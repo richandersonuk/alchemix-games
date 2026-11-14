@@ -1,2454 +1,2013 @@
-```html
 <!DOCTYPE html>
-<html lang="en" class="h-full w-full select-none overflow-hidden bg-black">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>The Alchemix: Science Saviour</title>
-  
-  <!-- Tailwind CSS & Phosphor Icons CDN -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,700;1,700&family=Press+Start+2P&display=swap');
 
     * {
-      touch-action: manipulation;
       user-select: none;
       -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      box-sizing: border-box;
+      touch-action: manipulation;
     }
 
     body {
-      font-family: 'Outfit', sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #030712;
+      background-color: #030014;
+      color: #fff;
+      font-family: 'Chakra Petch', sans-serif;
       overflow: hidden;
+      width: 100vw;
+      height: 100vh;
     }
 
-    .font-retro {
+    .font-pixel {
       font-family: 'Press Start 2P', monospace;
     }
 
+    /* Screen lock & container */
     #game-container {
-      position: absolute;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
+      position: relative;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at center, #1e1035 0%, #05020a 100%);
+      background: #05050f;
     }
 
     canvas {
       display: block;
       width: 100%;
       height: 100%;
-      image-rendering: auto;
+      image-rendering: pixelated;
     }
 
-    /* Force landscape view on phones held vertically */
-    @media (orientation: portrait) and (max-width: 896px) {
-      #game-wrapper {
-        transform: rotate(90deg);
-        transform-origin: center center;
-        width: 100vh !important;
-        height: 100vw !important;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        margin-top: -50vw;
-        margin-left: -50vh;
-      }
+    /* Floating UI elements */
+    .neon-border {
+      border: 2px solid #a855f7;
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.4), inset 0 0 10px rgba(168, 85, 247, 0.2);
     }
 
-    @media (orientation: landscape) or (min-width: 897px) {
-      #game-wrapper {
-        width: 100%;
-        height: 100%;
-        position: relative;
-      }
+    .neon-gold {
+      border: 2px solid #eab308;
+      box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
+    }
+
+    .touch-btn {
+      background: rgba(30, 27, 75, 0.65);
+      border: 2px solid rgba(168, 85, 247, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: transform 0.05s ease, background 0.05s ease;
     }
 
     .touch-btn:active, .touch-btn.active {
       transform: scale(0.92);
-      filter: brightness(1.3);
+      background: rgba(168, 85, 247, 0.85);
+      border-color: #f43f5e;
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f0c29;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #a855f7;
+      border-radius: 3px;
     }
   </style>
 </head>
-<body class="h-full w-full">
+<body class="bg-black select-none">
 
-  <div id="game-container">
-    <div id="game-wrapper">
-      <canvas id="gameCanvas"></canvas>
+  <div id="game-container" class="relative w-full h-full flex items-center justify-center">
+    <!-- Active Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
 
-      <!-- TOP HUD OVERLAY -->
-      <div id="hud" class="absolute top-0 left-0 right-0 p-2 sm:p-3 flex items-center justify-between pointer-events-none z-30 transition-opacity duration-300">
-        <!-- Back to Arcade Portal & Health -->
-        <div class="flex items-center gap-2 pointer-events-auto">
-          <a href="../" class="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-slate-950/85 border border-purple-500/50 text-purple-300 flex items-center justify-center hover:bg-purple-900/40 active:scale-95 transition-transform shadow-md" title="Back to Arcade Portal">
-            <i class="ph-bold ph-house text-lg sm:text-xl"></i>
-          </a>
+    <!-- TOP HUD OVERLAY -->
+    <div id="top-hud" class="absolute top-0 left-0 right-0 p-2 md:p-4 flex items-center justify-between pointer-events-none z-30">
+      <!-- Left: Player Stats & Genre Badge -->
+      <div class="flex items-center gap-2 md:gap-3 pointer-events-auto">
+        <!-- Return to Arcade Hub -->
+        <a href="../" title="Return to Arcade Portal" class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-purple-950/80 border border-purple-500/50 flex items-center justify-center text-purple-300 hover:text-white hover:bg-purple-800 transition">
+          <i class="ph-bold ph-house text-lg md:text-xl"></i>
+        </a>
 
-          <div class="flex items-center gap-2 sm:gap-3 bg-slate-950/85 p-1.5 sm:p-2 rounded-2xl border border-purple-500/40 backdrop-blur-md shadow-lg">
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-purple-900/60 border border-amber-400 flex items-center justify-center relative overflow-hidden">
-              <span class="text-lg sm:text-xl">🧙‍♂️</span>
-              <div class="absolute bottom-0 inset-x-0 h-1 bg-amber-400"></div>
+        <!-- Health / Flasks -->
+        <div class="bg-slate-950/80 backdrop-blur border border-purple-500/40 rounded-xl px-3 py-1.5 flex items-center gap-3">
+          <div class="flex items-center gap-1.5">
+            <i class="ph-fill ph-heart text-rose-500 text-lg animate-pulse"></i>
+            <div id="hud-hp-bar" class="w-16 md:w-24 h-3 bg-rose-950 rounded-full overflow-hidden border border-rose-500/50">
+              <div id="hud-hp-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-full transition-all duration-200"></div>
             </div>
-            <div class="flex flex-col">
-              <div class="flex items-center justify-between text-[9px] sm:text-[10px] font-retro text-purple-300 mb-1 gap-2">
-                <span id="hud-stage-label" class="text-amber-300">LVL 1</span>
-                <span id="hud-hp-val">100/100</span>
-              </div>
-              <div class="w-20 sm:w-32 h-2.5 sm:h-3 bg-slate-900 rounded-full border border-slate-700 overflow-hidden p-0.5">
-                <div id="hud-hp-bar" class="h-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 rounded-full transition-all duration-150" style="width: 100%;"></div>
-              </div>
-            </div>
-            <div class="flex items-center gap-1 px-2 py-1 bg-emerald-950/60 border border-emerald-500/50 rounded-xl text-emerald-300 text-xs font-bold">
-              <span class="text-sm sm:text-base animate-pulse">🧪</span>
-              <span id="hud-flask-counter" class="font-retro text-[10px] sm:text-xs">0/3</span>
-            </div>
+          </div>
+          <div class="flex items-center gap-1 border-l border-slate-700/60 pl-3">
+            <i class="ph-fill ph-flask text-emerald-400 text-base"></i>
+            <span id="hud-flask-count" class="font-pixel text-xs text-emerald-300">0/3</span>
           </div>
         </div>
 
-        <!-- Center Stage & Boss Banner -->
-        <div id="boss-hud-container" class="hidden pointer-events-auto flex flex-col items-center max-w-[230px] sm:max-w-md w-full px-2 bg-slate-950/90 py-1.5 rounded-2xl border border-red-500/50 backdrop-blur-md shadow-lg">
-          <div class="flex items-center justify-between w-full text-[9px] sm:text-[10px] font-retro text-amber-300 mb-1 px-1">
-            <span id="boss-name" class="truncate font-bold tracking-wider text-pink-400">BOSS</span>
-            <span id="boss-phase-badge" class="px-1.5 py-0.5 rounded bg-red-900/80 text-[8px] text-red-200 border border-red-400/50">PHASE 1</span>
+        <!-- Active Genre Badge -->
+        <button id="genre-badge" class="pointer-events-auto bg-purple-900/80 hover:bg-purple-800 border border-purple-400/60 rounded-xl px-3 py-1.5 flex items-center gap-2 cursor-pointer shadow-lg transition">
+          <span id="genre-icon" class="text-base">🇧🇷</span>
+          <div class="text-left">
+            <div class="text-[9px] uppercase tracking-wider text-purple-300 font-bold leading-none">Style [Q]</div>
+            <div id="genre-name" class="font-pixel text-xs text-amber-300 leading-tight">BR PHONK</div>
           </div>
-          <div class="w-full h-2.5 sm:h-3 bg-slate-950 rounded-full border border-red-500/80 overflow-hidden p-0.5">
-            <div id="boss-hp-bar" class="h-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 rounded-full transition-all duration-100" style="width: 100%;"></div>
-          </div>
-          <div id="boss-strategy-hint" class="text-[9px] sm:text-[10px] text-cyan-300 font-semibold mt-0.5 truncate w-full text-center">
-            Watch boss reactions to find their genre weakness!
-          </div>
-        </div>
-
-        <!-- Genre & Audio Deck Buttons -->
-        <div class="flex items-center gap-2 pointer-events-auto">
-          <button id="genre-capsule-btn" class="flex items-center gap-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-slate-950/85 border-2 border-pink-500/80 text-white backdrop-blur-md shadow-lg active:scale-95 transition-transform" title="Tap to switch genre (Q)">
-            <span id="genre-icon" class="text-base sm:text-xl">🔥</span>
-            <div class="text-left">
-              <div class="text-[7px] sm:text-[8px] font-retro text-pink-400 leading-none">BEAT [Q]</div>
-              <div id="genre-label" class="text-[10px] sm:text-xs font-black tracking-wider uppercase text-pink-200">BR PHONK</div>
-            </div>
-          </button>
-
-          <button id="open-audio-modal-btn" class="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-slate-950/80 border border-cyan-400/60 text-cyan-300 flex items-center justify-center hover:bg-cyan-950/40 active:scale-95 transition-transform shadow-md" title="Sound Effects & Audio Manager">
-            <i class="ph-bold ph-sliders-horizontal text-lg sm:text-xl"></i>
-          </button>
-
-          <button id="toggle-touch-btn" class="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-slate-950/80 border border-purple-400/60 text-purple-300 flex items-center justify-center hover:bg-purple-950/40 active:scale-95 transition-transform shadow-md" title="Toggle On-Screen Touch Controls">
-            <i class="ph-bold ph-game-controller text-lg sm:text-xl"></i>
-          </button>
-        </div>
+        </button>
       </div>
 
-      <!-- TOUCHPAD CONTROLS -->
-      <div id="mobile-controls" class="absolute bottom-3 inset-x-3 sm:bottom-4 sm:inset-x-6 flex items-end justify-between pointer-events-none z-40 select-none">
-        <div class="pointer-events-auto flex items-center gap-2 sm:gap-3 bg-slate-950/75 p-2 rounded-3xl backdrop-blur-md border border-purple-500/30 shadow-[0_0_20px_rgba(0,0,0,0.8)]">
-          <button id="touch-left" aria-label="Move Left" class="touch-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-purple-400/40 shadow-lg flex flex-col items-center justify-center text-white active:border-purple-400 touch-none">
-            <i class="ph-bold ph-caret-left text-2xl sm:text-3xl text-purple-300"></i>
-            <span class="text-[8px] font-retro text-purple-300 font-bold -mt-1">LEFT</span>
-          </button>
-          
-          <button id="touch-down" aria-label="Crouch" class="touch-btn w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-br from-slate-800 to-indigo-950 border-2 border-indigo-400/50 shadow-lg flex flex-col items-center justify-center text-white active:border-cyan-400 touch-none">
-            <i class="ph-bold ph-caret-down text-2xl sm:text-3xl text-cyan-300"></i>
-            <span class="text-[8px] font-retro text-cyan-200 font-bold -mt-1">DUCK</span>
-          </button>
-
-          <button id="touch-right" aria-label="Move Right" class="touch-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-purple-400/40 shadow-lg flex flex-col items-center justify-center text-white active:border-purple-400 touch-none">
-            <i class="ph-bold ph-caret-right text-2xl sm:text-3xl text-purple-300"></i>
-            <span class="text-[8px] font-retro text-purple-300 font-bold -mt-1">RIGHT</span>
-          </button>
-        </div>
-
-        <div class="pointer-events-auto flex items-center gap-2 sm:gap-3 bg-slate-950/75 p-2 rounded-3xl backdrop-blur-md border border-purple-500/30 shadow-[0_0_20px_rgba(0,0,0,0.8)]">
-          <button id="touch-style" aria-label="Cycle Musical Genre" class="touch-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-purple-900 to-indigo-950 border-2 border-pink-400/70 shadow-lg flex flex-col items-center justify-center text-white active:border-pink-300 touch-none">
-            <i class="ph-bold ph-repeat text-xl sm:text-2xl text-pink-300"></i>
-            <span class="text-[8px] font-retro text-pink-200 font-bold -mt-1">GENRE</span>
-          </button>
-
-          <button id="touch-attack" aria-label="Fire Musical Attack" class="touch-btn w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-pink-600 to-rose-700 border-2 border-pink-300 shadow-[0_0_15px_rgba(244,63,94,0.6)] flex flex-col items-center justify-center text-white active:scale-90 touch-none">
-            <i class="ph-fill ph-music-notes text-2xl sm:text-3xl text-white"></i>
-            <span class="text-[9px] font-retro text-yellow-200 font-bold">SOLO</span>
-          </button>
-
-          <button id="touch-jump" aria-label="Jump / Double Jump" class="touch-btn w-15 h-15 sm:w-17 sm:h-17 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-800 border-2 border-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.5)] flex flex-col items-center justify-center text-white active:scale-90 touch-none">
-            <i class="ph-bold ph-arrow-fat-line-up text-2xl sm:text-3xl text-white"></i>
-            <span class="text-[9px] font-retro text-emerald-100 font-bold">JUMP</span>
-          </button>
-        </div>
+      <!-- Center: Stage & Objective Title -->
+      <div class="hidden sm:flex flex-col items-center">
+        <div id="hud-stage-name" class="font-pixel text-xs text-purple-300 tracking-wider">STAGE 1: HIGH SCHOOL</div>
+        <div id="hud-stage-sub" class="text-[10px] text-slate-400">Rescue the Captured Chemistry Teacher!</div>
       </div>
 
-      <!-- START MENU MODAL -->
-      <div id="start-modal" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4 z-50 text-center">
-        <div class="max-w-md w-full bg-slate-900/90 border-2 border-purple-500 rounded-3xl p-6 sm:p-8 shadow-[0_0_40px_rgba(168,85,247,0.5)] flex flex-col items-center">
-          <div class="text-4xl sm:text-5xl mb-2 animate-bounce">🧙‍♂️⚡🎸</div>
-          <h1 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 tracking-wider mb-1">
-            THE ALCHEMIX
-          </h1>
-          <h2 class="text-xs sm:text-sm font-retro text-cyan-300 tracking-widest mb-4">
-            SCIENCE SAVIOUR
-          </h2>
+      <!-- Right: Boss Banner / Audio & Settings -->
+      <div class="flex items-center gap-2 pointer-events-auto">
+        <button id="btn-toggle-touch" title="Toggle On-Screen Controls" class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-purple-950/80 border border-purple-500/50 flex items-center justify-center text-purple-300 hover:text-white transition">
+          <i class="ph-bold ph-game-controller text-lg md:text-xl"></i>
+        </button>
 
-          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
-            Rescue kidnapped scientists across 5 hazardous worlds! Watch enemy reactions: if they <b>groove</b>, they're immune—if they <b>cover their ears</b>, you found their critical weakness!
-          </p>
+        <button id="btn-open-audio" title="Audio Deck & Custom MP3s" class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-purple-950/80 border border-purple-500/50 flex items-center justify-center text-purple-300 hover:text-white transition">
+          <i class="ph-bold ph-sliders-horizontal text-lg md:text-xl"></i>
+        </button>
 
-          <div class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl p-3 text-left text-[11px] text-slate-300 mb-5 space-y-1.5">
-            <div class="flex items-center justify-between">
-              <span class="text-slate-400">Move / Duck:</span>
-              <span class="text-amber-300 font-mono">A, D, S or D-Pad</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-slate-400">Jump / Double-Jump:</span>
-              <span class="text-emerald-300 font-mono">W / Space or JUMP</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-slate-400">Musical Solo Blast:</span>
-              <span class="text-pink-300 font-mono">J / Enter or SOLO</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-slate-400">Switch Genre:</span>
-              <span class="text-purple-300 font-mono">Q or GENRE Button</span>
-            </div>
+        <button id="btn-toggle-sound" title="Mute / Unmute" class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-purple-950/80 border border-purple-500/50 flex items-center justify-center text-purple-300 hover:text-white transition">
+          <i id="sound-icon" class="ph-bold ph-speaker-high text-lg md:text-xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- BOSS HEALTH HUD (Appears during boss phase) -->
+    <div id="boss-hud" class="absolute top-14 left-1/2 -translate-x-1/2 w-11/12 max-w-md bg-slate-950/90 border border-rose-500/60 rounded-xl p-2 hidden z-30 shadow-2xl backdrop-blur">
+      <div class="flex justify-between items-center text-xs mb-1">
+        <span id="boss-name" class="font-pixel text-rose-400">BOSS: APEX BULLY</span>
+        <span id="boss-phase-tag" class="text-[10px] font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/50">PHASE 1</span>
+      </div>
+      <div class="w-full h-3.5 bg-slate-900 rounded-full overflow-hidden border border-rose-900">
+        <div id="boss-hp-fill" class="h-full bg-gradient-to-r from-amber-500 via-rose-500 to-red-600 w-full transition-all duration-200"></div>
+      </div>
+      <div id="boss-hint" class="text-[10px] text-center text-slate-300 mt-1 italic">Hit with Weakness genre to shatter its armor!</div>
+    </div>
+
+    <!-- TOUCH CONTROLS OVERLAY (Ergonomic Landscape Pad) -->
+    <div id="touch-controls" class="absolute inset-x-0 bottom-0 p-3 md:p-6 flex justify-between items-end pointer-events-none z-30 select-none">
+      <!-- Movement Pad: Left, Duck, Right -->
+      <div class="flex items-center gap-2 pointer-events-auto">
+        <button id="btn-left" class="touch-btn h-16 w-16 md:h-20 md:w-20 rounded-2xl flex flex-col items-center justify-center text-purple-200 shadow-xl">
+          <i class="ph-bold ph-arrow-left text-2xl"></i>
+          <span class="text-[9px] uppercase font-bold text-purple-400">Left</span>
+        </button>
+        <button id="btn-duck" class="touch-btn h-14 w-14 md:h-16 md:w-16 rounded-2xl flex flex-col items-center justify-center text-purple-200 shadow-xl">
+          <i class="ph-bold ph-arrow-down text-xl"></i>
+          <span class="text-[9px] uppercase font-bold text-purple-400">Duck</span>
+        </button>
+        <button id="btn-right" class="touch-btn h-16 w-16 md:h-20 md:w-20 rounded-2xl flex flex-col items-center justify-center text-purple-200 shadow-xl">
+          <i class="ph-bold ph-arrow-right text-2xl"></i>
+          <span class="text-[9px] uppercase font-bold text-purple-400">Right</span>
+        </button>
+      </div>
+
+      <!-- Action Cluster: Genre Swap, Jump, Musical Solo Attack -->
+      <div class="flex items-end gap-2 md:gap-3 pointer-events-auto">
+        <!-- Genre Swap Button -->
+        <button id="btn-genre" class="touch-btn h-14 w-14 md:h-16 md:w-16 rounded-2xl flex flex-col items-center justify-center text-amber-300 border-amber-500/50 shadow-xl">
+          <i class="ph-bold ph-disc text-xl"></i>
+          <span class="text-[8px] uppercase font-bold text-amber-300">Style</span>
+        </button>
+
+        <!-- Jump -->
+        <button id="btn-jump" class="touch-btn h-16 w-16 md:h-20 md:w-20 rounded-2xl flex flex-col items-center justify-center text-emerald-300 border-emerald-500/50 shadow-xl">
+          <i class="ph-bold ph-arrow-up text-2xl"></i>
+          <span class="text-[9px] uppercase font-bold text-emerald-400">Jump</span>
+        </button>
+
+        <!-- Attack / Solo -->
+        <button id="btn-attack" class="touch-btn h-18 w-18 md:h-22 md:w-22 rounded-3xl flex flex-col items-center justify-center text-rose-300 border-rose-500/60 bg-rose-950/60 shadow-2xl active:bg-rose-700">
+          <i class="ph-fill ph-music-notes-simple text-3xl"></i>
+          <span class="text-[9px] uppercase font-bold text-rose-300 mt-0.5">Solo</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- START / INTRO MODAL -->
+    <div id="start-modal" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div class="max-w-md w-full bg-gradient-to-b from-purple-950/80 to-slate-950 border-2 border-purple-500/60 rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-600/20 rounded-full blur-2xl"></div>
+
+        <div class="inline-block p-3 bg-purple-900/40 rounded-2xl border border-purple-500/40 mb-3">
+          <span class="text-4xl">🧙‍♂️⚛️</span>
+        </div>
+
+        <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-rose-300 to-purple-400 mb-2">
+          THE ALCHEMIX
+        </h1>
+        <div class="font-pixel text-[11px] text-purple-300 tracking-wider mb-4">SCIENCE SAVIOUR</div>
+
+        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+          Misinformation syndicates have trapped our greatest scientists! Deploy musical spells across 5 worlds. Switch genres with <strong class="text-amber-300">[Q]</strong> to pierce enemy immunities and blast them into enlightenment.
+        </p>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 text-left text-[11px] text-slate-400 mb-5 space-y-1">
+          <div><strong class="text-purple-300">A / D / ← →</strong> : Move & Sprint</div>
+          <div><strong class="text-purple-300">W / Space / ↑</strong> : Jump & Sonic Double-Jump</div>
+          <div><strong class="text-purple-300">S / ↓</strong> : Duck & Crouch under high attacks</div>
+          <div><strong class="text-purple-300">J / Enter</strong> : Fire Musical Spell Attack</div>
+          <div><strong class="text-purple-300">Q / Tap Style</strong> : Switch Musical Genre</div>
+        </div>
+
+        <button id="btn-start-game" class="w-full py-4 rounded-2xl font-pixel text-xs bg-gradient-to-r from-purple-600 via-fuchsia-600 to-rose-600 text-white font-bold shadow-lg shadow-purple-600/40 hover:scale-[1.02] active:scale-[0.98] transition">
+          DROP THE BEAT & START
+        </button>
+      </div>
+    </div>
+
+    <!-- AUDIO DECK & SOUND CONFIG MODAL -->
+    <div id="audio-modal" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+      <div class="max-w-2xl w-full max-h-[90vh] bg-slate-900 border border-purple-500/50 rounded-3xl p-5 md:p-6 overflow-y-auto shadow-2xl flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+          <div class="flex items-center gap-2">
+            <i class="ph-bold ph-sliders-horizontal text-xl text-purple-400"></i>
+            <h2 class="text-lg font-bold text-white">Audio Deck & Sound Manager</h2>
           </div>
-
-          <button id="start-game-btn" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 font-retro text-xs sm:text-sm text-white tracking-widest shadow-[0_0_25px_rgba(236,72,153,0.7)] active:scale-95 transition-transform hover:brightness-110">
-            DROP THE BEAT & START
+          <button id="btn-close-audio" class="h-8 w-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+            <i class="ph-bold ph-x"></i>
           </button>
         </div>
-      </div>
 
-      <!-- AUDIO DECK & CUSTOM SFX / MP3 MODAL -->
-      <div id="audio-modal" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 z-50">
-        <div class="max-w-xl w-full bg-slate-900 border-2 border-cyan-500 rounded-3xl p-5 sm:p-6 shadow-[0_0_40px_rgba(6,182,212,0.4)] flex flex-col max-h-[92vh] overflow-y-auto">
-          <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
-            <div class="flex items-center gap-2">
-              <i class="ph-bold ph-faders text-2xl text-cyan-400"></i>
+        <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+          Provide custom files in your repo's <code class="text-purple-300 font-mono">./sounds/</code> folder, upload MP3/WAV files directly into browser cache, or leave empty for procedurally synthesized beats.
+        </p>
+
+        <!-- SOUND SLOTS -->
+        <div class="space-y-4 text-xs">
+          <!-- Background Soundtracks -->
+          <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-3">
+            <div class="font-bold text-purple-300 text-xs flex items-center gap-1.5">
+              <i class="ph-fill ph-disc"></i> 4 Genre Background Loops (Suno / Lyria / MP3)
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <h2 class="text-lg font-bold text-white tracking-wide">Audio Deck & `./sounds/` Folder</h2>
-                <div class="text-[10px] text-cyan-300 font-retro">DROP FILES IN ./sounds/ OR UPLOAD</div>
+                <label class="block text-slate-400 mb-1">1. Brazilian Phonk Loop</label>
+                <input id="audio-url-phonk" type="text" placeholder="./sounds/phonk.mp3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 text-xs mb-1" />
+                <input id="audio-file-phonk" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-purple-900 file:text-purple-200" />
               </div>
-            </div>
-            <button id="close-audio-modal-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
-              <i class="ph-bold ph-x text-lg"></i>
-            </button>
-          </div>
-
-          <p class="text-xs text-slate-300 mb-4">
-            When deploying to GitHub Pages, simply drop your audio files into <code class="text-pink-400">science-saviour/sounds/</code> matching the filenames below, or test them live right now using the Upload buttons.
-          </p>
-
-          <!-- SOUND TRACKS -->
-          <div class="space-y-3 mb-5">
-            <div class="text-xs font-retro text-pink-400 border-b border-slate-800 pb-1">BACKGROUND MUSIC TRACKS</div>
-            
-            <div class="bg-slate-950 p-2.5 rounded-xl border border-pink-500/30 flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-retro text-pink-400">1. Brazilian Phonk (`./sounds/phonk.mp3`)</span>
-                <label class="cursor-pointer px-2 py-0.5 rounded bg-pink-900/60 hover:bg-pink-800 border border-pink-400 text-[10px] text-pink-200 font-bold">
-                  📁 Upload File
-                  <input type="file" accept="audio/*" class="hidden" onchange="sound.handleFileUpload('track_0', this)">
-                </label>
+              <div>
+                <label class="block text-slate-400 mb-1">2. Rock Guitar Loop</label>
+                <input id="audio-url-rock" type="text" placeholder="./sounds/rock.mp3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 text-xs mb-1" />
+                <input id="audio-file-rock" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-purple-900 file:text-purple-200" />
               </div>
-              <input type="text" id="track-url-0" placeholder="./sounds/phonk.mp3" class="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-pink-500 outline-none">
-            </div>
-
-            <div class="bg-slate-950 p-2.5 rounded-xl border border-amber-500/30 flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-retro text-amber-400">2. Rock Guitar (`./sounds/rock.mp3`)</span>
-                <label class="cursor-pointer px-2 py-0.5 rounded bg-amber-900/60 hover:bg-amber-800 border border-amber-400 text-[10px] text-amber-200 font-bold">
-                  📁 Upload File
-                  <input type="file" accept="audio/*" class="hidden" onchange="sound.handleFileUpload('track_1', this)">
-                </label>
+              <div>
+                <label class="block text-slate-400 mb-1">3. Reggae Dub Skank Loop</label>
+                <input id="audio-url-reggae" type="text" placeholder="./sounds/reggae.mp3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 text-xs mb-1" />
+                <input id="audio-file-reggae" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-purple-900 file:text-purple-200" />
               </div>
-              <input type="text" id="track-url-1" placeholder="./sounds/rock.mp3" class="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-amber-500 outline-none">
-            </div>
-
-            <div class="bg-slate-950 p-2.5 rounded-xl border border-emerald-500/30 flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-retro text-emerald-400">3. Reggae Dub (`./sounds/reggae.mp3`)</span>
-                <label class="cursor-pointer px-2 py-0.5 rounded bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-400 text-[10px] text-emerald-200 font-bold">
-                  📁 Upload File
-                  <input type="file" accept="audio/*" class="hidden" onchange="sound.handleFileUpload('track_2', this)">
-                </label>
-              </div>
-              <input type="text" id="track-url-2" placeholder="./sounds/reggae.mp3" class="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-emerald-500 outline-none">
-            </div>
-
-            <div class="bg-slate-950 p-2.5 rounded-xl border border-cyan-500/30 flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-retro text-cyan-400">4. Viral Pop (`./sounds/viral.mp3`)</span>
-                <label class="cursor-pointer px-2 py-0.5 rounded bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-400 text-[10px] text-cyan-200 font-bold">
-                  📁 Upload File
-                  <input type="file" accept="audio/*" class="hidden" onchange="sound.handleFileUpload('track_3', this)">
-                </label>
-              </div>
-              <input type="text" id="track-url-3" placeholder="./sounds/viral.mp3" class="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-cyan-500 outline-none">
-            </div>
-
-            <!-- ACTION SOUND EFFECTS -->
-            <div class="text-xs font-retro text-yellow-400 border-b border-slate-800 pb-1 pt-2">GAME SOUND EFFECTS (SFX)</div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex flex-col gap-1.5">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-retro text-slate-300">Jump (`jump.wav`)</span>
-                  <label class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[9px] text-slate-300">
-                    Upload <input type="file" accept="audio/*" class="hidden" onchange="sound.handleFileUpload('sfx_jump', this)">
-                  </label>
-                </div>
-                <input type="text" id="sfx-url-jump" placeholder="./sounds/jump.wav" class="w-full text-[11px] bg-slate-900 border border-slate-800 rounded px-2 py-1 text-white font-mono">
-              </div>
-
-              <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex flex-col gap-1.5">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-retro text-slate-300">Solo Blast (`solo.wav`)</span>
-                  <label class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[9px] text-slate-300">
-                    Upload <input type="file" accept="audio/*" class="hidden" onchange="sound.handleFileUpload('sfx_solo', this)">
-                  </label>
-                </div>
-                <input type="text" id="sfx-url-solo" placeholder="./sounds/solo.wav" class="w-full text-[11px] bg-slate-900 border border-slate-800 rounded px-2 py-1 text-white font-mono">
-              </div>
-
-              <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex flex-col gap-1.5">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-retro text-slate-300">Flask (`flask.wav`)</span>
-                  <label class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[9px] text-slate-300">
-                    Upload <input type="file" accept="audio/*" class="hidden" onchange="sound.handleFileUpload('sfx_flask', this)">
-                  </label>
-                </div>
-                <input type="text" id="sfx-url-flask" placeholder="./sounds/flask.wav" class="w-full text-[11px] bg-slate-900 border border-slate-800 rounded px-2 py-1 text-white font-mono">
-              </div>
-
-              <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex flex-col gap-1.5">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-retro text-slate-300">Defeat (`defeat.wav`)</span>
-                  <label class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[9px] text-slate-300">
-                    Upload <input type="file" accept="audio/*" class="hidden" onchange="sound.handleFileUpload('sfx_defeat', this)">
-                  </label>
-                </div>
-                <input type="text" id="sfx-url-defeat" placeholder="./sounds/defeat.wav" class="w-full text-[11px] bg-slate-900 border border-slate-800 rounded px-2 py-1 text-white font-mono">
+              <div>
+                <label class="block text-slate-400 mb-1">4. Viral Hyper-Synth Loop</label>
+                <input id="audio-url-viral" type="text" placeholder="./sounds/viral.mp3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 text-xs mb-1" />
+                <input id="audio-file-viral" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-purple-900 file:text-purple-200" />
               </div>
             </div>
           </div>
 
-          <div class="flex items-center justify-between gap-2 border-t border-slate-800 pt-3">
-            <button id="reset-audio-btn" class="py-2 px-3 rounded-xl bg-rose-950/70 hover:bg-rose-900 border border-rose-500/40 text-rose-300 text-xs font-bold active:scale-95 transition-transform">
-              Clear & Reset Audio
-            </button>
-            <button id="save-audio-btn" class="py-2.5 px-6 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform">
-              Save & Apply All
-            </button>
+          <!-- RANDOMIZED SOLO ATTACK POOL -->
+          <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-3">
+            <div class="font-bold text-rose-300 text-xs flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><i class="ph-fill ph-waveform"></i> Random Solo Attack SFX Pool</span>
+              <span class="text-[10px] font-normal text-slate-400">Triggered randomly on attack</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-slate-400 mb-1">Solo SFX #1</label>
+                <input id="sfx-url-solo-1" type="text" placeholder="./sounds/solo_1.wav" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-xs mb-1" />
+                <input id="sfx-file-solo-1" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-rose-950 file:text-rose-300" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Solo SFX #2</label>
+                <input id="sfx-url-solo-2" type="text" placeholder="./sounds/solo_2.wav" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-xs mb-1" />
+                <input id="sfx-file-solo-2" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-rose-950 file:text-rose-300" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Solo SFX #3</label>
+                <input id="sfx-url-solo-3" type="text" placeholder="./sounds/solo_3.wav" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-xs mb-1" />
+                <input id="sfx-file-solo-3" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-rose-950 file:text-rose-300" />
+              </div>
+            </div>
+          </div>
+
+          <!-- RANDOMIZED ENEMY DEFEAT POOL -->
+          <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-3">
+            <div class="font-bold text-amber-300 text-xs flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><i class="ph-fill ph-skull"></i> Random Enemy Defeat SFX Pool</span>
+              <span class="text-[10px] font-normal text-slate-400">Triggered randomly on defeat</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-slate-400 mb-1">Defeat SFX #1</label>
+                <input id="sfx-url-defeat-1" type="text" placeholder="./sounds/defeat_1.wav" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-xs mb-1" />
+                <input id="sfx-file-defeat-1" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-amber-950 file:text-amber-300" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Defeat SFX #2</label>
+                <input id="sfx-url-defeat-2" type="text" placeholder="./sounds/defeat_2.wav" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-xs mb-1" />
+                <input id="sfx-file-defeat-2" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-amber-950 file:text-amber-300" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Defeat SFX #3</label>
+                <input id="sfx-url-defeat-3" type="text" placeholder="./sounds/defeat_3.wav" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-xs mb-1" />
+                <input id="sfx-file-defeat-3" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-amber-950 file:text-amber-300" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Other Game SFX -->
+          <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-3">
+            <div class="font-bold text-emerald-300 text-xs flex items-center gap-1.5">
+              <i class="ph-fill ph-speaker-simple-high"></i> Game Mechanics SFX
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-slate-400 mb-1">Jump Sound</label>
+                <input id="sfx-url-jump" type="text" placeholder="./sounds/jump.wav" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-xs mb-1" />
+                <input id="sfx-file-jump" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-emerald-950 file:text-emerald-300" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Genre Switch Sound</label>
+                <input id="sfx-url-switch" type="text" placeholder="./sounds/switch.wav" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-xs mb-1" />
+                <input id="sfx-file-switch" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-emerald-950 file:text-emerald-300" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Flask Collected</label>
+                <input id="sfx-url-flask" type="text" placeholder="./sounds/flask.wav" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-xs mb-1" />
+                <input id="sfx-file-flask" type="file" accept="audio/*" class="text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:bg-emerald-950 file:text-emerald-300" />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- GAME OVER / VICTORY OVERLAY -->
-      <div id="end-modal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4 z-50 text-center">
-        <div class="max-w-md w-full bg-slate-900 border-2 border-amber-500 rounded-3xl p-6 sm:p-8 flex flex-col items-center shadow-[0_0_40px_rgba(245,158,11,0.4)]">
-          <div id="end-emoji" class="text-5xl mb-2">🎉</div>
-          <h2 id="end-title" class="text-2xl font-black text-amber-300 font-retro mb-2">LEVEL CLEARED!</h2>
-          <p id="end-msg" class="text-xs sm:text-sm text-slate-300 mb-6">You cured the misinformation and rescued the scientist!</p>
-          <div class="flex items-center gap-3 w-full">
-            <a href="../" class="flex-1 py-3.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 font-retro text-xs text-slate-300 tracking-wider transition-colors">
-              ARCADE HUB
-            </a>
-            <button id="end-btn" class="flex-1 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-pink-600 font-retro text-xs text-white tracking-widest shadow-lg active:scale-95 transition-transform">
-              NEXT LEVEL
-            </button>
-          </div>
+        <div class="mt-6 flex justify-end gap-3 pt-3 border-t border-slate-800">
+          <button id="btn-save-audio" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-white text-xs transition">
+            Save & Apply Audio
+          </button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // ============================================================================
-    // 🎵 EASY SOUND CONFIGURATION FOR DEPLOYMENT (science-saviour/sounds/)
-    // ============================================================================
-    // Drop your MP3 or WAV files into `science-saviour/sounds/` with these names.
-    // Any missing file will automatically fall back to the built-in synthesizer!
+    /* ==========================================================================
+       1. SOUND CONFIGURATION & POOLS
+       ========================================================================== */
     const SOUND_CONFIG = {
-      music: {
-        phonk:  './sounds/phonk.mp3',   // Genre 0: Brazilian Phonk
-        rock:   './sounds/rock.mp3',    // Genre 1: Heavy Guitar Rock
-        reggae: './sounds/reggae.mp3',  // Genre 2: Reggae Dub
-        viral:  './sounds/viral.mp3'    // Genre 3: Viral Hyperpop
+      tracks: {
+        phonk:  './sounds/phonk.mp3',
+        rock:   './sounds/rock.mp3',
+        reggae: './sounds/reggae.mp3',
+        viral:  './sounds/viral.mp3'
       },
       sfx: {
-        jump:   './sounds/jump.wav',    // Jumping / Bounce pad
-        solo:   './sounds/solo.wav',    // Firing musical notes (optional override)
-        flask:  './sounds/flask.wav',   // Collecting green science flask
-        defeat: './sounds/defeat.wav'   // Enlightening an enemy or boss
+        jump:   './sounds/jump.wav',
+        switch: './sounds/switch.wav',
+        flask:  './sounds/flask.wav',
+        // Randomized sound pools:
+        solo: [
+          './sounds/solo_1.wav',
+          './sounds/solo_2.wav',
+          './sounds/solo_3.wav',
+          './sounds/solo_4.wav'
+        ],
+        defeat: [
+          './sounds/defeat_1.wav',
+          './sounds/defeat_2.wav',
+          './sounds/defeat_3.wav',
+          './sounds/defeat_4.wav',
+          './sounds/defeat_5.wav'
+        ]
       }
     };
 
-    const DEFAULT_AUDIO_PATHS = {
-      track_0: SOUND_CONFIG.music.phonk,
-      track_1: SOUND_CONFIG.music.rock,
-      track_2: SOUND_CONFIG.music.reggae,
-      track_3: SOUND_CONFIG.music.viral,
-      sfx_jump: SOUND_CONFIG.sfx.jump,
-      sfx_solo: SOUND_CONFIG.sfx.solo,
-      sfx_flask: SOUND_CONFIG.sfx.flask,
-      sfx_defeat: SOUND_CONFIG.sfx.defeat
-    };
+    /* ==========================================================================
+       2. PERSISTENCE & LOCAL SOUND CACHE (IndexedDB)
+       ========================================================================== */
+    const DB_NAME = 'AlchemixAudioDB';
+    const DB_VERSION = 2;
+    let db = null;
 
-    // ====================================================
-    // INDEXEDDB STORAGE FOR CUSTOM AUDIO FILES
-    // ====================================================
-    const AudioDB = {
-      dbName: 'AlchemixAudioCache',
-      storeName: 'sound_files',
-      open() {
-        return new Promise((resolve, reject) => {
-          const req = indexedDB.open(this.dbName, 1);
-          req.onupgradeneeded = () => req.result.createObjectStore(this.storeName);
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => reject(req.error);
-        });
-      },
-      async save(key, blob) {
-        const db = await this.open();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(this.storeName, 'readwrite');
-          tx.objectStore(this.storeName).put(blob, key);
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        });
-      },
-      async get(key) {
-        const db = await this.open();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(this.storeName, 'readonly');
-          const req = tx.objectStore(this.storeName).get(key);
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => reject(req.error);
-        });
-      },
-      async clear() {
-        const db = await this.open();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(this.storeName, 'readwrite');
-          tx.objectStore(this.storeName).clear();
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        });
-      }
-    };
+    function initDB() {
+      return new Promise((resolve) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const d = e.target.result;
+          if (!d.objectStoreNames.contains('sounds')) {
+            d.createObjectStore('sounds');
+          }
+        };
+        req.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+        req.onerror = () => resolve(null);
+      });
+    }
 
-    // ====================================================
-    // DUAL-MODE SOUND ENGINE
-    // ====================================================
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+    async function saveBlobToDB(key, blob) {
+      if (!db) await initDB();
+      return new Promise((resolve) => {
+        if (!db) return resolve(false);
+        const tx = db.transaction('sounds', 'readwrite');
+        tx.objectStore('sounds').put(blob, key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+      });
+    }
 
-    const V_WIDTH = 1024;
-    const V_HEIGHT = 576;
-    let canvasScale = 1;
+    async function getBlobFromDB(key) {
+      if (!db) await initDB();
+      return new Promise((resolve) => {
+        if (!db) return resolve(null);
+        const tx = db.transaction('sounds', 'readonly');
+        const req = tx.objectStore('sounds').get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    }
 
-    const GENRES = [
-      { id: 0, name: 'BR PHONK', icon: '🔥', color: '#ec4899', scale: [65.41, 77.78, 87.31, 98.00, 116.54, 130.81] },
-      { id: 1, name: 'ROCK RIFF', icon: '🎸', color: '#f59e0b', scale: [82.41, 98.00, 110.00, 116.54, 123.47, 146.83] },
-      { id: 2, name: 'REGGAE DUB', icon: '🌴', color: '#10b981', scale: [73.42, 82.41, 92.50, 110.00, 123.47, 146.83] },
-      { id: 3, name: 'VIRAL POP', icon: '⚡', color: '#06b6d4', scale: [130.81, 146.83, 164.81, 196.00, 220.00, 261.63] }
-    ];
-
-    let currentGenreIndex = 0;
-
+    /* ==========================================================================
+       3. SOUND ENGINE (Hybrid Multi-Pool Audio Player + Procedural Fallbacks)
+       ========================================================================== */
     class SoundEngine {
       constructor() {
         this.ctx = null;
-        this.masterGain = null;
-        this.distortionNode = null;
-        this.step = 0;
-        this.seqTimer = null;
-        this.isPlaying = false;
-        this.mp3Tracks = [null, null, null, null];
-        this.sfxAudio = { jump: null, solo: null, flask: null, defeat: null };
+        this.muted = false;
+        this.currentGenre = 'phonk';
+        this.trackAudios = {};
+        
+        // Audio sound banks (supports single audio or arrays for pools)
+        this.sfxPools = {
+          solo: [],
+          defeat: [],
+          jump: null,
+          switch: null,
+          flask: null
+        };
+
+        this.stepCounter = 0;
+        this.timer = null;
       }
 
-      async init() {
-        if (this.ctx) return;
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        this.ctx = new AudioContext();
-
-        this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.setValueAtTime(0.32, this.ctx.currentTime);
-
-        const curve = new Float32Array(44100);
-        for (let i = 0; i < 44100; ++i) {
-          const x = (i * 2) / 44100 - 1;
-          curve[i] = ((3 + 35) * x * 20 * (Math.PI / 180)) / (Math.PI + 35 * Math.abs(x));
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
         }
-        this.distortionNode = this.ctx.createWaveShaper();
-        this.distortionNode.curve = curve;
-        this.distortionNode.connect(this.masterGain);
-        this.masterGain.connect(this.ctx.destination);
-
-        await this.loadAllAudio();
-        this.startSequencer();
-      }
-
-      async handleFileUpload(storageKey, inputElement) {
-        const file = inputElement.files[0];
-        if (!file) return;
-        await AudioDB.save(storageKey, file);
-        createFloatText(`SAVED: ${file.name.slice(0, 12)}`, player.x, player.y - 40, "#34d399");
-        await this.loadAllAudio();
-      }
-
-      async probeAudio(url) {
-        return new Promise(resolve => {
-          const testAudio = new Audio();
-          testAudio.preload = 'metadata';
-          testAudio.oncanplay = () => resolve(testAudio);
-          testAudio.onerror = () => resolve(null);
-          testAudio.src = url;
-        });
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        this.loadAllAudio();
+        this.startProceduralSequencer();
       }
 
       async loadAllAudio() {
-        for (let i = 0; i < 4; i++) {
-          let audioObj = null;
-          const cachedBlob = await AudioDB.get(`track_${i}`);
-          if (cachedBlob) {
-            audioObj = new Audio(URL.createObjectURL(cachedBlob));
+        const genres = ['phonk', 'rock', 'reggae', 'viral'];
+
+        // Load Background Tracks
+        for (const g of genres) {
+          const dbBlob = await getBlobFromDB(`track_${g}`);
+          let src = null;
+          if (dbBlob) {
+            src = URL.createObjectURL(dbBlob);
           } else {
-            const storedUrl = localStorage.getItem(`alchemix_track_${i}`) || DEFAULT_AUDIO_PATHS[`track_${i}`];
-            if (storedUrl && storedUrl.trim().length > 3) {
-              audioObj = await this.probeAudio(storedUrl.trim());
-            }
+            src = localStorage.getItem(`custom_track_${g}`) || SOUND_CONFIG.tracks[g];
           }
-          if (audioObj) {
-            audioObj.loop = true;
-            audioObj.volume = 0.55;
-            this.mp3Tracks[i] = audioObj;
-          } else {
-            this.mp3Tracks[i] = null;
+
+          if (src) {
+            const aud = new Audio();
+            aud.src = src;
+            aud.loop = true;
+            aud.volume = 0.55;
+            aud.crossOrigin = 'anonymous';
+            aud.onerror = () => { this.trackAudios[g] = null; };
+            this.trackAudios[g] = aud;
           }
         }
 
-        const sfxKeys = ['jump', 'solo', 'flask', 'defeat'];
-        for (const k of sfxKeys) {
-          let sfxObj = null;
-          const blob = await AudioDB.get(`sfx_${k}`);
-          if (blob) {
-            sfxObj = new Audio(URL.createObjectURL(blob));
-          } else {
-            const url = localStorage.getItem(`alchemix_sfx_${k}`) || DEFAULT_AUDIO_PATHS[`sfx_${k}`];
-            if (url && url.trim().length > 3) {
-              sfxObj = await this.probeAudio(url.trim());
+        // Helper to load sound pool variants
+        const loadPool = async (category, count) => {
+          this.sfxPools[category] = [];
+          for (let i = 1; i <= count; i++) {
+            const key = `${category}_${i}`;
+            const dbBlob = await getBlobFromDB(`sfx_${key}`);
+            let src = null;
+            if (dbBlob) {
+              src = URL.createObjectURL(dbBlob);
+            } else {
+              src = localStorage.getItem(`custom_sfx_${key}`) || SOUND_CONFIG.sfx[category][i - 1];
+            }
+            if (src) {
+              const aud = new Audio(src);
+              aud.volume = 0.65;
+              aud.crossOrigin = 'anonymous';
+              aud.onerror = () => {};
+              this.sfxPools[category].push(aud);
             }
           }
-          if (sfxObj) {
-            sfxObj.volume = 0.65;
-            this.sfxAudio[k] = sfxObj;
+        };
+
+        // Load randomized pools
+        await loadPool('solo', 3);
+        await loadPool('defeat', 3);
+
+        // Load standalone SFX
+        const singleSFX = ['jump', 'switch', 'flask'];
+        for (const key of singleSFX) {
+          const dbBlob = await getBlobFromDB(`sfx_${key}`);
+          let src = null;
+          if (dbBlob) {
+            src = URL.createObjectURL(dbBlob);
           } else {
-            this.sfxAudio[k] = null;
+            src = localStorage.getItem(`custom_sfx_${key}`) || SOUND_CONFIG.sfx[key];
+          }
+          if (src) {
+            const aud = new Audio(src);
+            aud.volume = 0.65;
+            aud.crossOrigin = 'anonymous';
+            aud.onerror = () => { this.sfxPools[key] = null; };
+            this.sfxPools[key] = aud;
           }
         }
-        this.handleTrackSwitch();
+
+        this.syncMusicTrack();
       }
 
-      handleTrackSwitch() {
-        this.mp3Tracks.forEach((track, idx) => {
-          if (track) {
-            if (idx === currentGenreIndex && this.isPlaying) {
-              track.play().catch(() => {});
-            } else {
-              track.pause();
-            }
+      syncMusicTrack() {
+        if (this.muted) {
+          Object.values(this.trackAudios).forEach(a => a && a.pause());
+          return;
+        }
+
+        Object.keys(this.trackAudios).forEach(g => {
+          const aud = this.trackAudios[g];
+          if (!aud) return;
+          if (g === this.currentGenre) {
+            aud.play().catch(() => {});
+          } else {
+            aud.pause();
+            aud.currentTime = 0;
           }
         });
       }
 
-      startSequencer() {
-        if (this.seqTimer) clearInterval(this.seqTimer);
-        this.isPlaying = true;
-        this.handleTrackSwitch();
-
-        const stepInterval = (60000 / 138) / 4;
-        this.seqTimer = setInterval(() => {
-          if (!this.ctx || this.ctx.state !== 'running') return;
-          if (this.mp3Tracks[currentGenreIndex]) return;
-          this.playStep(this.step, currentGenreIndex);
-          this.step = (this.step + 1) % 16;
-        }, stepInterval);
+      setGenre(genre) {
+        this.currentGenre = genre;
+        this.syncMusicTrack();
+        this.triggerSFX('switch');
       }
 
-      playStep(step, genre) {
-        const time = this.ctx.currentTime;
-        if (genre === 0) {
-          if (step === 0 || step === 3 || step === 8 || step === 11) this.playSub808(time, 46.25, 0.28);
-          if (step === 4 || step === 12) this.playTamborzaoSnare(time);
-          if (step % 2 === 0 && (step === 2 || step === 6 || step === 10 || step === 14)) this.playMetallicCowbell(time, 440 * (step === 6 ? 1.25 : 1.0));
-        } else if (genre === 1) {
-          if (step === 0 || step === 8) this.playSub808(time, 82.41, 0.15);
-          if (step === 4 || step === 12) this.playTamborzaoSnare(time);
-          if (step % 2 === 0) this.playDistortedGuitar(time, (step % 4 === 0 ? 82.41 : 123.47), 0.14);
-        } else if (genre === 2) {
-          if (step === 0 || step === 8) this.playSub808(time, 65.41, 0.35);
-          if (step % 4 === 2) this.playReggaeSkank(time, 523.25);
-        } else {
-          if (step % 4 === 0) this.playSub808(time, 130.81, 0.15);
-          if (step % 2 === 1) this.playSynthNote(time, [523.25, 659.25, 783.99, 1046.50][step % 4], 0.08, 'sawtooth');
-        }
-      }
-
-      playSub808(t, f, d) {
-        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-        osc.frequency.setValueAtTime(f * 1.5, t);
-        osc.frequency.exponentialRampToValueAtTime(f, t + 0.08);
-        g.gain.setValueAtTime(0.7, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + d);
-        osc.connect(g); g.connect(this.distortionNode);
-        osc.start(t); osc.stop(t + d);
-      }
-      playTamborzaoSnare(t) {
-        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-        osc.type = 'triangle'; osc.frequency.setValueAtTime(180, t);
-        osc.frequency.exponentialRampToValueAtTime(70, t + 0.1);
-        g.gain.setValueAtTime(0.4, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
-        osc.connect(g); g.connect(this.masterGain);
-        osc.start(t); osc.stop(t + 0.12);
-      }
-      playMetallicCowbell(t, f) {
-        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-        osc.type = 'square'; osc.frequency.setValueAtTime(f, t);
-        g.gain.setValueAtTime(0.2, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-        osc.connect(g); g.connect(this.masterGain);
-        osc.start(t); osc.stop(t + 0.15);
-      }
-      playDistortedGuitar(t, f, d) {
-        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(f, t);
-        g.gain.setValueAtTime(0.3, t); g.gain.exponentialRampToValueAtTime(0.01, t + d);
-        osc.connect(g); g.connect(this.distortionNode);
-        osc.start(t); osc.stop(t + d);
-      }
-      playReggaeSkank(t, f) {
-        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-        osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t);
-        g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
-        osc.connect(g); g.connect(this.masterGain);
-        osc.start(t); osc.stop(t + 0.08);
-      }
-      playSynthNote(t, f, d, type = 'sine') {
-        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-        osc.type = type; osc.frequency.setValueAtTime(f, t);
-        g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
-        osc.connect(g); g.connect(this.masterGain);
-        osc.start(t); osc.stop(t + d);
+      toggleMute() {
+        this.muted = !this.muted;
+        this.syncMusicTrack();
+        return this.muted;
       }
 
       triggerSFX(name) {
-        if (this.sfxAudio[name]) {
-          try {
-            const clone = this.sfxAudio[name].cloneNode();
-            clone.volume = 0.7;
-            clone.play();
-            return;
-          } catch (_) {}
+        if (this.muted) return;
+
+        // Randomized pools for solo & defeat
+        if (name === 'solo' || name === 'defeat') {
+          const pool = this.sfxPools[name];
+          if (pool && pool.length > 0) {
+            // Pick a random loaded sound
+            const valid = pool.filter(a => a && !isNaN(a.duration) && a.duration > 0 || a.src);
+            if (valid.length > 0) {
+              const pick = valid[Math.floor(Math.random() * valid.length)];
+              const clone = pick.cloneNode();
+              clone.volume = 0.6;
+              clone.play().catch(() => {});
+              return;
+            }
+          }
         }
-        if (name === 'jump') this.playTone(440, 0.1, 'sine', 0.25);
-        if (name === 'flask') this.playTone(880, 0.2, 'sine', 0.3);
-        if (name === 'defeat') this.playTone(220, 0.25, 'triangle', 0.3);
+
+        // Single SFX
+        if (this.sfxPools[name]) {
+          try {
+            const clone = this.sfxPools[name].cloneNode();
+            clone.volume = 0.65;
+            clone.play().catch(() => {});
+            return;
+          } catch(e) {}
+        }
+
+        // Procedural fallbacks if no sound file exists
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        if (name === 'jump') {
+          this.playTone(280, 0.12, 'sine', 0.2, 540);
+        } else if (name === 'switch') {
+          this.playTone(420, 0.08, 'triangle', 0.25, 680);
+        } else if (name === 'flask') {
+          this.playTone(587.33, 0.15, 'sine', 0.25, 880);
+        } else if (name === 'defeat') {
+          // Fallback random pitch drop
+          const startF = 350 + Math.random() * 100;
+          this.playTone(startF, 0.25, 'sawtooth', 0.2, 80);
+        } else if (name === 'solo') {
+          // Scale-quantized procedural note
+          const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
+          const freq = notes[Math.floor(Math.random() * notes.length)];
+          this.playTone(freq, 0.18, this.currentGenre === 'rock' ? 'sawtooth' : 'triangle', 0.25);
+        }
       }
 
-      playSoloNote(genreIdx) {
-        if (this.sfxAudio.solo) {
-          try {
-            const clone = this.sfxAudio.solo.cloneNode();
-            clone.volume = 0.75;
-            clone.play();
-            return;
-          } catch (_) {}
+      playTone(freq, duration, type = 'sine', vol = 0.2, endFreq = null) {
+        if (this.muted || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        if (endFreq) {
+          osc.frequency.exponentialRampToValueAtTime(endFreq, this.ctx.currentTime + duration);
         }
-        if (!this.ctx) return;
-        const time = this.ctx.currentTime;
-        const scale = GENRES[genreIdx].scale;
-        const noteFreq = scale[Math.floor(Math.random() * scale.length)] * 2;
-        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-        osc.type = genreIdx === 0 ? 'square' : (genreIdx === 1 ? 'sawtooth' : (genreIdx === 2 ? 'triangle' : 'sine'));
-        osc.frequency.setValueAtTime(noteFreq * (genreIdx === 0 ? 1.5 : 1), time);
-        g.gain.setValueAtTime(0.4, time);
-        g.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
-        osc.connect(g);
-        if (genreIdx <= 1) g.connect(this.distortionNode);
-        else g.connect(this.masterGain);
-        osc.start(time); osc.stop(time + 0.28);
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
       }
 
-      playTone(freq, dur, type = 'sine', vol = 0.2) {
-        if (!this.ctx) return;
-        const time = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-        osc.type = type; osc.frequency.setValueAtTime(freq, time);
-        g.gain.setValueAtTime(vol, time);
-        g.gain.exponentialRampToValueAtTime(0.001, time + dur);
-        osc.connect(g); g.connect(this.masterGain);
-        osc.start(time); osc.stop(time + dur);
+      startProceduralSequencer() {
+        if (this.timer) return;
+        this.timer = setInterval(() => {
+          if (this.muted || !this.ctx) return;
+          // Only play procedural synth rhythm if no custom MP3 track is playing
+          const currentTrack = this.trackAudios[this.currentGenre];
+          if (currentTrack && !currentTrack.paused && currentTrack.currentTime > 0) return;
+
+          this.stepCounter = (this.stepCounter + 1) % 16;
+          const step = this.stepCounter;
+
+          if (this.currentGenre === 'phonk') {
+            // Brazilian Phonk Tamborzão Syncopation
+            if (step === 0 || step === 4 || step === 7 || step === 10 || step === 12) {
+              this.playTone(55, 0.15, 'sawtooth', 0.35, 30);
+            }
+            if (step === 2 || step === 8 || step === 14) {
+              this.playTone(820, 0.04, 'triangle', 0.18);
+            }
+          } else if (this.currentGenre === 'rock') {
+            // Driving 8th-note power riff
+            if (step % 2 === 0) {
+              const notes = [73.42, 73.42, 87.31, 98.00];
+              this.playTone(notes[(step / 2) % 4], 0.12, 'sawtooth', 0.25);
+            }
+          } else if (this.currentGenre === 'reggae') {
+            // Offbeat skank chords
+            if (step === 4 || step === 12) {
+              this.playTone(440, 0.08, 'triangle', 0.25);
+              this.playTone(554.37, 0.08, 'triangle', 0.2);
+            }
+          } else if (this.currentGenre === 'viral') {
+            // Hyperpop arpeggios
+            const arp = [523.25, 659.25, 783.99, 1046.50];
+            this.playTone(arp[step % 4], 0.06, 'sine', 0.15);
+          }
+        }, 125);
       }
     }
 
     const sound = new SoundEngine();
 
-    // ====================================================
-    // GAME STATE, ENTITIES & CONFIGS
-    // ====================================================
+    /* ==========================================================================
+       4. GAME ENGINE & VECTOR GRAPHICS PIPELINE
+       ========================================================================== */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Virtual Internal Resolution
+    const V_WIDTH = 1024;
+    const V_HEIGHT = 576;
+    let scale = 1;
+    let cameraX = 0;
+
+    // Genres & Attributes
+    const GENRES = [
+      { id: 'phonk', name: 'BR PHONK', icon: '🇧🇷', color: '#ec4899', light: '#f472b6' },
+      { id: 'rock',  name: 'ROCK RIFF', icon: '🎸', color: '#f59e0b', light: '#fbbf24' },
+      { id: 'reggae',name: 'REGGAE DUB', icon: '🇯🇲', color: '#10b981', light: '#34d399' },
+      { id: 'viral', name: 'VIRAL POP', icon: '✨', color: '#8b5cf6', light: '#a78bfa' }
+    ];
+    let currentGenreIndex = 0;
+
+    // Game State
     let gameState = 'START';
     let currentLevel = 0;
-    let worldTick = 0;
+    let score = 0;
+    let flasksCollected = 0;
 
+    // Input States
+    const keys = {
+      left: false,
+      right: false,
+      jump: false,
+      duck: false,
+      shoot: false
+    };
+
+    // The Alchemix Player Model
     const player = {
       x: 100,
       y: 350,
-      width: 48,
-      height: 74,
-      normalHeight: 74,
-      crouchHeight: 42,
-      isCrouching: false,
+      w: 48,
+      h: 74,
+      normalH: 74,
+      crouchH: 42,
       vx: 0,
       vy: 0,
-      speed: 6.8,
-      jumpForce: -14.4,
+      speed: 5.6,
+      jumpPower: 12.8,
       isGrounded: false,
-      jumpsLeft: 2,
-      health: 100,
-      maxHealth: 100,
+      isCrouching: false,
+      doubleJumps: 1,
+      facingRight: true,
+      hp: 100,
+      maxHp: 100,
       invulnTimer: 0,
-      facing: 1,
-      walkCycle: 0,
-      attackAnimTimer: 0,
       attackCooldown: 0,
-      flasksCollected: 0,
-      totalFlasks: 3
+      walkFrame: 0
     };
 
-    const camera = { x: 0, y: 0 };
-    let platforms = [], jumpPads = [], hazards = [], enemies = [], notes = [], bossProjectiles = [], particles = [], flasks = [], floatTexts = [];
-    let activeBoss = null, scientistCage = null;
+    // Active Entities
+    let platforms = [];
+    let obstacles = [];
+    let flasks = [];
+    let enemies = [];
+    let projectiles = [];
+    let bossProjectiles = [];
+    let particles = [];
+    let activeBoss = null;
 
-    const keys = { left: false, right: false, down: false, up: false, attack: false };
-
-    const LEVEL_CONFIGS = [
+    /* ==========================================================================
+       5. LEVEL DESIGN & THEMED WORLDS
+       ========================================================================== */
+    const LEVEL_SPECS = [
       {
-        id: 0,
-        title: "St. Newton High School",
-        bgTop: "#0f172a",
-        bgBot: "#1e1b4b",
-        groundColor: "#312e81",
-        trimColor: "#f59e0b",
-        length: 3000,
-        enemyTypes: ['BULLY_JOCK', 'COOL_SKATER'],
-        quotes: {
-          BULLY_JOCK: ["Gravity is a myth bro!", "Give me your lab notes!", "Locker time nerd!"],
-          COOL_SKATER: ["Physics is totally bogus!", "Who needs periodic tables?", "Vibes > Facts!"]
-        },
-        hazardType: 'SCHOOL_BELL_AND_SPILL',
-        bossName: "Principal 'Apex Bully' McFlat",
-        bossHp: 420,
-        bossHintP1: "Phase 1: Jump over low locker throws & hit his weak beat!",
-        bossHintP2: "Phase 2 (ENRAGED): Weakness shifted! Duck high chalk barrages!",
-        scientistName: "Dr. Marie Curie-ous"
+        title: 'STAGE 1: HIGH SCHOOL',
+        sub: 'Defeat Hall Bullies & Rescue Chemistry Teacher',
+        bgHue: '#1e112a',
+        gridColor: '#3b1d54',
+        enemyTypes: ['bully', 'skater'],
+        boss: {
+          name: 'PRINCIPAL MCBULLY',
+          title: 'The Anti-Curriculum Titan',
+          maxHp: 650,
+          weakness: 'phonk',
+          immune: 'rock',
+          phase2Weakness: 'viral'
+        }
       },
       {
-        id: 1,
-        title: "Conspiracy Corner Street",
-        bgTop: "#090d16",
-        bgBot: "#1e293b",
-        groundColor: "#0f172a",
-        trimColor: "#ec4899",
-        length: 3300,
-        enemyTypes: ['MEGAPHONE_GUY', 'TINFOIL_PODCASTER'],
-        quotes: {
-          MEGAPHONE_GUY: ["Birds are government drones!", "The moon is a hologram!", "Wake up sheeple!"],
-          TINFOIL_PODCASTER: ["I did 5 minutes of research!", "Big Magnet is lying!", "Subscribe to my bunker!"]
-        },
-        hazardType: 'STEAM_AND_PUDDLE',
-        bossName: "Grandmaster Radar-Dish",
-        bossHp: 560,
-        bossHintP1: "Phase 1: Evade his megaphone shockwaves & test beats!",
-        bossHintP2: "Phase 2 (TIN-FOIL OVERDRIVE): Foil shield reflects immune genre! Duck radar beams!",
-        scientistName: "Prof. Carl Sagan-ite"
+        title: 'STAGE 2: DOWNTOWN STREETS',
+        sub: 'Counter Flat-Earther Megaphones & Free Astronomer',
+        bgHue: '#0f172a',
+        gridColor: '#1e293b',
+        enemyTypes: ['conspiracist', 'podcaster'],
+        boss: {
+          name: 'DISH-HEAD CONSPIRACIST',
+          title: 'The Echo-Chamber Master',
+          maxHp: 850,
+          weakness: 'rock',
+          immune: 'reggae',
+          phase2Weakness: 'phonk'
+        }
       },
       {
-        id: 2,
-        title: "Channel 404 News Studio",
-        bgTop: "#172554",
-        bgBot: "#1e1b4b",
-        groundColor: "#0f172a",
-        trimColor: "#ef4444",
-        length: 3500,
-        enemyTypes: ['FAKE_ANCHOR', 'PAPARAZZI_DRONE'],
-        quotes: {
-          FAKE_ANCHOR: ["BREAKING: Water is too wet!", "Panic ratings up 400%!", "Facts bore our sponsors!"],
-          PAPARAZZI_DRONE: ["Smile for the clickbait!", "Out-of-context photo!", "Viral drama incoming!"]
-        },
-        hazardType: 'STUDIO_LIGHTS_AND_MIC',
-        bossName: "Chroma-Key Mogul 9000",
-        bossHp: 700,
-        bossHintP1: "Phase 1: Dodge teleprompter bricks & watch his screen face react!",
-        bossHintP2: "Phase 2 (PRIME TIME RATINGS): Hovers high! Use bounce pads & duck laser headlines!",
-        scientistName: "Dr. Jane Good-Data"
+        title: 'STAGE 3: SENSATIONAL TV STUDIO',
+        sub: 'Silencing Fake News Anchors & Rescue Virologist',
+        bgHue: '#180f24',
+        gridColor: '#381440',
+        enemyTypes: ['anchor', 'drone'],
+        boss: {
+          name: 'CHROMA-MOGUL 9000',
+          title: 'Broadcast Overlord',
+          maxHp: 1100,
+          weakness: 'reggae',
+          immune: 'viral',
+          phase2Weakness: 'rock'
+        }
       },
       {
-        id: 3,
-        title: "The Algorithm Cyberspace",
-        bgTop: "#020617",
-        bgBot: "#0f2942",
-        groundColor: "#081420",
-        trimColor: "#06b6d4",
-        length: 3700,
-        enemyTypes: ['RINGLIGHT_INFLUENCER', 'TROLL_BOT'],
-        quotes: {
-          RINGLIGHT_INFLUENCER: ["Drink raw glowing battery acid!", "Link in bio for magic beans!", "Science kills my aesthetic!"],
-          TROLL_BOT: ["010010 RATIO + L!", "Beep boop fake citation!", "Deploying ragebait.exe!"]
-        },
-        hazardType: 'FIREWALL_LASER',
-        bossName: "The Shadowban Mainframe",
-        bossHp: 840,
-        bossHintP1: "Phase 1: Avoid binary webs & strike the core with its weak beat!",
-        bossHintP2: "Phase 2 (FIREWALL PROTOCOL): Cycles genre weakness & fires sweeping dual lasers!",
-        scientistName: "Dr. Alan Turing-Test"
+        title: 'STAGE 4: CYBERSPACE MATRIX',
+        sub: 'Dismantle Ragebait Farms & Free Data Scientist',
+        bgHue: '#03171e',
+        gridColor: '#064e3b',
+        enemyTypes: ['influencer', 'trollbot'],
+        boss: {
+          name: 'SHADOWBAN ALGORITHM',
+          title: 'Autonomous Clout Engine',
+          maxHp: 1400,
+          weakness: 'viral',
+          immune: 'phonk',
+          phase2Weakness: 'reggae'
+        }
       },
       {
-        id: 4,
-        title: "Megacorp Disinfo Lab",
-        bgTop: "#051a14",
-        bgBot: "#142e24",
-        groundColor: "#0c1f17",
-        trimColor: "#10b981",
-        length: 4000,
-        enemyTypes: ['SPIN_DOCTOR', 'HAZMAT_ENFORCER'],
-        quotes: {
-          SPIN_DOCTOR: ["Toxic sludge is 100% organic!", "Our paid study says it's safe!", "Profits over peer review!"],
-          HAZMAT_ENFORCER: ["Shredding the climate data!", "Nothing to see in Vat 7!", "Move along citizen!"]
-        },
-        hazardType: 'ACID_VAT_AND_BEAM',
-        bossName: "CEO Baron Von Greenwash",
-        bossHp: 1050,
-        bossHintP1: "Phase 1: Jump toxic barrel rolls & crack his gold mech armor!",
-        bossHintP2: "Phase 2 (HOSTILE TAKEOVER): Rapid-fires briefcases + high sludge! Switch beat & duck!",
-        scientistName: "Chief Laureate Albus"
+        title: 'STAGE 5: ROGUE CORPORATE LAB',
+        sub: 'Confront PR Spin Doctors & Liberate Chief Laureate',
+        bgHue: '#1a0d0d',
+        gridColor: '#450a0a',
+        enemyTypes: ['spin_doctor', 'enforcer'],
+        boss: {
+          name: 'BARON VON GREENWASH',
+          title: 'CEO of Disinformation Inc.',
+          maxHp: 1800,
+          weakness: 'phonk',
+          immune: 'rock',
+          phase2Weakness: 'viral'
+        }
       }
     ];
 
-    // ====================================================
-    // STAGE INITIALIZATION
-    // ====================================================
-    function initStage(lvlIndex) {
-      const cfg = LEVEL_CONFIGS[lvlIndex];
+    function initLevel(lvlIdx) {
+      currentLevel = lvlIdx % LEVEL_SPECS.length;
+      const spec = LEVEL_SPECS[currentLevel];
+
       player.x = 80;
-      player.y = 380;
+      player.y = 300;
       player.vx = 0;
       player.vy = 0;
-      player.isCrouching = false;
-      player.height = player.normalHeight;
-      player.health = player.maxHealth;
-      player.flasksCollected = 0;
-      player.totalFlasks = 3;
+      player.hp = 100;
+      flasksCollected = 0;
+      cameraX = 0;
 
-      document.getElementById('hud-stage-label').innerText = `LVL ${lvlIndex + 1}/5`;
-
-      camera.x = 0;
       platforms = [];
-      jumpPads = [];
-      hazards = [];
+      obstacles = [];
+      flasks = [];
       enemies = [];
-      notes = [];
+      projectiles = [];
       bossProjectiles = [];
       particles = [];
-      flasks = [];
-      floatTexts = [];
 
-      // Main floor
-      platforms.push({ x: -120, y: 480, width: cfg.length + 400, height: 160, type: 'ground' });
+      // Base Ground
+      platforms.push({ x: -100, y: 500, w: 3200, h: 100, type: 'ground' });
 
-      // Multi-tiered varied platforms
-      const layout = [
-        { x: 260, y: 385, w: 170 },
-        { x: 510, y: 300, w: 190 },
-        { x: 780, y: 365, w: 160 },
-        { x: 1030, y: 275, w: 220 },
-        { x: 1340, y: 375, w: 180 },
-        { x: 1600, y: 280, w: 210 },
-        { x: 1900, y: 205, w: 180 },
-        { x: 2160, y: 350, w: 200 },
-        { x: 2450, y: 270, w: 190 },
-        // Boss Arena Tactical Platforms
-        { x: cfg.length - 750, y: 350, w: 140 },
-        { x: cfg.length - 360, y: 350, w: 140 }
+      // Hand-Crafted Platforms
+      const platLayouts = [
+        // Level 1
+        [
+          { x: 260, y: 390, w: 140, h: 20 },
+          { x: 480, y: 310, w: 150, h: 20 },
+          { x: 700, y: 240, w: 160, h: 20 },
+          { x: 960, y: 340, w: 150, h: 20 },
+          { x: 1200, y: 250, w: 180, h: 20 },
+          { x: 1480, y: 360, w: 160, h: 20 },
+          { x: 1750, y: 270, w: 190, h: 20 },
+          { x: 2040, y: 380, w: 200, h: 20 }
+        ],
+        // Level 2
+        [
+          { x: 240, y: 380, w: 130, h: 20 },
+          { x: 440, y: 290, w: 140, h: 20 },
+          { x: 670, y: 360, w: 170, h: 20 },
+          { x: 920, y: 250, w: 140, h: 20 },
+          { x: 1150, y: 340, w: 180, h: 20 },
+          { x: 1400, y: 230, w: 150, h: 20 },
+          { x: 1680, y: 330, w: 170, h: 20 },
+          { x: 1980, y: 250, w: 210, h: 20 }
+        ],
+        // Level 3
+        [
+          { x: 250, y: 360, w: 140, h: 20 },
+          { x: 460, y: 270, w: 150, h: 20 },
+          { x: 700, y: 350, w: 160, h: 20 },
+          { x: 950, y: 260, w: 160, h: 20 },
+          { x: 1220, y: 340, w: 160, h: 20 },
+          { x: 1490, y: 250, w: 180, h: 20 },
+          { x: 1780, y: 340, w: 170, h: 20 }
+        ],
+        // Level 4
+        [
+          { x: 220, y: 380, w: 130, h: 20 },
+          { x: 420, y: 280, w: 150, h: 20 },
+          { x: 650, y: 210, w: 140, h: 20 },
+          { x: 880, y: 320, w: 150, h: 20 },
+          { x: 1120, y: 230, w: 160, h: 20 },
+          { x: 1380, y: 330, w: 170, h: 20 },
+          { x: 1650, y: 240, w: 160, h: 20 },
+          { x: 1940, y: 330, w: 200, h: 20 }
+        ],
+        // Level 5
+        [
+          { x: 240, y: 370, w: 140, h: 20 },
+          { x: 460, y: 280, w: 160, h: 20 },
+          { x: 720, y: 350, w: 150, h: 20 },
+          { x: 960, y: 240, w: 160, h: 20 },
+          { x: 1220, y: 330, w: 170, h: 20 },
+          { x: 1500, y: 250, w: 170, h: 20 },
+          { x: 1790, y: 340, w: 180, h: 20 }
+        ]
       ];
-      layout.forEach((p, idx) => {
-        platforms.push({
-          x: p.x,
-          y: p.y,
-          width: p.w,
-          height: 22,
-          type: 'platform',
-          glitch: lvlIndex === 3 && idx % 2 === 1
-        });
-      });
+      platforms.push(...platLayouts[currentLevel]);
 
-      // Sonic Jump Pads
-      [450, 1280, 1840, cfg.length - 820].forEach(jx => {
-        jumpPads.push({ x: jx, y: 468, width: 40, height: 12, power: -19.2 });
-      });
+      // Environmental Obstacles
+      if (currentLevel === 0) {
+        // High School: Wet floor signs & swinging bells
+        obstacles.push({ x: 550, y: 470, w: 30, h: 30, type: 'wet_floor' });
+        obstacles.push({ x: 1350, y: 470, w: 30, h: 30, type: 'wet_floor' });
+      } else if (currentLevel === 1) {
+        // Street: Steam Vents
+        obstacles.push({ x: 600, y: 485, w: 40, h: 15, type: 'steam_vent', timer: 0 });
+        obstacles.push({ x: 1550, y: 485, w: 40, h: 15, type: 'steam_vent', timer: 1.5 });
+      } else if (currentLevel === 2) {
+        // TV Studio: Hot Spotlights
+        obstacles.push({ x: 820, y: 150, w: 50, h: 350, type: 'spotlight', timer: 0 });
+      } else if (currentLevel === 3) {
+        // Cyberspace: Firewall beam
+        obstacles.push({ x: 1020, y: 380, w: 20, h: 120, type: 'firewall', timer: 0 });
+      } else if (currentLevel === 4) {
+        // Lab: Acid Tank
+        obstacles.push({ x: 800, y: 485, w: 80, h: 20, type: 'acid' });
+        obstacles.push({ x: 1600, y: 485, w: 80, h: 20, type: 'acid' });
+      }
 
-      // Collectible Flasks on high routes
-      flasks.push({ x: 600, y: 250, collected: false });
-      flasks.push({ x: 1140, y: 225, collected: false });
-      flasks.push({ x: 1990, y: 155, collected: false });
+      // 3 Science Flasks
+      flasks = [
+        { x: 520, y: 270, collected: false },
+        { x: 1260, y: 210, collected: false },
+        { x: 1800, y: 230, collected: false }
+      ];
 
-      // Stage-specific environmental obstacles/hazards
-      const hazardSpots = [690, 960, 1500, 2080, 2380];
-      hazardSpots.forEach((hx, i) => {
-        if (lvlIndex === 0) {
-          hazards.push({
-            x: hx,
-            y: i % 2 === 0 ? 464 : 180,
-            width: i % 2 === 0 ? 65 : 36,
-            height: i % 2 === 0 ? 16 : 110,
-            subtype: i % 2 === 0 ? 'WET_FLOOR' : 'SWING_BELL',
-            phase: i * 1.3
-          });
-        } else if (lvlIndex === 1) {
-          hazards.push({
-            x: hx,
-            y: 465,
-            width: 55,
-            height: 15,
-            subtype: i % 2 === 0 ? 'STEAM_VENT' : 'ELEC_PUDDLE',
-            phase: i * 1.7
-          });
-        } else if (lvlIndex === 2) {
-          hazards.push({
-            x: hx,
-            y: i % 2 === 0 ? 390 : 464,
-            width: 50,
-            height: i % 2 === 0 ? 45 : 16,
-            subtype: i % 2 === 0 ? 'BOOM_MIC' : 'HOT_CABLE',
-            phase: i * 1.1
-          });
-        } else if (lvlIndex === 3) {
-          hazards.push({
-            x: hx,
-            y: 360,
-            width: 18,
-            height: 120,
-            subtype: 'FIREWALL_BEAM',
-            phase: i * 2.0
-          });
-        } else {
-          hazards.push({
-            x: hx,
-            y: 462,
-            width: 75,
-            height: 18,
-            subtype: i % 2 === 0 ? 'ACID_VAT' : 'LASER_EMITTER',
-            phase: i * 1.5
-          });
-        }
-      });
+      // Spawn Enemies (2 types per level)
+      const eTypes = spec.enemyTypes;
+      const enemySpawns = [
+        { x: 380,  t: eTypes[0], w: 'phonk',  i: 'rock' },
+        { x: 740,  t: eTypes[1], w: 'rock',   i: 'reggae' },
+        { x: 1040, t: eTypes[0], w: 'reggae', i: 'viral' },
+        { x: 1320, t: eTypes[1], w: 'viral',  i: 'phonk' },
+        { x: 1600, t: eTypes[0], w: 'phonk',  i: 'reggae' },
+        { x: 1860, t: eTypes[1], w: 'rock',   i: 'viral' }
+      ];
 
-      // Spawn 2 Distinct Enemy Types per Level
-      const enemySpawns = [340, 620, 860, 1140, 1420, 1700, 2020, 2260, 2520];
-      enemySpawns.forEach((ex, idx) => {
-        const typeKey = cfg.enemyTypes[idx % 2];
-        const weak = idx % 4;
-        const immune = (weak + 2) % 4;
-        const isFloater = typeKey === 'PAPARAZZI_DRONE';
-        const baseY = isFloater ? 340 : 410;
-        const quotePool = cfg.quotes[typeKey];
+      enemies = enemySpawns.map(s => createEnemy(s.x, 440, s.t, s.w, s.i));
 
-        enemies.push({
-          id: idx,
-          x: ex,
-          y: baseY,
-          baseY: baseY,
-          width: 46,
-          height: 70,
-          vx: (idx % 2 === 0 ? 1 : -1) * (typeKey === 'COOL_SKATER' ? 2.8 : 1.7),
-          minX: ex - 130,
-          maxX: ex + 130,
-          health: 70 + lvlIndex * 10,
-          maxHealth: 70 + lvlIndex * 10,
-          weakGenre: weak,
-          immuneGenre: immune,
-          type: typeKey,
-          speechTimer: 40 + (idx * 35) % 140,
-          activeQuote: quotePool[idx % quotePool.length],
-          danceTimer: 0,
-          shockTimer: 0,
-          attackTimer: 75 + Math.random() * 75,
-          animTick: Math.random() * 100
-        });
-      });
-
-      // Initialize Multi-Phase Level Boss
-      const bossX = cfg.length - 480;
+      // Spawn Boss in End Arena (x = 2400)
       activeBoss = {
-        levelId: lvlIndex,
-        name: cfg.bossName,
-        x: bossX,
-        y: 330,
-        baseY: 330,
-        width: 116,
-        height: 150,
-        health: cfg.bossHp,
-        maxHealth: cfg.bossHp,
+        name: spec.boss.name,
+        title: spec.boss.title,
+        x: 2450,
+        y: 350,
+        w: 90,
+        h: 150,
+        hp: spec.boss.maxHp,
+        maxHp: spec.boss.maxHp,
+        weakness: spec.boss.weakness,
+        immune: spec.boss.immune,
         phase: 1,
-        weakGenre: (lvlIndex + 1) % 4,
-        immuneGenre: (lvlIndex + 3) % 4,
-        attackTimer: 85,
-        patternIndex: 0,
-        shieldTimer: 0,
-        vx: 2.1,
-        minX: bossX - 240,
-        maxX: bossX + 180,
+        phase2Weakness: spec.boss.phase2Weakness,
+        attackTimer: 0,
         danceTimer: 0,
         shockTimer: 0,
+        facingLeft: true,
         defeated: false
       };
 
-      scientistCage = {
-        x: cfg.length - 160,
-        y: 375,
-        width: 68,
-        height: 105,
-        name: cfg.scientistName,
+      // Captured Scientist Pod
+      activeBoss.scientist = {
+        x: 2680,
+        y: 410,
+        w: 50,
+        h: 90,
         rescued: false
       };
 
-      updateHealthHUD();
+      // HUD Sync
+      document.getElementById('hud-stage-name').innerText = spec.title;
+      document.getElementById('hud-stage-sub').innerText = spec.sub;
       updateFlaskHUD();
-      document.getElementById('boss-hud-container').classList.add('hidden');
+      updateHealthHUD();
+      hideBossHUD();
     }
 
+    function createEnemy(x, y, type, weakness, immune) {
+      return {
+        x: x,
+        y: y,
+        w: 42,
+        h: 62,
+        vx: 1.2,
+        patrolLeft: x - 90,
+        patrolRight: x + 90,
+        type: type,
+        weakness: weakness,
+        immune: immune,
+        hp: 60,
+        maxHp: 60,
+        danceTimer: 0,
+        shockTimer: 0,
+        facingRight: true,
+        shootCooldown: Math.random() * 2 + 1.5,
+        speechTimer: Math.random() * 3 + 2,
+        speechText: getEnemySpeech(type)
+      };
+    }
+
+    function getEnemySpeech(type) {
+      const phrases = {
+        bully: ["Science is for geeks!", "Give me your lunch money!"],
+        skater: ["Chill out dude!", "TikTok said earth is flat!"],
+        conspiracist: ["Birds are drones!", "Wake up sheeple!"],
+        podcaster: ["5G vibrates my crystals!", "Follow my channel!"],
+        anchor: ["PANIC RATINGS!", "Experts baffled!"],
+        drone: ["BZZT! Content captured!", "Trending news!"],
+        influencer: ["Like & subscribe!", "Manifesting detox teas!"],
+        trollbot: ["Ragebait engaged!", "Ratio + L!"],
+        spin_doctor: ["Emissions are natural!", "The PR memo is clear!"],
+        enforcer: ["Access denied!", "Corporate policy stands!"]
+      };
+      const list = phrases[type] || ["Misinformation rules!"];
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    /* ==========================================================================
+       6. COMBAT, PROJECTILES & WEAKNESS MATRIX
+       ========================================================================== */
     function cycleGenre() {
       currentGenreIndex = (currentGenreIndex + 1) % GENRES.length;
       const g = GENRES[currentGenreIndex];
-      document.getElementById('genre-label').innerText = g.name;
+      sound.setGenre(g.id);
+
       document.getElementById('genre-icon').innerText = g.icon;
-      document.getElementById('genre-capsule-btn').style.borderColor = g.color;
-      sound.playTone(320, 0.08, 'triangle', 0.2);
-      sound.handleTrackSwitch();
-      createFloatText(`STYLE: ${g.name}`, player.x, player.y - 35, g.color);
+      document.getElementById('genre-name').innerText = g.name;
+      document.getElementById('genre-name').style.color = g.light;
     }
 
     function fireMusicalAttack() {
       if (player.attackCooldown > 0) return;
       player.attackCooldown = 14;
-      player.attackAnimTimer = 12;
 
-      const g = GENRES[currentGenreIndex];
-      sound.playSoloNote(currentGenreIndex);
+      const genre = GENRES[currentGenreIndex];
+      sound.triggerSFX('solo');
 
-      const spawnX = player.facing === 1 ? player.x + player.width + 6 : player.x - 14;
-      const spawnY = player.isCrouching ? player.y + 22 : player.y + 26;
-      const glyphs = ['♩', '♪', '♫', '♬', '𝄞'];
+      // Notes: ♩ ♪ ♫ ♬ 𝄞
+      const noteSymbols = ['♩', '♪', '♫', '♬', '𝄞'];
+      const symbol = noteSymbols[Math.floor(Math.random() * noteSymbols.length)];
 
-      notes.push({
+      const spawnX = player.facingRight ? player.x + player.w : player.x - 10;
+      const spawnY = player.isCrouching ? player.y + 20 : player.y + 28;
+
+      projectiles.push({
         x: spawnX,
         y: spawnY,
-        vx: player.facing * 14.5,
-        vy: (Math.random() - 0.5) * 1.2,
-        genre: currentGenreIndex,
-        glyph: glyphs[Math.floor(Math.random() * glyphs.length)],
-        color: g.color,
-        distTraveled: 0,
-        maxRange: 430
+        vx: player.facingRight ? 9.5 : -9.5,
+        startX: spawnX,
+        maxRange: 420,
+        symbol: symbol,
+        genre: genre.id,
+        color: genre.color,
+        light: genre.light,
+        size: 22
       });
+
+      // Recoil kick
+      player.vx += player.facingRight ? -0.8 : 0.8;
     }
 
-    function createFloatText(text, x, y, color = '#ffffff') {
-      floatTexts.push({ text, x, y, color, life: 52, vy: -1.3 });
-    }
+    /* ==========================================================================
+       7. MAIN GAME LOOP & UPDATES
+       ========================================================================== */
+    let lastTime = performance.now();
 
-    function createSparkCluster(x, y, color, count = 10) {
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const spd = 2 + Math.random() * 4.5;
-        particles.push({
-          x, y,
-          vx: Math.cos(angle) * spd,
-          vy: Math.sin(angle) * spd,
-          color,
-          radius: 2 + Math.random() * 3,
-          life: 22 + Math.random() * 14
-        });
+    function gameLoop(time) {
+      const dt = Math.min((time - lastTime) / 1000, 0.04);
+      lastTime = time;
+
+      if (gameState === 'PLAYING') {
+        update(dt);
       }
-    }
-
-    // ====================================================
-    // MAIN UPDATE LOOP
-    // ====================================================
-    let lastTimestamp = 0;
-    function gameLoop(timestamp) {
-      if (!lastTimestamp) lastTimestamp = timestamp;
-      const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.05);
-      lastTimestamp = timestamp;
-
-      update(dt);
       render();
+
       requestAnimationFrame(gameLoop);
     }
 
     function update(dt) {
-      if (gameState !== 'PLAYING') return;
-      worldTick++;
+      // 1. Player Physics & Input
+      player.isCrouching = keys.duck && player.isGrounded;
+      player.h = player.isCrouching ? player.crouchH : player.normalH;
 
-      if (player.invulnTimer > 0) player.invulnTimer--;
-      if (player.attackAnimTimer > 0) player.attackAnimTimer--;
-      if (player.attackCooldown > 0) player.attackCooldown--;
-
-      // Crouch handling
-      if (keys.down && player.isGrounded) {
-        if (!player.isCrouching) {
-          player.isCrouching = true;
-          player.y += (player.normalHeight - player.crouchHeight);
-          player.height = player.crouchHeight;
-        }
-      } else if (player.isCrouching) {
-        player.isCrouching = false;
-        player.y -= (player.normalHeight - player.crouchHeight);
-        player.height = player.normalHeight;
-      }
-
-      const currentSpeed = player.isCrouching ? player.speed * 0.45 : player.speed;
-      if (keys.left) {
-        player.vx = -currentSpeed;
-        player.facing = -1;
-        player.walkCycle += player.isCrouching ? 0.14 : 0.26;
-      } else if (keys.right) {
-        player.vx = currentSpeed;
-        player.facing = 1;
-        player.walkCycle += player.isCrouching ? 0.14 : 0.26;
+      if (keys.left && !player.isCrouching) {
+        player.vx = -player.speed;
+        player.facingRight = false;
+        player.walkFrame += dt * 10;
+      } else if (keys.right && !player.isCrouching) {
+        player.vx = player.speed;
+        player.facingRight = true;
+        player.walkFrame += dt * 10;
       } else {
-        player.vx *= 0.76;
-        player.walkCycle = 0;
+        player.vx *= 0.78;
+        if (Math.abs(player.vx) < 0.1) player.vx = 0;
       }
 
-      if (keys.attack) fireMusicalAttack();
+      // Jump
+      if (keys.jump) {
+        if (player.isGrounded) {
+          player.vy = -player.jumpPower;
+          player.isGrounded = false;
+          sound.triggerSFX('jump');
+          spawnPuff(player.x + player.w / 2, player.y + player.h, '#a855f7');
+        } else if (player.doubleJumps > 0) {
+          player.vy = -player.jumpPower * 0.9;
+          player.doubleJumps--;
+          sound.triggerSFX('jump');
+          spawnPuff(player.x + player.w / 2, player.y + player.h, '#38bdf8');
+        }
+        keys.jump = false;
+      }
 
-      player.vy += 0.68;
-      player.x = Math.max(0, player.x + player.vx);
+      // Gravity
+      player.vy += 28 * dt;
+      player.x += player.vx;
       player.y += player.vy;
 
-      // Platform Collisions
+      // Platform Collision
       player.isGrounded = false;
-      platforms.forEach(p => {
-        if (p.glitch && Math.floor(worldTick / 75) % 3 === 0) return; // Glitching cyberspace platform
+      for (const p of platforms) {
         if (
-          player.x + player.width > p.x &&
-          player.x < p.x + p.width &&
-          player.y + player.height >= p.y &&
-          player.y + player.height <= p.y + 18 &&
+          player.x + player.w > p.x &&
+          player.x < p.x + p.w &&
+          player.y + player.h >= p.y &&
+          player.y + player.h <= p.y + p.h + player.vy + 2 &&
           player.vy >= 0
         ) {
-          player.isGrounded = true;
+          player.y = p.y - player.h;
           player.vy = 0;
-          player.y = p.y - player.height;
-          player.jumpsLeft = 2;
+          player.isGrounded = true;
+          player.doubleJumps = 1;
         }
-      });
+      }
 
-      // Jump Pads
-      jumpPads.forEach(jp => {
-        if (
-          player.x + player.width > jp.x &&
-          player.x < jp.x + jp.width &&
-          player.y + player.height >= jp.y &&
-          player.y + player.height <= jp.y + 18 &&
-          player.vy >= 0
-        ) {
-          player.vy = jp.power;
-          player.jumpsLeft = 1;
-          sound.triggerSFX('jump');
-          createSparkCluster(jp.x + jp.width / 2, jp.y, '#38bdf8', 14);
-        }
-      });
+      // Attack
+      if (keys.shoot) {
+        fireMusicalAttack();
+        keys.shoot = false;
+      }
+      if (player.attackCooldown > 0) player.attackCooldown--;
+      if (player.invulnTimer > 0) player.invulnTimer -= dt;
 
-      // Stage Environmental Hazards
-      hazards.forEach(h => {
-        let active = true;
-        if (h.subtype === 'STEAM_VENT' || h.subtype === 'FIREWALL_BEAM') {
-          active = Math.sin(worldTick * 0.05 + h.phase) > 0.15;
-        }
-        if (!active) return;
-
-        let hx = h.x, hy = h.y, hw = h.width, hh = h.height;
-        if (h.subtype === 'SWING_BELL' || h.subtype === 'BOOM_MIC') {
-          hx += Math.sin(worldTick * 0.05 + h.phase) * 35;
-        }
-
-        if (
-          player.invulnTimer <= 0 &&
-          player.x + player.width - 8 > hx &&
-          player.x + 8 < hx + hw &&
-          player.y + player.height - 6 > hy &&
-          player.y + 6 < hy + hh
-        ) {
-          if (h.subtype === 'WET_FLOOR') {
-            player.vx = player.facing * 12;
-            player.vy = -6;
-            player.invulnTimer = 25;
-            createFloatText("SLIPPED!", player.x, player.y - 15, "#fde047");
-          } else {
-            player.health -= 10;
-            player.vy = -8;
-            player.invulnTimer = 40;
-            updateHealthHUD();
-            createFloatText("HAZARD!", player.x, player.y - 20, "#f43f5e");
-            createSparkCluster(player.x + 20, player.y + 30, "#f43f5e", 10);
-            if (player.health <= 0) gameOver();
-          }
-        }
-      });
-
-      // Camera Follow
+      // Camera Tracking
       const targetCamX = player.x - V_WIDTH * 0.35;
-      camera.x += (targetCamX - camera.x) * 0.1;
-      camera.x = Math.max(0, Math.min(camera.x, LEVEL_CONFIGS[currentLevel].length - V_WIDTH));
+      cameraX += (targetCamX - cameraX) * 0.1;
+      if (cameraX < 0) cameraX = 0;
+      if (cameraX > 2800 - V_WIDTH) cameraX = 2800 - V_WIDTH;
 
-      // Flask Pickups
-      flasks.forEach(f => {
-        if (!f.collected) {
-          const dx = (player.x + player.width / 2) - f.x;
-          const dy = (player.y + player.height / 2) - f.y;
-          if (Math.hypot(dx, dy) < 34) {
-            f.collected = true;
-            player.flasksCollected++;
-            player.health = Math.min(player.maxHealth, player.health + 25);
-            updateHealthHUD();
-            updateFlaskHUD();
-            sound.triggerSFX('flask');
-            createFloatText("+25 HP FORMULA!", f.x, f.y, "#34d399");
-            createSparkCluster(f.x, f.y, "#34d399", 16);
+      // 2. Environmental Hazards
+      for (const obs of obstacles) {
+        if (obs.type === 'wet_floor') {
+          if (checkCollision(player, obs)) {
+            player.vx *= 1.4; // Slippery!
           }
+        } else if (obs.type === 'steam_vent') {
+          obs.timer = (obs.timer + dt) % 3;
+          if (obs.timer < 1.2 && checkCollision(player, { x: obs.x, y: obs.y - 40, w: obs.w, h: 40 })) {
+            damagePlayer(15);
+          }
+        } else if (obs.type === 'firewall' || obs.type === 'acid') {
+          if (checkCollision(player, obs)) {
+            damagePlayer(25);
+          }
+        }
+      }
+
+      // 3. Flask Pickups
+      flasks.forEach(f => {
+        if (!f.collected && checkCollision(player, { x: f.x - 14, y: f.y - 14, w: 28, h: 28 })) {
+          f.collected = true;
+          flasksCollected++;
+          sound.triggerSFX('flask');
+          updateFlaskHUD();
+          spawnSparks(f.x, f.y, '#34d399', 15);
         }
       });
 
-      // Player Musical Note Projectiles
-      for (let i = notes.length - 1; i >= 0; i--) {
-        const n = notes[i];
-        n.x += n.vx;
-        n.y += n.vy;
-        n.distTraveled += Math.abs(n.vx);
+      // 4. Player Musical Projectiles
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const pr = projectiles[i];
+        pr.x += pr.vx;
 
-        if (n.distTraveled >= n.maxRange) {
-          createSparkCluster(n.x, n.y, n.color, 4);
-          notes.splice(i, 1);
+        // Max range check
+        if (Math.abs(pr.x - pr.startX) > pr.maxRange) {
+          spawnSparks(pr.x, pr.y, pr.light, 5);
+          projectiles.splice(i, 1);
           continue;
         }
 
-        let noteHit = false;
-        // Check Enemy Hits
-        for (let j = enemies.length - 1; j >= 0; j--) {
-          const e = enemies[j];
-          if (n.x > e.x && n.x < e.x + e.width && n.y > e.y && n.y < e.y + e.height) {
-            noteHit = true;
-            if (n.genre === e.immuneGenre) {
-              e.danceTimer = 45;
-              e.shockTimer = 0;
-              createFloatText("VIBING ♪ (IMMUNE)", e.x - 10, e.y - 18, "#c084fc");
-              createSparkCluster(n.x, n.y, "#c084fc", 8);
-            } else if (n.genre === e.weakGenre) {
-              e.shockTimer = 48;
-              e.danceTimer = 0;
-              e.health -= 48;
-              createFloatText("MIND BLOWN! (CRIT)", e.x - 15, e.y - 22, "#fbbf24");
-              createSparkCluster(n.x, n.y, "#f59e0b", 18);
-            } else {
-              e.health -= 22;
-              createFloatText("HIT!", e.x, e.y - 15, "#ffffff");
-              createSparkCluster(n.x, n.y, n.color, 8);
-            }
-
-            if (e.health <= 0) {
-              sound.triggerSFX('defeat');
-              createSparkCluster(e.x + e.width / 2, e.y + e.height / 2, '#34d399', 26);
-              createFloatText(" EDUCATED! ", e.x - 10, e.y - 25, "#34d399");
-              enemies.splice(j, 1);
-            }
+        // Hit Enemies
+        let hit = false;
+        for (const e of enemies) {
+          if (e.hp > 0 && checkCollision(pr, e)) {
+            hit = true;
+            handleMusicalImpact(e, pr);
             break;
           }
         }
 
-        // Check Boss Hit & Nuanced Strategy
-        if (!noteHit && activeBoss && !activeBoss.defeated) {
-          const b = activeBoss;
-          if (n.x > b.x && n.x < b.x + b.width && n.y > b.y && n.y < b.y + b.height) {
-            noteHit = true;
+        // Hit Boss
+        if (!hit && activeBoss && !activeBoss.defeated && checkCollision(pr, activeBoss)) {
+          hit = true;
+          handleBossImpact(activeBoss, pr);
+        }
 
-            // If boss has active acoustic shield, only weakGenre can shatter it!
-            if (b.shieldTimer > 0 && n.genre !== b.weakGenre) {
-              createFloatText("SHIELD BLOCKED! SWITCH BEAT!", b.x - 20, b.y - 20, "#38bdf8");
-              createSparkCluster(n.x, n.y, "#38bdf8", 10);
-            } else if (n.genre === b.immuneGenre) {
-              b.danceTimer = 42;
-              b.shockTimer = 0;
-              createFloatText("BOSS DANCES ♪ (HEALS!)", b.x, b.y - 20, "#c084fc");
-              b.health = Math.min(b.maxHealth, b.health + 10);
-              // Phase 2 retaliation counter-shot when fed immune music
-              if (b.phase === 2) {
-                bossProjectiles.push({
-                  x: b.x + b.width / 2,
-                  y: b.y + 45,
-                  vx: player.x < b.x ? -9 : 9,
-                  vy: 0,
-                  gravity: 0,
-                  kind: 'COUNTER_WAVE',
-                  dmg: 16,
-                  life: 85
-                });
-              }
-            } else if (n.genre === b.weakGenre) {
-              if (b.shieldTimer > 0) {
-                b.shieldTimer = 0;
-                createFloatText("SHIELD SHATTERED!", b.x, b.y - 35, "#22d3ee");
-              }
-              b.shockTimer = 46;
-              b.danceTimer = 0;
-              b.health -= 42;
-              createFloatText("CRITICAL FREQUENCY!", b.x, b.y - 24, "#fbbf24");
-              createSparkCluster(n.x, n.y, "#f59e0b", 22);
-            } else {
-              b.health -= 15;
-              createFloatText("HIT", b.x + 20, b.y - 15, "#ffffff");
-              createSparkCluster(n.x, n.y, n.color, 10);
-            }
+        if (hit) {
+          spawnSparks(pr.x, pr.y, pr.light, 8);
+          projectiles.splice(i, 1);
+        }
+      }
 
-            // Trigger Boss Phase 2 Transition at < 50% HP
-            if (b.phase === 1 && b.health <= b.maxHealth * 0.5 && b.health > 0) {
-              b.phase = 2;
-              b.weakGenre = (b.weakGenre + 1) % 4;
-              b.immuneGenre = (b.weakGenre + 2) % 4;
-              b.shieldTimer = 180;
-              b.vx *= 1.45;
-              createSparkCluster(b.x + b.width / 2, b.y + b.height / 2, '#ef4444', 40);
-              createFloatText("PHASE 2: BEAT SHIFTED!", b.x - 20, b.y - 45, "#f43f5e");
-            }
+      // 5. Enemies Patrol, Speech & Combat
+      enemies.forEach(e => {
+        if (e.hp <= 0) return;
 
-            updateBossHUD();
+        // Timers for animations
+        if (e.danceTimer > 0) e.danceTimer -= dt;
+        if (e.shockTimer > 0) e.shockTimer -= dt;
 
-            if (b.health <= 0) {
-              b.defeated = true;
-              sound.triggerSFX('defeat');
-              createSparkCluster(b.x + b.width / 2, b.y + b.height / 2, '#ec4899', 55);
-              createFloatText("BOSS ENLIGHTENED!", b.x, b.y - 30, "#34d399");
-              document.getElementById('boss-hud-container').classList.add('hidden');
-            }
+        // Patrol
+        if (e.danceTimer <= 0) {
+          e.x += e.vx;
+          if (e.x < e.patrolLeft) {
+            e.x = e.patrolLeft;
+            e.vx = Math.abs(e.vx);
+            e.facingRight = true;
+          } else if (e.x > e.patrolRight) {
+            e.x = e.patrolRight;
+            e.vx = -Math.abs(e.vx);
+            e.facingRight = false;
           }
         }
 
-        if (noteHit) notes.splice(i, 1);
-      }
-
-      // Enemy Patrols & Attacks
-      enemies.forEach(e => {
-        e.animTick++;
-        if (e.type === 'PAPARAZZI_DRONE') {
-          e.y = e.baseY + Math.sin(e.animTick * 0.08) * 22;
-        }
-        if (e.danceTimer > 0) { e.danceTimer--; return; }
-        if (e.shockTimer > 0) { e.shockTimer--; return; }
-
-        e.x += e.vx;
-        if (e.x < e.minX || e.x > e.maxX) e.vx *= -1;
-
-        e.speechTimer--;
+        // Speech Bubbles
+        e.speechTimer -= dt;
         if (e.speechTimer <= 0) {
-          e.speechTimer = 170 + Math.random() * 110;
-          const pool = LEVEL_CONFIGS[currentLevel].quotes[e.type];
-          e.activeQuote = pool[Math.floor(Math.random() * pool.length)];
+          e.speechText = getEnemySpeech(e.type);
+          e.speechTimer = Math.random() * 4 + 3;
         }
 
-        e.attackTimer--;
-        if (e.attackTimer <= 0 && Math.abs(player.x - e.x) < 420) {
-          e.attackTimer = 115 + Math.random() * 75;
-          const dir = player.x < e.x ? -1 : 1;
-          const isHighShot = e.type === 'COOL_SKATER' || e.type === 'PAPARAZZI_DRONE' || e.type === 'RINGLIGHT_INFLUENCER';
+        // Enemy Shooting Misinformation
+        e.shootCooldown -= dt;
+        const distToPlayer = Math.abs((e.x + e.w / 2) - (player.x + player.w / 2));
+        if (e.shootCooldown <= 0 && distToPlayer < 400) {
+          e.shootCooldown = Math.random() * 2 + 2;
+          const toRight = player.x > e.x;
           bossProjectiles.push({
-            x: e.x + e.width / 2,
-            y: isHighShot ? e.y + 12 : e.y + 34,
-            vx: dir * 5.8,
-            vy: isHighShot ? 0 : -2.2,
-            gravity: isHighShot ? 0 : 0.14,
-            kind: e.type,
-            dmg: 12,
-            life: 95
+            x: toRight ? e.x + e.w : e.x,
+            y: e.y + 20,
+            vx: toRight ? 4 : -4,
+            text: 'FAKE!',
+            color: '#ef4444',
+            w: 36,
+            h: 18
           });
+        }
+
+        // Player Touch Damage
+        if (checkCollision(player, e) && e.hp > 0) {
+          damagePlayer(12);
         }
       });
 
-      // Boss AI & Multi-Phase Attack Patterns
+      // 6. Boss AI & Phase Transitions
       if (activeBoss && !activeBoss.defeated) {
-        const b = activeBoss;
-        if (b.shieldTimer > 0) b.shieldTimer--;
-
-        if (Math.abs(player.x - b.x) < 620) {
-          document.getElementById('boss-hud-container').classList.remove('hidden');
+        const bossDist = Math.abs(activeBoss.x - player.x);
+        if (bossDist < 600) {
+          showBossHUD();
           updateBossHUD();
-        }
 
-        // Level 2 & 3 Bosses hover in Phase 2
-        if (b.phase === 2 && (b.levelId === 2 || b.levelId === 3)) {
-          b.y = b.baseY - 45 + Math.sin(worldTick * 0.06) * 28;
-        } else {
-          b.y = b.baseY;
-        }
+          // Phase transition at 50% HP
+          if (activeBoss.phase === 1 && activeBoss.hp <= activeBoss.maxHp * 0.5) {
+            activeBoss.phase = 2;
+            activeBoss.weakness = activeBoss.phase2Weakness;
+            document.getElementById('boss-phase-tag').innerText = 'PHASE 2: ENRAGED';
+            document.getElementById('boss-hint').innerText = 'Armor Shifted! Find its new musical weakness!';
+            spawnSparks(activeBoss.x + activeBoss.w / 2, activeBoss.y + activeBoss.h / 2, '#ef4444', 30);
+          }
 
-        if (b.danceTimer > 0) b.danceTimer--;
-        else if (b.shockTimer > 0) b.shockTimer--;
-        else {
-          b.x += b.vx;
-          if (b.x < b.minX || b.x > b.maxX) b.vx *= -1;
+          if (activeBoss.danceTimer > 0) activeBoss.danceTimer -= dt;
+          if (activeBoss.shockTimer > 0) activeBoss.shockTimer -= dt;
 
-          b.attackTimer--;
-          if (b.attackTimer <= 0 && Math.abs(player.x - b.x) < 640) {
-            b.attackTimer = b.phase === 2 ? 62 : 88;
-            b.patternIndex = (b.patternIndex + 1) % 3;
-            const dir = player.x < b.x ? -1 : 1;
-
-            if (b.patternIndex === 0) {
-              // Pattern A: Low Ground Skimmer (Must Jump Over)
-              bossProjectiles.push({
-                x: b.x + b.width / 2,
-                y: 448,
-                vx: dir * (b.phase === 2 ? 8.5 : 6.8),
-                vy: 0,
-                gravity: 0,
-                kind: 'BOSS_LOW',
-                dmg: 16,
-                life: 110
-              });
-            } else if (b.patternIndex === 1) {
-              // Pattern B: High Head-Level Laser/Barrage (Must Duck Under!)
-              bossProjectiles.push({
-                x: b.x + b.width / 2,
-                y: 398,
-                vx: dir * (b.phase === 2 ? 9.5 : 7.5),
-                vy: 0,
-                gravity: 0,
-                kind: 'BOSS_HIGH_DUCK',
-                dmg: 18,
-                life: 110
-              });
-            } else {
-              // Pattern C: Lobbed Mortar Spread + Temporary Shield in Phase 2
-              if (b.phase === 2 && b.shieldTimer <= 0) b.shieldTimer = 140;
-              [-1, 0, 1].forEach(spread => {
-                bossProjectiles.push({
-                  x: b.x + b.width / 2,
-                  y: b.y + 30,
-                  vx: dir * (5.5 + spread * 1.8),
-                  vy: -6.5 - Math.abs(spread),
-                  gravity: 0.24,
-                  kind: 'BOSS_LOB',
-                  dmg: 15,
-                  life: 115
-                });
-              });
-            }
+          // Multi-Phase Attack Sequence
+          activeBoss.attackTimer += dt;
+          if (activeBoss.attackTimer > (activeBoss.phase === 1 ? 2.5 : 1.6)) {
+            activeBoss.attackTimer = 0;
+            executeBossAttack(activeBoss);
           }
         }
       }
 
-      // Update Enemy & Boss Projectiles
+      // 7. Boss & Hazard Projectiles
       for (let i = bossProjectiles.length - 1; i >= 0; i--) {
         const bp = bossProjectiles[i];
         bp.x += bp.vx;
-        bp.y += bp.vy;
-        if (bp.gravity) bp.vy += bp.gravity;
-        bp.life--;
 
-        const inX = bp.x > player.x - 10 && bp.x < player.x + player.width + 10;
-        const inY = bp.y > player.y - 8 && bp.y < player.y + player.height + 6;
-
-        if (player.invulnTimer <= 0 && inX && inY) {
-          player.health -= bp.dmg;
-          player.invulnTimer = 38;
-          updateHealthHUD();
-          createFloatText("MISINFO HIT!", player.x, player.y - 20, "#ef4444");
-          createSparkCluster(bp.x, bp.y, "#ef4444", 12);
+        if (checkCollision(player, bp)) {
+          damagePlayer(18);
           bossProjectiles.splice(i, 1);
-          if (player.health <= 0) gameOver();
           continue;
         }
 
-        if (bp.life <= 0 || bp.y > 540) bossProjectiles.splice(i, 1);
-      }
-
-      // Rescue Scientist Check
-      if (scientistCage && !scientistCage.rescued && activeBoss && activeBoss.defeated) {
-        if (Math.abs(player.x - scientistCage.x) < 65) {
-          scientistCage.rescued = true;
-          levelVictory();
+        if (bp.x < cameraX - 100 || bp.x > cameraX + V_WIDTH + 100) {
+          bossProjectiles.splice(i, 1);
         }
       }
 
-      // Particles & Floating Combat Text
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx; p.y += p.vy; p.life--;
-        if (p.life <= 0) particles.splice(i, 1);
+      // 8. Scientist Rescue Check
+      if (activeBoss && activeBoss.defeated && !activeBoss.scientist.rescued) {
+        if (checkCollision(player, activeBoss.scientist)) {
+          activeBoss.scientist.rescued = true;
+          spawnSparks(activeBoss.scientist.x + 25, activeBoss.scientist.y + 45, '#fbbf24', 35);
+          setTimeout(() => {
+            if (currentLevel < LEVEL_SPECS.length - 1) {
+              alert(`🎉 SCIENTIST RESCUED! Commencing ${LEVEL_SPECS[currentLevel + 1].title}!`);
+              initLevel(currentLevel + 1);
+            } else {
+              alert('🏆 VICTORY! All scientists rescued from misinformation syndicates! You are the true Science Saviour!');
+              initLevel(0);
+            }
+          }, 300);
+        }
       }
 
-      for (let i = floatTexts.length - 1; i >= 0; i--) {
-        const ft = floatTexts[i];
-        ft.y += ft.vy; ft.life--;
-        if (ft.life <= 0) floatTexts.splice(i, 1);
+      // 9. Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const pt = particles[i];
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.life -= dt;
+        if (pt.life <= 0) particles.splice(i, 1);
       }
     }
 
-    // ====================================================
-    // RICH PARALLAX & SPRITE RENDERING ENGINE
-    // ====================================================
+    /* ==========================================================================
+       8. DAMAGE & COMBAT RESOLUTION
+       ========================================================================== */
+    function handleMusicalImpact(enemy, proj) {
+      if (proj.genre === enemy.immune) {
+        // IMMUNITY: Enemy grooves and bobs head
+        enemy.danceTimer = 1.2;
+        spawnText(enemy.x + enemy.w / 2, enemy.y - 10, 'GROOVING! ⊘', '#34d399');
+      } else if (proj.genre === enemy.weakness) {
+        // WEAKNESS: Shocks enemy, deals 2.5x critical damage
+        enemy.shockTimer = 1.0;
+        enemy.hp -= 45;
+        spawnText(enemy.x + enemy.w / 2, enemy.y - 10, 'CRITICAL! 💥', '#fbbf24');
+      } else {
+        // Standard hit
+        enemy.hp -= 18;
+      }
+
+      if (enemy.hp <= 0) {
+        sound.triggerSFX('defeat');
+        spawnSparks(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, '#a855f7', 20);
+      }
+    }
+
+    function handleBossImpact(boss, proj) {
+      if (proj.genre === boss.immune) {
+        boss.danceTimer = 1.2;
+        spawnText(boss.x + boss.w / 2, boss.y - 20, 'IMMUNE! ⊘', '#34d399');
+      } else if (proj.genre === boss.weakness) {
+        boss.shockTimer = 1.0;
+        boss.hp -= 65;
+        spawnText(boss.x + boss.w / 2, boss.y - 20, 'WEAKNESS SHATTER! ⚡', '#f59e0b');
+      } else {
+        boss.hp -= 22;
+      }
+
+      if (boss.hp <= 0 && !boss.defeated) {
+        boss.defeated = true;
+        sound.triggerSFX('defeat');
+        hideBossHUD();
+        spawnSparks(boss.x + boss.w / 2, boss.y + boss.h / 2, '#ec4899', 40);
+      }
+      updateBossHUD();
+    }
+
+    function executeBossAttack(boss) {
+      const type = Math.floor(Math.random() * 2);
+      if (type === 0) {
+        // High Laser / Soundwave -> Duck to avoid!
+        bossProjectiles.push({
+          x: boss.x - 20,
+          y: boss.y + 35,
+          vx: -5.5,
+          text: '⚡HIGH LASER⚡',
+          color: '#fbbf24',
+          w: 60,
+          h: 20
+        });
+      } else {
+        // Low Skimming Shockwave -> Jump to avoid!
+        bossProjectiles.push({
+          x: boss.x - 20,
+          y: boss.y + boss.h - 25,
+          vx: -4.5,
+          text: '🌊SHOCKWAVE',
+          color: '#ec4899',
+          w: 50,
+          h: 24
+        });
+      }
+    }
+
+    function damagePlayer(amount) {
+      if (player.invulnTimer > 0) return;
+      player.hp -= amount;
+      player.invulnTimer = 0.8;
+      player.vy = -4;
+      updateHealthHUD();
+      spawnSparks(player.x + player.w / 2, player.y + player.h / 2, '#ef4444', 12);
+
+      if (player.hp <= 0) {
+        alert('💀 Defeated by Misinformation! Reinforcing science shields...');
+        initLevel(currentLevel);
+      }
+    }
+
+    function checkCollision(r1, r2) {
+      return (
+        r1.x < r2.x + r2.w &&
+        r1.x + r1.w > r2.x &&
+        r1.y < r2.y + r2.h &&
+        r1.y + r1.h > r2.y
+      );
+    }
+
+    /* ==========================================================================
+       9. VECTOR RENDERING (Rich Character, Bosses & Parallax)
+       ========================================================================== */
     function render() {
       ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
-      const cfg = LEVEL_CONFIGS[currentLevel];
+      const spec = LEVEL_SPECS[currentLevel];
 
-      // Sky / Room Gradient
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, V_HEIGHT);
-      bgGrad.addColorStop(0, cfg.bgTop);
-      bgGrad.addColorStop(1, cfg.bgBot);
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
-
-      // Draw Parallax Background Scenery
-      drawEnvironmentScenery(currentLevel, camera.x);
+      // Parallax Background
+      renderThemedBackground(spec);
 
       ctx.save();
-      ctx.translate(-Math.round(camera.x), 0);
+      ctx.translate(-cameraX, 0);
 
-      // Draw Platforms
-      platforms.forEach(p => {
-        if (p.x + p.width < camera.x - 50 || p.x > camera.x + V_WIDTH + 50) return;
+      // Platforms
+      renderPlatforms();
 
-        if (p.type === 'ground') {
-          ctx.fillStyle = cfg.groundColor;
-          ctx.fillRect(p.x, p.y, p.width, p.height);
-          ctx.fillStyle = cfg.trimColor;
-          ctx.fillRect(p.x, p.y, p.width, 6);
-          // Floor tile details
-          ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-          ctx.lineWidth = 2;
-          for (let tx = Math.floor(camera.x / 80) * 80; tx < camera.x + V_WIDTH; tx += 80) {
-            ctx.strokeRect(tx, p.y + 6, 80, 40);
-          }
-        } else {
-          const isPhasedOut = p.glitch && Math.floor(worldTick / 75) % 3 === 0;
-          ctx.globalAlpha = isPhasedOut ? 0.25 : 1.0;
-          ctx.fillStyle = '#1e1b4b';
-          ctx.fillRect(p.x, p.y, p.width, p.height);
-          ctx.fillStyle = cfg.trimColor;
-          ctx.fillRect(p.x, p.y, p.width, 4);
-          ctx.strokeStyle = '#c084fc';
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(p.x, p.y, p.width, p.height);
-          ctx.globalAlpha = 1.0;
-        }
-      });
+      // Obstacles
+      renderObstacles();
 
-      // Draw Sonic Bounce Pads
-      jumpPads.forEach(jp => {
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(jp.x, jp.y + 4, jp.width, 8);
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(jp.x + 3, jp.y - 2 + Math.sin(worldTick * 0.15) * 2, jp.width - 6, 6);
-      });
+      // Flasks
+      renderFlasks();
 
-      // Draw Level Obstacles & Hazards
-      drawStageHazards();
-
-      // Draw Bubbling Erlenmeyer Science Flasks
-      flasks.forEach(f => {
-        if (!f.collected) {
-          const fy = f.y + Math.sin(worldTick * 0.08 + f.x) * 5;
-          ctx.save();
-          ctx.translate(f.x, fy);
-          // Outer Glow
-          ctx.fillStyle = 'rgba(52, 211, 153, 0.22)';
-          ctx.beginPath(); ctx.arc(0, 4, 18, 0, Math.PI * 2); ctx.fill();
-          // Flask Glass
-          ctx.fillStyle = '#10b981';
-          ctx.beginPath();
-          ctx.moveTo(-4, -10); ctx.lineTo(4, -10);
-          ctx.lineTo(4, -3); ctx.lineTo(12, 12);
-          ctx.lineTo(-12, 12); ctx.lineTo(-4, -3);
-          ctx.closePath();
-          ctx.fill();
-          ctx.strokeStyle = '#a7f3d0';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-          ctx.restore();
-        }
-      });
-
-      // Draw Captured Scientist Stasis Pod
-      if (scientistCage) {
-        drawScientistPod(scientistCage);
+      // Scientist Pod
+      if (activeBoss && activeBoss.scientist) {
+        renderScientistPod(activeBoss.scientist, activeBoss.defeated);
       }
 
-      // Draw 10 Detailed Enemy Types + Speech Bubbles
+      // Enemies
       enemies.forEach(e => {
-        if (e.x + e.width < camera.x - 100 || e.x > camera.x + V_WIDTH + 100) return;
-        drawDetailedEnemy(e);
+        if (e.hp > 0) renderEnemySprite(e);
       });
 
-      // Draw Multi-Phase Epic Boss
+      // Boss
       if (activeBoss && !activeBoss.defeated) {
-        drawDetailedBoss(activeBoss);
+        renderBossSprite(activeBoss);
       }
 
-      // Draw Player Musical Notes
-      notes.forEach(n => {
-        ctx.save();
-        ctx.fillStyle = n.color;
-        ctx.font = "bold 24px serif";
-        ctx.fillText(n.glyph, n.x, n.y);
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 0.8;
-        ctx.strokeText(n.glyph, n.x, n.y);
-        ctx.restore();
+      // Player Projectiles
+      projectiles.forEach(pr => {
+        ctx.fillStyle = pr.color;
+        ctx.font = 'bold 24px serif';
+        ctx.fillText(pr.symbol, pr.x, pr.y);
       });
 
-      // Draw Enemy & Boss Projectiles
+      // Boss Projectiles
       bossProjectiles.forEach(bp => {
-        drawProjectileSprite(bp);
+        ctx.fillStyle = bp.color;
+        ctx.fillRect(bp.x, bp.y, bp.w, bp.h);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px monospace';
+        ctx.fillText(bp.text, bp.x + 4, bp.y + 13);
       });
 
-      // Draw The Alchemix Player Character
-      drawAlchemix(player.x, player.y, player.facing);
+      // The Alchemix Player Character
+      renderTheAlchemix(player);
 
       // Particles
-      particles.forEach(p => {
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Floating Combat Text
-      floatTexts.forEach(ft => {
-        ctx.fillStyle = '#000000';
-        ctx.font = "bold 11px 'Press Start 2P', monospace";
-        ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
-        ctx.fillStyle = ft.color;
-        ctx.fillText(ft.text, ft.x, ft.y);
-      });
+      renderParticles();
 
       ctx.restore();
     }
 
-    // ====================================================
-    // PARALLAX ENVIRONMENT BACKGROUNDS (5 WORLDS)
-    // ====================================================
-    function drawEnvironmentScenery(lvl, camX) {
+    function renderThemedBackground(spec) {
+      // Dynamic sky gradient
+      const grad = ctx.createLinearGradient(0, 0, 0, V_HEIGHT);
+      grad.addColorStop(0, spec.bgHue);
+      grad.addColorStop(1, '#05030a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+      // Parallax Scenery Layer
       ctx.save();
-      const pSlow = -(camX * 0.25) % 320;
-      const pMed = -(camX * 0.5) % 400;
+      const parallaxX = -cameraX * 0.25;
+      ctx.translate(parallaxX, 0);
 
-      if (lvl === 0) {
-        // HIGH SCHOOL: Lockers, Chalkboards with E=mc2, Banners
-        for (let x = pMed; x < V_WIDTH + 400; x += 400) {
-          // Chalkboard
-          ctx.fillStyle = '#064e3b';
-          ctx.fillRect(x + 40, 120, 180, 95);
-          ctx.strokeStyle = '#92400e';
-          ctx.lineWidth = 6;
-          ctx.strokeRect(x + 40, 120, 180, 95);
-          ctx.fillStyle = 'rgba(255,255,255,0.6)';
-          ctx.font = '12px monospace';
-          ctx.fillText('E = mc²   F = ma', x + 58, 155);
-          ctx.fillText('H₂O + NaCl → Ion', x + 58, 185);
+      ctx.strokeStyle = spec.gridColor;
+      ctx.lineWidth = 1;
+      for (let x = 0; x < 3500; x += 60) {
+        ctx.beginPath();
+        ctx.moveTo(x, 100);
+        ctx.lineTo(x, 500);
+        ctx.stroke();
+      }
 
-          // Bank of Lockers
-          for (let l = 0; l < 4; l++) {
-            ctx.fillStyle = '#3b82f6';
-            ctx.fillRect(x + 250 + l * 32, 260, 30, 220);
-            ctx.strokeStyle = '#1d4ed8';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x + 250 + l * 32, 260, 30, 220);
-            ctx.fillStyle = '#93c5fd';
-            ctx.fillRect(x + 256 + l * 32, 275, 18, 4);
-            ctx.fillRect(x + 256 + l * 32, 283, 18, 4);
-          }
-        }
-      } else if (lvl === 1) {
-        // CITY STREET: Distant Skyscrapers, Streetlights, Conspiracy Billboards
-        for (let x = pSlow; x < V_WIDTH + 320; x += 320) {
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(x + 20, 90, 110, 390);
-          ctx.fillRect(x + 150, 140, 130, 340);
-          ctx.fillStyle = 'rgba(251, 191, 36, 0.35)';
-          for (let wy = 110; wy < 440; wy += 35) {
-            ctx.fillRect(x + 35, wy, 16, 20);
-            ctx.fillRect(x + 75, wy, 16, 20);
-            if (wy > 150) ctx.fillRect(x + 175, wy, 22, 18);
-          }
-        }
-        for (let x = pMed; x < V_WIDTH + 400; x += 400) {
-          // Neon Streetlamp
-          ctx.fillStyle = '#334155';
-          ctx.fillRect(x + 120, 190, 8, 290);
-          ctx.fillStyle = '#38bdf8';
-          ctx.beginPath(); ctx.arc(x + 124, 190, 16, 0, Math.PI * 2); ctx.fill();
-        }
-      } else if (lvl === 2) {
-        // TV STUDIO: Acoustic Foam, Chroma Green Screen, Overhead Lighting Trusses
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(0, 45, V_WIDTH, 18);
-        for (let x = pMed; x < V_WIDTH + 400; x += 400) {
-          // Chroma Key Green Backdrop
-          ctx.fillStyle = '#16a34a';
-          ctx.fillRect(x + 60, 150, 210, 230);
-          ctx.strokeStyle = '#4ade80';
-          ctx.lineWidth = 3;
-          ctx.strokeRect(x + 60, 150, 210, 230);
-          // ON AIR Sign
-          ctx.fillStyle = '#dc2626';
-          ctx.fillRect(x + 300, 120, 85, 34);
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 11px monospace';
-          ctx.fillText('● ON AIR', x + 312, 141);
-        }
-      } else if (lvl === 3) {
-        // CYBERSPACE MATRIX: Scrolling Binary Code & Neon Grid
-        ctx.strokeStyle = 'rgba(6, 182, 212, 0.18)';
-        ctx.lineWidth = 1;
-        for (let x = pSlow; x < V_WIDTH + 320; x += 64) {
-          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, V_HEIGHT); ctx.stroke();
-        }
-        for (let y = 80; y < V_HEIGHT; y += 64) {
-          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(V_WIDTH, y); ctx.stroke();
-        }
-        ctx.fillStyle = 'rgba(16, 185, 129, 0.35)';
+      if (currentLevel === 0) {
+        // High School Lockers & Chalkboards
+        ctx.fillStyle = '#2d1840';
+        ctx.fillRect(200, 220, 260, 140);
+        ctx.fillStyle = '#a855f7';
+        ctx.font = '14px monospace';
+        ctx.fillText('E = mc²  |  PV = nRT', 240, 280);
+      } else if (currentLevel === 1) {
+        // City Neon Silhouettes
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(300, 150, 80, 350);
+        ctx.fillRect(420, 100, 110, 400);
+        ctx.fillRect(680, 180, 95, 320);
+      } else if (currentLevel === 2) {
+        // TV Studio Cameras & Rigging
+        ctx.fillStyle = '#f43f5e';
+        ctx.font = 'bold 16px monospace';
+        ctx.fillText('● LIVE ON AIR', 400, 120);
+      } else if (currentLevel === 3) {
+        // Cyberspace Matrix Codes
+        ctx.fillStyle = '#10b981';
         ctx.font = '12px monospace';
-        for (let x = pMed; x < V_WIDTH + 400; x += 160) {
-          const offset = (worldTick * 2 + x) % 360;
-          ctx.fillText('10110', x + 20, 100 + offset);
-          ctx.fillText('01001', x + 90, 420 - offset);
-        }
-      } else {
-        // CORPORATE LAB: Specimen Tanks, Biohazard Pipes
-        for (let x = pMed; x < V_WIDTH + 400; x += 400) {
-          ctx.fillStyle = 'rgba(16, 185, 129, 0.18)';
-          ctx.fillRect(x + 80, 130, 90, 240);
-          ctx.strokeStyle = '#10b981';
-          ctx.lineWidth = 3;
-          ctx.strokeRect(x + 80, 130, 90, 240);
-          // Bubbles in tank
-          ctx.fillStyle = '#34d399';
-          ctx.beginPath();
-          ctx.arc(x + 125, 320 - ((worldTick + x) % 160), 8, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        ctx.fillText('01000001 01001100 01000011', 250, 160);
       }
       ctx.restore();
     }
 
-    function drawStageHazards() {
-      hazards.forEach(h => {
-        if (h.x + h.width < camera.x - 80 || h.x > camera.x + V_WIDTH + 80) return;
-        ctx.save();
+    function renderPlatforms() {
+      platforms.forEach(p => {
+        ctx.fillStyle = '#1e1b4b';
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.fillStyle = '#a855f7';
+        ctx.fillRect(p.x, p.y, p.w, 4); // Neon trim
+      });
+    }
 
-        if (h.subtype === 'WET_FLOOR') {
-          ctx.fillStyle = '#38bdf8';
-          ctx.fillRect(h.x, h.y + 10, h.width, 6);
-          // Yellow caution cone
+    function renderObstacles() {
+      obstacles.forEach(o => {
+        if (o.type === 'wet_floor') {
           ctx.fillStyle = '#eab308';
           ctx.beginPath();
-          ctx.moveTo(h.x + h.width / 2, h.y - 12);
-          ctx.lineTo(h.x + h.width / 2 + 12, h.y + 14);
-          ctx.lineTo(h.x + h.width / 2 - 12, h.y + 14);
+          ctx.moveTo(o.x + o.w / 2, o.y);
+          ctx.lineTo(o.x + o.w, o.y + o.h);
+          ctx.lineTo(o.x, o.y + o.h);
           ctx.closePath();
           ctx.fill();
-        } else if (h.subtype === 'SWING_BELL' || h.subtype === 'BOOM_MIC') {
-          const swingX = h.x + Math.sin(worldTick * 0.05 + h.phase) * 35;
-          ctx.strokeStyle = '#94a3b8';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(h.x + 18, h.y - 60);
-          ctx.lineTo(swingX + 18, h.y + 25);
-          ctx.stroke();
-          ctx.fillStyle = h.subtype === 'SWING_BELL' ? '#fbbf24' : '#ef4444';
-          ctx.beginPath();
-          ctx.arc(swingX + 18, h.y + 25, 16, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (h.subtype === 'STEAM_VENT' || h.subtype === 'FIREWALL_BEAM') {
-          const active = Math.sin(worldTick * 0.05 + h.phase) > 0.15;
-          ctx.fillStyle = '#475569';
-          ctx.fillRect(h.x, 472, h.width, 8);
-          if (active) {
-            ctx.fillStyle = h.subtype === 'STEAM_VENT' ? 'rgba(226, 232, 240, 0.7)' : 'rgba(239, 68, 68, 0.75)';
-            ctx.fillRect(h.x + 4, h.y - (h.subtype === 'STEAM_VENT' ? 95 : 0), h.width - 8, h.subtype === 'STEAM_VENT' ? 110 : h.height);
-          }
-        } else {
-          // Electrified Puddle / Acid Vat / Hot Cable
-          ctx.fillStyle = h.subtype === 'ACID_VAT' ? '#22c55e' : '#eab308';
-          ctx.fillRect(h.x, h.y, h.width, h.height);
-          if (worldTick % 10 < 5) {
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(h.x + 2, h.y - 3, h.width - 4, h.height);
-          }
+        } else if (o.type === 'acid') {
+          ctx.fillStyle = '#10b981';
+          ctx.fillRect(o.x, o.y, o.w, o.h);
+        } else if (o.type === 'firewall') {
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(o.x, o.y, o.w, o.h);
         }
+      });
+    }
+
+    function renderFlasks() {
+      flasks.forEach(f => {
+        if (f.collected) return;
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(0, 4, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#34d399';
+        ctx.fillRect(-3, -10, 6, 8);
         ctx.restore();
       });
     }
 
-    // ====================================================
-    // 10 BESPOKE ENEMY SPRITES + REACTIONS + SPEECH BUBBLES
-    // ====================================================
-    function drawDetailedEnemy(e) {
-      ctx.save();
-      ctx.translate(Math.round(e.x + e.width / 2), Math.round(e.y + e.height / 2));
-
-      // Musical Immunity (Groove/Dance) vs Weakness (Ear-Clutch Shock)
-      if (e.danceTimer > 0) {
-        ctx.translate(0, Math.sin(worldTick * 0.45) * 6);
-        ctx.rotate(Math.sin(worldTick * 0.25) * 0.12);
-      } else if (e.shockTimer > 0) {
-        ctx.translate(Math.sin(worldTick * 1.1) * 5, 0);
-      }
-
-      const dir = e.vx >= 0 ? 1 : -1;
-      ctx.scale(dir, 1);
-
-      const legSwing = Math.sin(e.animTick * 0.2) * 6;
-
-      // Legs / Skateboard
-      if (e.type === 'COOL_SKATER') {
-        ctx.fillStyle = '#f43f5e';
-        ctx.fillRect(-20, 26, 40, 5);
-        ctx.fillStyle = '#fde047';
-        ctx.beginPath(); ctx.arc(-12, 33, 4, 0, Math.PI * 2); ctx.arc(12, 33, 4, 0, Math.PI * 2); ctx.fill();
-      } else if (e.type !== 'PAPARAZZI_DRONE') {
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(-10 + legSwing, 16, 7, 18);
-        ctx.fillRect(3 - legSwing, 16, 7, 18);
-      }
-
-      // Torso by Specific Enemy Type
-      switch (e.type) {
-        case 'BULLY_JOCK':
-          ctx.fillStyle = '#dc2626'; // Red Varsity Jacket
-          ctx.fillRect(-16, -12, 32, 30);
-          ctx.fillStyle = '#fef08a'; // White sleeves & letter 'B'
-          ctx.fillRect(-18, -10, 6, 22);
-          ctx.fillRect(12, -10, 6, 22);
-          ctx.font = 'bold 12px sans-serif';
-          ctx.fillText('B', -4, 6);
-          break;
-        case 'COOL_SKATER':
-          ctx.fillStyle = '#06b6d4'; // Hoodie
-          ctx.fillRect(-14, -10, 28, 28);
-          ctx.fillStyle = '#f59e0b';
-          ctx.fillRect(-14, 2, 28, 5);
-          break;
-        case 'MEGAPHONE_GUY':
-          ctx.fillStyle = '#475569'; // Trenchcoat
-          ctx.fillRect(-15, -12, 30, 30);
-          // Megaphone in hand
-          ctx.fillStyle = '#ef4444';
-          ctx.beginPath(); ctx.moveTo(12, -2); ctx.lineTo(28, -10); ctx.lineTo(28, 8); ctx.closePath(); ctx.fill();
-          break;
-        case 'TINFOIL_PODCASTER':
-          ctx.fillStyle = '#7c3aed';
-          ctx.fillRect(-14, -10, 28, 28);
-          // Podcast Mic Stand
-          ctx.fillStyle = '#cbd5e1';
-          ctx.fillRect(14, -8, 6, 14);
-          break;
-        case 'FAKE_ANCHOR':
-          ctx.fillStyle = '#1e3a8a'; // Blue TV Suit
-          ctx.fillRect(-16, -12, 32, 30);
-          ctx.fillStyle = '#ef4444'; // Red Power Tie
-          ctx.fillRect(-2, -10, 4, 20);
-          break;
-        case 'PAPARAZZI_DRONE':
-          // Flying Camera Drone + Operator Visor
-          ctx.fillStyle = '#334155';
-          ctx.fillRect(-22, -18, 44, 6);
-          ctx.fillStyle = '#38bdf8';
-          ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#ef4444';
-          ctx.beginPath(); ctx.arc(6, 0, 6, 0, Math.PI * 2); ctx.fill();
-          break;
-        case 'RINGLIGHT_INFLUENCER':
-          ctx.fillStyle = '#ec4899';
-          ctx.fillRect(-13, -10, 26, 28);
-          // Glowing Ring-Light on Selfie Stick
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.arc(22, -12, 10, 0, Math.PI * 2); ctx.stroke();
-          break;
-        case 'TROLL_BOT':
-          ctx.fillStyle = '#0f172a';
-          ctx.strokeStyle = '#10b981';
-          ctx.lineWidth = 2;
-          ctx.fillRect(-16, -14, 32, 32);
-          ctx.strokeRect(-16, -14, 32, 32);
-          break;
-        case 'SPIN_DOCTOR':
-          ctx.fillStyle = '#1f2937'; // Charcoal Executive Suit
-          ctx.fillRect(-15, -12, 30, 30);
-          ctx.fillStyle = '#10b981'; // Cash briefcase
-          ctx.fillRect(12, 6, 14, 11);
-          break;
-        case 'HAZMAT_ENFORCER':
-          ctx.fillStyle = '#eab308'; // Yellow Hazmat Suit
-          ctx.fillRect(-16, -12, 32, 30);
-          ctx.fillStyle = '#22c55e'; // Backpack tank
-          ctx.fillRect(-22, -8, 7, 22);
-          break;
-      }
-
-      // Head & Hats (Except Drone)
-      if (e.type !== 'PAPARAZZI_DRONE') {
-        ctx.fillStyle = e.type === 'TROLL_BOT' ? '#334155' : '#fed7aa';
-        ctx.beginPath();
-        ctx.arc(0, -21, 11, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Hats / Hair / Visors
-        if (e.type === 'TINFOIL_PODCASTER') {
-          ctx.fillStyle = '#e2e8f0'; // Shiny Silver Tin-Foil Cone
-          ctx.beginPath(); ctx.moveTo(-13, -26); ctx.lineTo(0, -46); ctx.lineTo(13, -26); ctx.closePath(); ctx.fill();
-        } else if (e.type === 'COOL_SKATER') {
-          ctx.fillStyle = '#111827'; // Cool Shades + Backwards Cap
-          ctx.fillRect(-2, -25, 12, 5);
-          ctx.fillStyle = '#ef4444';
-          ctx.fillRect(-14, -32, 22, 6);
-        } else if (e.type === 'HAZMAT_ENFORCER') {
-          ctx.fillStyle = '#38bdf8'; // Gas mask visor
-          ctx.fillRect(-4, -26, 13, 8);
-        }
-
-        // Reaction Hands Covering Ears when Shocked!
-        if (e.shockTimer > 0) {
-          ctx.fillStyle = '#fbbf24';
-          ctx.fillRect(-16, -28, 6, 12);
-          ctx.fillRect(10, -28, 6, 12);
-          ctx.strokeStyle = '#ef4444';
-          ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.arc(4, -18, 4, 0, Math.PI * 2); ctx.stroke();
-        }
-      }
-
-      ctx.restore();
-
-      // Health Bar & Speech Bubble (Unflipped)
-      ctx.save();
-      ctx.translate(Math.round(e.x + e.width / 2), Math.round(e.y));
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(-20, -16, 40, 5);
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(-20, -16, Math.max(0, (e.health / e.maxHealth) * 40), 5);
-
-      if (e.danceTimer > 0) {
-        ctx.fillStyle = '#c084fc';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText('♪ ♫ ♪', -16, -24);
-      } else if (e.shockTimer > 0) {
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText('⚡😖⚡', -18, -24);
-      } else if (e.speechTimer > 110 && Math.abs(player.x - e.x) < 420) {
-        // Draw Speech Bubble
-        ctx.font = 'bold 10px Outfit, sans-serif';
-        const tw = ctx.measureText(e.activeQuote).width + 14;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
-        ctx.fillRect(-tw / 2, -44, tw, 20);
-        ctx.strokeStyle = '#1e1b4b';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(-tw / 2, -44, tw, 20);
-        ctx.fillStyle = '#0f172a';
-        ctx.fillText(e.activeQuote, -tw / 2 + 7, -30);
-      }
-      ctx.restore();
-    }
-
-    // ====================================================
-    // 5 MULTI-PHASE BOSSES WITH VISUAL TELEGRAPHS
-    // ====================================================
-    function drawDetailedBoss(b) {
-      ctx.save();
-      ctx.translate(Math.round(b.x + b.width / 2), Math.round(b.y + b.height / 2));
-
-      if (b.danceTimer > 0) {
-        ctx.translate(0, Math.sin(worldTick * 0.45) * 9);
-      } else if (b.shockTimer > 0) {
-        ctx.translate(Math.sin(worldTick * 1.2) * 8, 0);
-      }
-
-      // Phase 2 Enraged Aura
-      if (b.phase === 2) {
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
-        ctx.beginPath();
-        ctx.arc(0, 0, 78 + Math.sin(worldTick * 0.2) * 6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Acoustic Shield Dome (Must hit with weakGenre to break!)
-      if (b.shieldTimer > 0) {
-        ctx.strokeStyle = GENRES[b.weakGenre].color;
-        ctx.lineWidth = 4;
-        ctx.setLineDash([8, 6]);
-        ctx.beginPath();
-        ctx.arc(0, 0, 82, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
-      // Boss Mech / Chassis Design by Level
-      if (b.levelId === 0) {
-        // Principal McFlat in Armored Podium Mech
-        ctx.fillStyle = '#78350f';
-        ctx.fillRect(-46, -15, 92, 80);
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(-50, -22, 100, 12);
-        ctx.fillStyle = '#1e3a8a';
-        ctx.fillRect(-30, -52, 60, 40);
-        ctx.fillStyle = '#fed7aa';
-        ctx.beginPath(); ctx.arc(0, -64, 20, 0, Math.PI * 2); ctx.fill();
-      } else if (b.levelId === 1) {
-        // Grandmaster Radar-Dish Pyramid Exosuit
-        ctx.fillStyle = '#475569';
-        ctx.beginPath(); ctx.moveTo(-55, 65); ctx.lineTo(0, -55); ctx.lineTo(55, 65); ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.stroke();
-        ctx.fillStyle = '#e2e8f0';
-        ctx.beginPath(); ctx.arc(0, -62, 26, Math.PI, 0); ctx.fill();
-      } else if (b.levelId === 2) {
-        // Chroma-Key Mogul 9000 Giant CRT TV Head
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(-52, -55, 104, 95);
-        ctx.fillStyle = b.phase === 2 ? '#dc2626' : '#2563eb';
-        ctx.fillRect(-42, -45, 84, 65);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px monospace';
-        ctx.fillText(b.shockTimer > 0 ? 'ERR 404!' : 'FAKE NEWS', -36, -10);
-      } else if (b.levelId === 3) {
-        // The Shadowban Mainframe Cyber-Spider Core
-        ctx.strokeStyle = '#06b6d4';
-        ctx.lineWidth = 5;
-        for (let leg = -2; leg <= 2; leg++) {
-          if (leg === 0) continue;
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(leg * 32, -25 + Math.sin(worldTick * 0.15 + leg) * 12);
-          ctx.lineTo(leg * 48, 55);
-          ctx.stroke();
-        }
-        ctx.fillStyle = '#0f172a';
-        ctx.beginPath(); ctx.arc(0, -5, 42, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#ec4899'; ctx.stroke();
-        ctx.fillStyle = '#ef4444';
-        ctx.beginPath(); ctx.arc(0, -5, 14, 0, Math.PI * 2); ctx.fill();
-      } else {
-        // CEO Baron Von Greenwash Gold Bio-Tank Mech
-        ctx.fillStyle = '#eab308';
-        ctx.fillRect(-50, -30, 100, 95);
-        ctx.fillStyle = '#22c55e';
-        ctx.fillRect(-34, -15, 68, 50);
-        ctx.fillStyle = '#1f2937';
-        ctx.fillRect(-22, -75, 44, 30); // Top Hat
-        ctx.fillRect(-32, -48, 64, 6);
-      }
-
-      // Boss Reaction Indicators (Ear-Hold Shock vs Groove)
-      if (b.shockTimer > 0) {
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('⚡EARS RINGING!⚡', -68, -85);
-      } else if (b.danceTimer > 0) {
-        ctx.fillStyle = '#c084fc';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('♪ GROOVING (IMMUNE) ♪', -78, -85);
-      }
-
-      ctx.restore();
-    }
-
-    function drawProjectileSprite(bp) {
-      ctx.save();
-      ctx.translate(bp.x, bp.y);
-      if (bp.kind === 'BOSS_HIGH_DUCK') {
-        // High Laser Beam with DUCK hint
-        ctx.fillStyle = '#f43f5e';
-        ctx.fillRect(-22, -8, 44, 16);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 9px monospace';
-        ctx.fillText('DUCK!', -15, 3);
-      } else if (bp.kind === 'BOSS_LOW') {
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(-16, -12, 32, 24);
-        ctx.fillStyle = '#000';
-        ctx.font = 'bold 9px monospace';
-        ctx.fillText('JUMP', -13, 3);
-      } else {
-        ctx.fillStyle = '#ef4444';
-        ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2; ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function drawScientistPod(pod) {
+    function renderScientistPod(pod, freed) {
       ctx.save();
       ctx.translate(pod.x, pod.y);
-      // Base & Cap
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(-4, 92, pod.width + 8, 14);
-      ctx.fillRect(-4, 0, pod.width + 8, 12);
-
-      // Glowing Glass Containment Cylinder
-      ctx.fillStyle = pod.rescued ? 'rgba(34, 197, 94, 0.2)' : 'rgba(6, 182, 212, 0.28)';
-      ctx.fillRect(0, 12, pod.width, 80);
-      ctx.strokeStyle = pod.rescued ? '#22c55e' : '#06b6d4';
+      // Containment glass
+      ctx.fillStyle = freed ? 'rgba(52, 211, 153, 0.2)' : 'rgba(239, 68, 68, 0.25)';
+      ctx.strokeStyle = freed ? '#34d399' : '#ef4444';
       ctx.lineWidth = 3;
-      ctx.strokeRect(0, 12, pod.width, 80);
+      ctx.strokeRect(0, 0, pod.w, pod.h);
+      ctx.fillRect(0, 0, pod.w, pod.h);
 
-      // Scientist inside Lab Coat & Glasses
-      const sy = pod.rescued ? 38 : 34 + Math.sin(worldTick * 0.08) * 4;
+      // Scientist inside
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(20, sy + 14, 28, 36);
-      ctx.fillStyle = '#fed7aa';
-      ctx.beginPath(); ctx.arc(34, sy + 4, 11, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(26, sy, 7, 5);
-      ctx.strokeRect(35, sy, 7, 5);
+      ctx.fillRect(16, 25, 18, 40); // Lab coat
+      ctx.fillStyle = '#fbcfe8';
+      ctx.beginPath();
+      ctx.arc(25, 18, 9, 0, Math.PI * 2); // Head
+      ctx.fill();
 
-      ctx.fillStyle = '#a5f3fc';
+      // Label
+      ctx.fillStyle = freed ? '#34d399' : '#ef4444';
       ctx.font = 'bold 9px monospace';
-      ctx.fillText(pod.name, -12, -8);
+      ctx.fillText(freed ? 'RESCUED!' : 'TRAPPED!', -4, -10);
       ctx.restore();
     }
 
-    // ====================================================
-    // THE ALCHEMIX CHARACTER VECTOR SPRITE
-    // ====================================================
-    function drawAlchemix(x, y, facing) {
+    /* ==========================================================================
+       10. THE ALCHEMIX VECTOR SPRITE
+       ========================================================================== */
+    function renderTheAlchemix(p) {
       ctx.save();
-      if (player.invulnTimer > 0 && Math.floor(player.invulnTimer / 3) % 2 === 0) ctx.globalAlpha = 0.5;
+      ctx.translate(p.x, p.y);
 
-      const isCrouched = player.isCrouching;
-      ctx.translate(Math.round(x + player.width / 2), Math.round(y + player.height / 2));
-      ctx.scale(facing, 1);
-      if (isCrouched) ctx.translate(0, 6);
+      if (p.invulnTimer > 0 && Math.floor(Date.now() / 80) % 2 === 0) {
+        ctx.globalAlpha = 0.4;
+      }
 
-      const walkSwing = player.isGrounded && !isCrouched ? Math.sin(player.walkCycle) * 7 : 0;
+      const flip = !p.facingRight;
+      if (flip) {
+        ctx.translate(p.w, 0);
+        ctx.scale(-1, 1);
+      }
 
-      // Boots
-      ctx.fillStyle = "#1e1b4b";
-      ctx.fillRect(-11 + walkSwing, isCrouched ? 6 : 18, 9, isCrouched ? 10 : 16);
-      ctx.fillRect(2 - walkSwing, isCrouched ? 6 : 18, 9, isCrouched ? 10 : 16);
+      const isDucking = p.isCrouching;
 
-      // Ornate Purple Alchemix Wizard Coat
-      ctx.fillStyle = "#4c1d95";
-      ctx.beginPath();
-      ctx.moveTo(-16, -10);
-      ctx.lineTo(16, -10);
-      ctx.lineTo(24, isCrouched ? 15 : 30);
-      ctx.lineTo(-24, isCrouched ? 15 : 30);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "#f59e0b"; // Gold Trim
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // High Wizard Collar
-      ctx.fillStyle = "#5b21b6";
-      ctx.beginPath();
-      ctx.moveTo(-18, -8); ctx.lineTo(-24, -22); ctx.lineTo(-10, -14); ctx.closePath(); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(18, -8); ctx.lineTo(24, -22); ctx.lineTo(10, -14); ctx.closePath(); ctx.fill();
-
-      // Belt & Glowing Green Bubbling Flask in Left Hand
-      ctx.fillStyle = "#78350f";
-      ctx.fillRect(-18, isCrouched ? 3 : 11, 36, 5);
-      ctx.fillStyle = "#10b981";
-      ctx.beginPath(); ctx.arc(-18, isCrouched ? 0 : 4, 6, 0, Math.PI * 2); ctx.fill();
-
-      // Head, Smile & Salt-and-Pepper Goatee
-      const headY = isCrouched ? -13 : -17;
-      ctx.fillStyle = "#f5cba7";
-      ctx.beginPath();
-      ctx.arc(0, headY, 13, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Goatee
-      ctx.fillStyle = "#475569";
-      ctx.beginPath();
-      ctx.arc(0, headY + 4, 8, 0.15, Math.PI - 0.15);
-      ctx.fill();
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(-4, headY + 4, 8, 2);
-
-      // Eyes
-      ctx.fillStyle = "#1e293b";
-      ctx.fillRect(-5, headY - 3, 3, 3);
-      ctx.fillRect(3, headY - 3, 3, 3);
-
-      // Bent Wizard Hat, Atomic Crest & Orange Cassette Tape
-      ctx.fillStyle = "#4c1d95";
-      ctx.beginPath();
-      ctx.ellipse(0, headY - 10, 26, 5.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#f59e0b";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(-17, headY - 10);
-      ctx.quadraticCurveTo(-8, headY - 34, 14, headY - 38);
-      ctx.lineTo(9, headY - 23);
-      ctx.lineTo(17, headY - 10);
-      ctx.closePath();
-      ctx.fill();
-
-      // Orange Cassette Tape on Hat Brim
-      ctx.fillStyle = "#ea580c";
-      ctx.fillRect(7, headY - 19, 11, 6);
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(9, headY - 17, 7, 2);
-
-      // Genre-Matched Musical Instrument in Right Hand
-      const instY = isCrouched ? 0 : 2;
-      ctx.fillStyle = GENRES[currentGenreIndex].color;
-      if (currentGenreIndex === 0) {
-        // Phonk MPC Sampler Pad
-        ctx.fillRect(14, instY, 15, 10);
-      } else if (currentGenreIndex === 1) {
-        // Flying-V Rock Guitar
-        ctx.beginPath();
-        ctx.moveTo(10, instY + 4); ctx.lineTo(30, instY - 4); ctx.lineTo(26, instY + 10);
-        ctx.closePath(); ctx.fill();
-      } else if (currentGenreIndex === 2) {
-        // Brass Reggae Horn
-        ctx.beginPath();
-        ctx.moveTo(12, instY + 3); ctx.lineTo(29, instY - 3); ctx.lineTo(29, instY + 9);
-        ctx.closePath(); ctx.fill();
+      // Purple Wizard Robe
+      ctx.fillStyle = '#581c87';
+      if (isDucking) {
+        ctx.fillRect(6, 16, 36, 26);
       } else {
-        // Vintage Studio Ribbon Mic
-        ctx.fillRect(16, instY - 4, 7, 11);
-        ctx.fillStyle = "#94a3b8";
-        ctx.fillRect(18, instY + 7, 3, 8);
+        ctx.fillRect(8, 24, 32, 46);
+        // Animated walking legs
+        const legOffset = Math.sin(p.walkFrame) * 6;
+        ctx.fillStyle = '#2e1065';
+        ctx.fillRect(10, 68, 10, 8 + legOffset);
+        ctx.fillRect(28, 68, 10, 8 - legOffset);
+      }
+
+      // Golden Treble Clef & Atom Rune Embroidery
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 12px serif';
+      ctx.fillText('𝄞', 14, isDucking ? 30 : 42);
+      ctx.fillText('⚛', 26, isDucking ? 34 : 56);
+
+      // Face & Salt-and-Pepper Goatee
+      const headY = isDucking ? 2 : 6;
+      ctx.fillStyle = '#fcd34d';
+      ctx.beginPath();
+      ctx.arc(24, headY + 12, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Salt-and-pepper Goatee
+      ctx.fillStyle = '#6b7280';
+      ctx.beginPath();
+      ctx.arc(24, headY + 17, 4, 0, Math.PI);
+      ctx.fill();
+
+      // Wizard Hat with Skull-Atom & Orange Cassette Badge
+      ctx.fillStyle = '#6b21a8';
+      ctx.beginPath();
+      ctx.moveTo(4, headY + 10);
+      ctx.lineTo(44, headY + 10);
+      ctx.lineTo(34, headY - 14);
+      ctx.lineTo(14, headY - 14);
+      ctx.closePath();
+      ctx.fill();
+
+      // Orange Cassette Tape on hat
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(26, headY - 6, 12, 7);
+
+      // Bubbling Green Flask in hand
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(8, isDucking ? 24 : 40, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Active Musical Instrument in performance hand
+      const genre = GENRES[currentGenreIndex].id;
+      if (genre === 'phonk') {
+        // MPC Beat Pad
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(32, isDucking ? 20 : 34, 16, 14);
+        ctx.fillStyle = '#ec4899';
+        ctx.fillRect(35, isDucking ? 23 : 37, 4, 4);
+      } else if (genre === 'rock') {
+        // Neon Flying-V Guitar
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.moveTo(34, isDucking ? 16 : 28);
+        ctx.lineTo(48, isDucking ? 26 : 42);
+        ctx.lineTo(48, isDucking ? 10 : 20);
+        ctx.closePath();
+        ctx.fill();
+      } else if (genre === 'reggae') {
+        // Melodica
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(32, isDucking ? 22 : 36, 18, 8);
+      } else {
+        // Vintage Microphone
+        ctx.fillStyle = '#a855f7';
+        ctx.fillRect(34, isDucking ? 18 : 30, 6, 14);
       }
 
       ctx.restore();
     }
 
-    // ====================================================
-    // HUD & UI CONTROLS
-    // ====================================================
+    /* ==========================================================================
+       11. ENEMY & BOSS SPRITE RENDERING
+       ========================================================================== */
+    function renderEnemySprite(e) {
+      ctx.save();
+      ctx.translate(e.x, e.y);
+
+      // Grooving Animation if Immune
+      if (e.danceTimer > 0) {
+        ctx.translate(0, Math.sin(Date.now() / 80) * 8);
+      }
+      // Shaking Animation if Weakness Hit
+      if (e.shockTimer > 0) {
+        ctx.translate(Math.sin(Date.now() / 40) * 6, 0);
+      }
+
+      // Sprite Body
+      ctx.fillStyle = '#374151';
+      ctx.fillRect(6, 16, 30, 44);
+
+      // Head
+      ctx.fillStyle = '#fca5a5';
+      ctx.beginPath();
+      ctx.arc(21, 12, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Clutches ears when shocked
+      if (e.shockTimer > 0) {
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(8, 12, 4, 0, Math.PI * 2);
+        ctx.arc(34, 12, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Speech Bubble
+      if (e.speechText && e.danceTimer <= 0) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-15, -28, 72, 18);
+        ctx.fillStyle = '#000000';
+        ctx.font = '8px sans-serif';
+        ctx.fillText(e.speechText.substring(0, 14), -10, -16);
+      }
+
+      ctx.restore();
+    }
+
+    function renderBossSprite(b) {
+      ctx.save();
+      ctx.translate(b.x, b.y);
+
+      if (b.danceTimer > 0) ctx.translate(0, Math.sin(Date.now() / 80) * 10);
+      if (b.shockTimer > 0) ctx.translate(Math.sin(Date.now() / 40) * 8, 0);
+
+      // Giant Boss Mech Body
+      ctx.fillStyle = b.phase === 1 ? '#4c1d95' : '#831843';
+      ctx.fillRect(10, 30, 70, 110);
+
+      // Glowing Core
+      ctx.fillStyle = b.phase === 1 ? '#a855f7' : '#f43f5e';
+      ctx.beginPath();
+      ctx.arc(45, 80, 22, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Boss Head
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(25, 6, 40, 26);
+
+      ctx.restore();
+    }
+
+    function renderParticles() {
+      particles.forEach(pt => {
+        ctx.fillStyle = pt.color;
+        ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
+      });
+    }
+
+    function spawnSparks(x, y, color, count = 10) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          color: color,
+          size: Math.random() * 3 + 2,
+          life: 0.5
+        });
+      }
+    }
+
+    function spawnPuff(x, y, color) {
+      spawnSparks(x, y, color, 6);
+    }
+
+    function spawnText(x, y, text, color) {
+      particles.push({
+        x: x,
+        y: y,
+        vx: 0,
+        vy: -1.2,
+        color: color,
+        size: 0,
+        text: text,
+        life: 0.8
+      });
+    }
+
+    /* ==========================================================================
+       12. HUD & UI MANAGEMENT
+       ========================================================================== */
     function updateHealthHUD() {
-      const pct = Math.max(0, (player.health / player.maxHealth) * 100);
-      document.getElementById('hud-hp-bar').style.width = `${pct}%`;
-      document.getElementById('hud-hp-val').innerText = `${Math.ceil(player.health)}/${player.maxHealth}`;
+      const fill = document.getElementById('hud-hp-fill');
+      fill.style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
     }
 
     function updateFlaskHUD() {
-      document.getElementById('hud-flask-counter').innerText = `${player.flasksCollected}/${player.totalFlasks}`;
+      document.getElementById('hud-flask-count').innerText = `${flasksCollected}/3`;
+    }
+
+    function showBossHUD() {
+      document.getElementById('boss-hud').classList.remove('hidden');
+    }
+
+    function hideBossHUD() {
+      document.getElementById('boss-hud').classList.add('hidden');
     }
 
     function updateBossHUD() {
       if (!activeBoss) return;
-      const cfg = LEVEL_CONFIGS[currentLevel];
-      const bPct = Math.max(0, (activeBoss.health / activeBoss.maxHealth) * 100);
       document.getElementById('boss-name').innerText = activeBoss.name;
-      document.getElementById('boss-hp-bar').style.width = `${bPct}%`;
-      document.getElementById('boss-phase-badge').innerText = `PHASE ${activeBoss.phase}`;
-      document.getElementById('boss-strategy-hint').innerText = activeBoss.phase === 1 ? cfg.bossHintP1 : cfg.bossHintP2;
+      const pct = Math.max(0, (activeBoss.hp / activeBoss.maxHp) * 100);
+      document.getElementById('boss-hp-fill').style.width = `${pct}%`;
     }
 
-    function gameOver() {
-      gameState = 'GAMEOVER';
-      document.getElementById('end-emoji').innerText = '💀';
-      document.getElementById('end-title').innerText = 'OUT OF HARMONY';
-      document.getElementById('end-title').className = "text-2xl font-black text-red-500 font-retro mb-2";
-      document.getElementById('end-msg').innerText = "The misinformation drowned out scientific truth. Switch genres when enemies groove!";
-      document.getElementById('end-btn').innerText = "REPLAY STAGE";
-      document.getElementById('end-modal').classList.remove('hidden');
-    }
-
-    function levelVictory() {
-      gameState = 'VICTORY';
-      const cfg = LEVEL_CONFIGS[currentLevel];
-      sound.playTone(659.25, 0.4, 'sine', 0.3);
-
-      if (currentLevel < LEVEL_CONFIGS.length - 1) {
-        document.getElementById('end-emoji').innerText = '🎉';
-        document.getElementById('end-title').innerText = 'SCIENTIST RESCUED!';
-        document.getElementById('end-title').className = "text-2xl font-black text-emerald-400 font-retro mb-2";
-        document.getElementById('end-msg').innerText = `You defeated ${cfg.bossName} and liberated ${cfg.scientistName}!`;
-        document.getElementById('end-btn').innerText = "NEXT WORLD";
-      } else {
-        document.getElementById('end-emoji').innerText = '🏆';
-        document.getElementById('end-title').innerText = 'SCIENCE SAVED!';
-        document.getElementById('end-title').className = "text-2xl font-black text-amber-400 font-retro mb-2";
-        document.getElementById('end-msg').innerText = "The Alchemix has defeated every disinformation boss across all 5 worlds!";
-        document.getElementById('end-btn').innerText = "PLAY AGAIN";
-      }
-      document.getElementById('end-modal').classList.remove('hidden');
-    }
-
-    function setupInputs() {
-      window.addEventListener('keydown', (e) => {
-        if (e.repeat) return;
-        sound.init();
-        if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keys.left = true;
-        if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keys.right = true;
-        if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') keys.down = true;
-        if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp' || e.key === ' ') {
-          if (player.jumpsLeft > 0) {
-            player.vy = player.jumpForce;
-            player.jumpsLeft--;
-            sound.triggerSFX('jump');
-          }
-        }
-        if (e.key === 'j' || e.key === 'J' || e.key === 'Enter') keys.attack = true;
-        if (e.key === 'q' || e.key === 'Q') cycleGenre();
-      });
-
-      window.addEventListener('keyup', (e) => {
-        if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keys.left = false;
-        if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keys.right = false;
-        if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') keys.down = false;
-        if (e.key === 'j' || e.key === 'J' || e.key === 'Enter') keys.attack = false;
-      });
-
-      const bindPointer = (elem, pressFn, releaseFn) => {
-        if (!elem) return;
-        elem.addEventListener('pointerdown', (e) => {
-          e.preventDefault();
-          elem.setPointerCapture?.(e.pointerId);
-          elem.classList.add('active');
-          sound.init();
-          pressFn();
-        }, { passive: false });
-
-        const endHandler = (e) => {
-          e.preventDefault();
-          elem.releasePointerCapture?.(e.pointerId);
-          elem.classList.remove('active');
-          if (releaseFn) releaseFn();
-        };
-
-        elem.addEventListener('pointerup', endHandler, { passive: false });
-        elem.addEventListener('pointercancel', endHandler, { passive: false });
-      };
-
-      bindPointer(document.getElementById('touch-left'), () => { keys.left = true; }, () => { keys.left = false; });
-      bindPointer(document.getElementById('touch-right'), () => { keys.right = true; }, () => { keys.right = false; });
-      bindPointer(document.getElementById('touch-down'), () => { keys.down = true; }, () => { keys.down = false; });
-      bindPointer(document.getElementById('touch-jump'), () => {
-        if (player.jumpsLeft > 0) {
-          player.vy = player.jumpForce;
-          player.jumpsLeft--;
-          sound.triggerSFX('jump');
-        }
-      });
-      bindPointer(document.getElementById('touch-attack'), () => { keys.attack = true; }, () => { keys.attack = false; });
-      bindPointer(document.getElementById('touch-style'), () => { cycleGenre(); });
-
-      document.getElementById('genre-capsule-btn').addEventListener('click', cycleGenre);
-      document.getElementById('toggle-touch-btn').addEventListener('click', () => {
-        document.getElementById('mobile-controls').classList.toggle('hidden');
-      });
-
-      document.getElementById('open-audio-modal-btn').addEventListener('click', () => {
-        for (let i = 0; i < 4; i++) {
-          document.getElementById(`track-url-${i}`).value = localStorage.getItem(`alchemix_track_${i}`) || DEFAULT_AUDIO_PATHS[`track_${i}`];
-        }
-        ['jump', 'solo', 'flask', 'defeat'].forEach(k => {
-          document.getElementById(`sfx-url-${k}`).value = localStorage.getItem(`alchemix_sfx_${k}`) || DEFAULT_AUDIO_PATHS[`sfx_${k}`];
-        });
-        document.getElementById('audio-modal').classList.remove('hidden');
-      });
-
-      document.getElementById('close-audio-modal-btn').addEventListener('click', () => {
-        document.getElementById('audio-modal').classList.add('hidden');
-      });
-
-      document.getElementById('save-audio-btn').addEventListener('click', async () => {
-        for (let i = 0; i < 4; i++) {
-          localStorage.setItem(`alchemix_track_${i}`, document.getElementById(`track-url-${i}`).value.trim());
-        }
-        ['jump', 'solo', 'flask', 'defeat'].forEach(k => {
-          localStorage.setItem(`alchemix_sfx_${k}`, document.getElementById(`sfx-url-${k}`).value.trim());
-        });
-        await sound.loadAllAudio();
-        document.getElementById('audio-modal').classList.add('hidden');
-        createFloatText("AUDIO SETTINGS APPLIED!", player.x, player.y - 40, "#06b6d4");
-      });
-
-      document.getElementById('reset-audio-btn').addEventListener('click', async () => {
-        await AudioDB.clear();
-        for (let i = 0; i < 4; i++) localStorage.removeItem(`alchemix_track_${i}`);
-        ['jump', 'solo', 'flask', 'defeat'].forEach(k => localStorage.removeItem(`alchemix_sfx_${k}`));
-        await sound.loadAllAudio();
-        document.getElementById('audio-modal').classList.add('hidden');
-        createFloatText("DEFAULT SOUNDS RESTORED!", player.x, player.y - 40, "#ec4899");
-      });
-
-      document.getElementById('start-game-btn').addEventListener('click', () => {
-        sound.init();
-        try {
-          if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
-          else if (document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen().catch(() => {});
-        } catch (_) {}
-
-        document.getElementById('start-modal').classList.add('hidden');
-        gameState = 'PLAYING';
-        initStage(currentLevel);
-      });
-
-      document.getElementById('end-btn').addEventListener('click', () => {
-        document.getElementById('end-modal').classList.add('hidden');
-        if (gameState === 'GAMEOVER') {
-          initStage(currentLevel);
-        } else {
-          currentLevel = (currentLevel + 1) % LEVEL_CONFIGS.length;
-          initStage(currentLevel);
-        }
-        gameState = 'PLAYING';
-      });
-    }
-
+    /* ==========================================================================
+       13. CONTROLS & RESIZE HANDLERS
+       ========================================================================== */
     function resizeCanvas() {
-      const wrapper = document.getElementById('game-wrapper');
-      const rect = wrapper.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-      canvasScale = Math.min(canvas.width / V_WIDTH, canvas.height / V_HEIGHT);
-      ctx.setTransform(canvasScale, 0, 0, canvasScale, 0, 0);
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      scale = Math.min(canvas.width / V_WIDTH, canvas.height / V_HEIGHT);
+      ctx.imageSmoothingEnabled = false;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Keyboard bindings
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = true;
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = true;
+      if (e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') keys.jump = true;
+      if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.duck = true;
+      if (e.code === 'KeyJ' || e.code === 'Enter') keys.shoot = true;
+      if (e.code === 'KeyQ') cycleGenre();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = false;
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = false;
+      if (e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') keys.jump = false;
+      if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.duck = false;
+    });
+
+    // Touch pad bindings
+    function bindTouch(id, keyName) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        keys[keyName] = true;
+        btn.classList.add('active');
+      });
+      const clear = (e) => {
+        e.preventDefault();
+        keys[keyName] = false;
+        btn.classList.remove('active');
+      };
+      btn.addEventListener('pointerup', clear);
+      btn.addEventListener('pointercancel', clear);
     }
 
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+    bindTouch('btn-left', 'left');
+    bindTouch('btn-right', 'right');
+    bindTouch('btn-duck', 'duck');
+    bindTouch('btn-jump', 'jump');
+    bindTouch('btn-attack', 'shoot');
 
-    window.onload = function () {
-      resizeCanvas();
-      setupInputs();
-      initStage(0);
-      requestAnimationFrame(gameLoop);
-    };
+    document.getElementById('btn-genre').addEventListener('click', cycleGenre);
+    document.getElementById('genre-badge').addEventListener('click', cycleGenre);
+
+    // Audio Modal & Settings
+    document.getElementById('btn-open-audio').addEventListener('click', () => {
+      document.getElementById('audio-modal').classList.remove('hidden');
+    });
+    document.getElementById('btn-close-audio').addEventListener('click', () => {
+      document.getElementById('audio-modal').classList.add('hidden');
+    });
+
+    document.getElementById('btn-toggle-sound').addEventListener('click', () => {
+      const isMuted = sound.toggleMute();
+      document.getElementById('sound-icon').className = isMuted
+        ? 'ph-bold ph-speaker-slash text-rose-400 text-lg md:text-xl'
+        : 'ph-bold ph-speaker-high text-lg md:text-xl';
+    });
+
+    document.getElementById('btn-toggle-touch').addEventListener('click', () => {
+      const tc = document.getElementById('touch-controls');
+      tc.classList.toggle('hidden');
+    });
+
+    // Start Game Button
+    document.getElementById('btn-start-game').addEventListener('click', () => {
+      sound.init();
+      document.getElementById('start-modal').classList.add('hidden');
+      gameState = 'PLAYING';
+      initLevel(0);
+      // Attempt fullscreen
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    });
+
+    // Audio Deck Save & File Bindings
+    function setupAudioInput(inputId, fileId, storageKey, isBlobKey) {
+      const input = document.getElementById(inputId);
+      const fileInput = document.getElementById(fileId);
+
+      const savedUrl = localStorage.getItem(`custom_${storageKey}`);
+      if (savedUrl && input) input.value = savedUrl;
+
+      if (fileInput) {
+        fileInput.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            await saveBlobToDB(isBlobKey, file);
+            alert(`✅ Saved "${file.name}" into local storage!`);
+          }
+        });
+      }
+    }
+
+    // Bind all inputs & pools
+    ['phonk', 'rock', 'reggae', 'viral'].forEach(g => {
+      setupAudioInput(`audio-url-${g}`, `audio-file-${g}`, `track_${g}`, `track_${g}`);
+    });
+    [1, 2, 3].forEach(idx => {
+      setupAudioInput(`sfx-url-solo-${idx}`, `sfx-file-solo-${idx}`, `sfx_solo_${idx}`, `sfx_solo_${idx}`);
+      setupAudioInput(`sfx-url-defeat-${idx}`, `sfx-file-defeat-${idx}`, `sfx_defeat_${idx}`, `sfx_defeat_${idx}`);
+    });
+    setupAudioInput('sfx-url-jump', 'sfx-file-jump', 'sfx_jump', 'sfx_jump');
+    setupAudioInput('sfx-url-switch', 'sfx-file-switch', 'sfx_switch', 'sfx_switch');
+    setupAudioInput('sfx-url-flask', 'sfx-file-flask', 'sfx_flask', 'sfx_flask');
+
+    document.getElementById('btn-save-audio').addEventListener('click', () => {
+      // Save URLs
+      ['phonk', 'rock', 'reggae', 'viral'].forEach(g => {
+        const val = document.getElementById(`audio-url-${g}`).value.trim();
+        if (val) localStorage.setItem(`custom_track_${g}`, val);
+      });
+      [1, 2, 3].forEach(idx => {
+        const soloVal = document.getElementById(`sfx-url-solo-${idx}`).value.trim();
+        if (soloVal) localStorage.setItem(`custom_sfx_solo_${idx}`, soloVal);
+        const defVal = document.getElementById(`sfx-url-defeat-${idx}`).value.trim();
+        if (defVal) localStorage.setItem(`custom_sfx_defeat_${idx}`, defVal);
+      });
+      ['jump', 'switch', 'flask'].forEach(k => {
+        const val = document.getElementById(`sfx-url-${k}`).value.trim();
+        if (val) localStorage.setItem(`custom_sfx_${k}`, val);
+      });
+
+      sound.loadAllAudio();
+      document.getElementById('audio-modal').classList.add('hidden');
+    });
+
+    // Start render loop
+    requestAnimationFrame(gameLoop);
   </script>
 </body>
 </html>
-```
