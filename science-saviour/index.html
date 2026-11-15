@@ -2618,5 +2618,14 @@
     scoreboard.renderTable();
     requestAnimationFrame(gameLoop);
   </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js?v=1.0.1')
+          .then(reg => console.log('Game SW registered for Science Saviour', reg.scope))
+          .catch(err => console.error('ServiceWorker registration failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>
