@@ -1,108 +1,180 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full w-full bg-slate-950 text-white select-none overflow-hidden">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>The Alchemix: Science Saviour</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;700;900&display=swap');
-    
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600;800;900&display=swap');
+
     * {
       box-sizing: border-box;
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
-      touch-action: manipulation;
+      touch-action: none;
     }
-    
+
     body {
       margin: 0;
       padding: 0;
-      background-color: #030014;
       font-family: 'Outfit', sans-serif;
+      background: #030108;
       overflow: hidden;
     }
-    
+
     .font-retro {
       font-family: 'Press Start 2P', monospace;
     }
 
-    canvas {
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
-    }
-
-    .touch-btn {
-      touch-action: none;
-      user-select: none;
+    .scanlines {
+      background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0, 0, 0, 0.22) 50%,
+        rgba(0, 0, 0, 0.22)
+      );
+      background-size: 100% 4px;
+      pointer-events: none;
     }
   </style>
 </head>
-<body class="w-screen h-screen flex flex-col items-center justify-center bg-slate-950 text-white relative">
+<body class="h-screen w-screen flex flex-col justify-between relative bg-slate-950 overflow-hidden">
 
-  <!-- HUD TOP BAR -->
-  <header class="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-2 bg-slate-950/80 backdrop-blur-md border-b border-purple-500/30 text-xs">
-    <a href="../" class="flex items-center gap-2 text-purple-400 hover:text-pink-400 transition-colors font-retro text-[10px]">
-      <span>&larr;</span> <span>HUB</span>
-    </a>
-    
-    <div class="flex items-center gap-3 sm:gap-6 font-retro text-[9px] sm:text-[11px]">
-      <div>LVL: <span id="hud-level" class="text-amber-400">1</span>/5</div>
-      <div>HP: <span id="hud-hp" class="text-emerald-400">100</span>%</div>
-      <div>GENRE: <span id="hud-genre" class="text-pink-400">PHONK</span></div>
-      <div>SCORE: <span id="hud-score" class="text-cyan-400">0</span></div>
+  <div class="fixed inset-0 scanlines z-30"></div>
+
+  <!-- TOP HUD BAR -->
+  <header class="w-full bg-slate-950/90 border-b border-purple-500/30 px-3 sm:px-6 py-2 flex items-center justify-between z-40 shrink-0">
+    <div class="flex items-center gap-3">
+      <a href="../" class="px-2.5 py-1.5 rounded-lg bg-purple-950/80 border border-purple-500/40 text-purple-300 hover:text-white hover:border-pink-500 flex items-center gap-1.5 text-[10px] font-retro transition-all">
+        <i class="ph-bold ph-arrow-left"></i> <span>HUB</span>
+      </a>
+      <div class="hidden sm:block">
+        <div id="hud-world-name" class="font-retro text-[10px] text-amber-300 tracking-wider">LVL 1: DISINFO DISTRICT</div>
+      </div>
     </div>
 
-    <button id="btn-audio-toggle" class="px-2 py-1 bg-purple-900/60 border border-purple-500/40 rounded text-[10px] font-retro text-purple-300">
-      🔊
-    </button>
+    <!-- Center Stats -->
+    <div class="flex items-center gap-3 sm:gap-6">
+      <!-- Health Bar -->
+      <div class="flex items-center gap-1.5">
+        <span class="font-retro text-[9px] text-emerald-400">HP</span>
+        <div class="w-20 sm:w-28 h-3 bg-slate-900 rounded-full border border-slate-700 overflow-hidden p-0.5">
+          <div id="hud-hp-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-150" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Rescued Scientists -->
+      <div class="flex items-center gap-1 font-retro text-[9px] sm:text-[10px] text-cyan-300">
+        <span>🧪</span>
+        <span id="hud-rescued">0/3</span>
+      </div>
+
+      <!-- Active Genre Badge -->
+      <button id="btn-genre-hud" class="px-2.5 py-1 rounded-md bg-pink-950/90 border border-pink-500/60 font-retro text-[9px] text-pink-300 shadow-[0_0_10px_rgba(236,72,153,0.4)] active:scale-95 transition-all">
+        🎵 <span id="hud-genre">PHONK</span>
+      </button>
+
+      <!-- Score -->
+      <div class="hidden md:flex items-center gap-1 font-retro text-[10px] text-amber-300">
+        <span>PTS:</span>
+        <span id="hud-score">0000</span>
+      </div>
+    </div>
+
+    <!-- Audio Controls -->
+    <div class="flex items-center gap-2">
+      <button id="btn-mute" class="w-8 h-8 rounded-lg bg-slate-900 border border-purple-500/40 flex items-center justify-center text-sm hover:border-pink-500 transition-colors">
+        🔊
+      </button>
+    </div>
   </header>
 
-  <!-- CANVAS GAME CONTAINER -->
-  <div class="relative w-full h-full flex items-center justify-center pt-8 pb-16">
-    <canvas id="gameCanvas" class="w-full h-full max-w-5xl max-h-[720px] shadow-2xl border border-purple-900/40 rounded-xl bg-slate-900"></canvas>
-  </div>
-
-  <!-- ON-SCREEN MOBILE CONTROLS -->
-  <div class="absolute bottom-2 left-2 right-2 z-20 flex justify-between items-center pointer-events-none md:hidden">
-    <!-- Directional Pad -->
-    <div class="flex gap-2 pointer-events-auto">
-      <button id="touch-left" class="touch-btn w-14 h-14 bg-slate-900/80 border border-purple-500/50 rounded-2xl flex items-center justify-center text-xl text-purple-300 active:bg-purple-600 active:text-white shadow-lg">
-        ◀
-      </button>
-      <button id="touch-right" class="touch-btn w-14 h-14 bg-slate-900/80 border border-purple-500/50 rounded-2xl flex items-center justify-center text-xl text-purple-300 active:bg-purple-600 active:text-white shadow-lg">
-        ▶
-      </button>
+  <!-- BOSS HEALTH BAR OVERLAY -->
+  <div id="boss-hud" class="hidden absolute top-14 left-1/2 -translate-x-1/2 z-30 w-11/12 max-w-lg bg-slate-950/90 border-2 border-red-500/80 rounded-2xl p-2.5 shadow-[0_0_25px_rgba(239,68,68,0.5)] backdrop-blur-md">
+    <div class="flex justify-between items-center mb-1">
+      <span id="boss-name" class="font-retro text-[10px] text-red-400 tracking-wider">BOSS: BARON VON CLICKBAIT</span>
+      <span id="boss-hp-text" class="font-retro text-[9px] text-slate-300">100%</span>
     </div>
-
-    <!-- Actions Pad -->
-    <div class="flex gap-2 pointer-events-auto">
-      <button id="touch-switch" class="touch-btn w-12 h-12 bg-pink-950/80 border border-pink-500/50 rounded-2xl flex items-center justify-center text-xs font-retro text-pink-300 active:bg-pink-600 active:text-white shadow-lg">
-        GENRE
-      </button>
-      <button id="touch-shoot" class="touch-btn w-14 h-14 bg-cyan-950/80 border border-cyan-500/50 rounded-2xl flex items-center justify-center text-xl text-cyan-300 active:bg-cyan-600 active:text-white shadow-lg">
-        ⚡
-      </button>
-      <button id="touch-jump" class="touch-btn w-14 h-14 bg-purple-950/80 border border-purple-500/50 rounded-2xl flex items-center justify-center text-xl text-purple-300 active:bg-purple-600 active:text-white shadow-lg">
-        ▲
-      </button>
+    <div class="w-full h-3.5 bg-slate-900 rounded-lg overflow-hidden border border-red-900/60 p-0.5">
+      <div id="boss-hp-bar" class="h-full bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 rounded transition-all duration-100" style="width: 100%;"></div>
     </div>
   </div>
 
-  <!-- GAME SCRIPT WITH VERSION CACHE-BUSTING -->
+  <!-- MAIN CANVAS WRAPPER -->
+  <main class="flex-1 w-full h-full flex items-center justify-center relative overflow-hidden bg-slate-950">
+    <canvas id="gameCanvas" class="w-full h-full object-contain"></canvas>
+
+    <!-- START / LEVEL TRANSITION / VICTORY OVERLAY MODAL -->
+    <div id="modal-overlay" class="absolute inset-0 z-40 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="max-w-md w-full rounded-3xl bg-slate-900 border-2 border-purple-500 p-6 text-center shadow-[0_0_50px_rgba(168,85,247,0.5)]">
+        <div id="modal-badge" class="inline-block px-3 py-1 rounded-full bg-purple-950 border border-purple-500/50 font-retro text-[9px] text-purple-300 mb-3">
+          THE ALCHEMIX ARCADE
+        </div>
+        <h1 id="modal-title" class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 mb-2">
+          SCIENCE SAVIOUR
+        </h1>
+        <p id="modal-desc" class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-5">
+          Corrupt Disinformation Moguls have kidnapped the world's top scientists! Wield the Sonic Alchemix Guitar, switch musical genres to adapt your firepower, free the scientists, and defeat all 5 bosses.
+        </p>
+
+        <div class="grid grid-cols-2 gap-2 text-left bg-slate-950/90 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-300 mb-5">
+          <div><span class="text-pink-400 font-bold">Move:</span> A/D or Arrows</div>
+          <div><span class="text-cyan-400 font-bold">Jump:</span> W / Up / Space</div>
+          <div><span class="text-amber-400 font-bold">Sonic Blast:</span> J / Z / Click</div>
+          <div><span class="text-emerald-400 font-bold">Switch Genre:</span> K / X / Shift</div>
+        </div>
+
+        <button id="btn-modal-action" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 font-retro text-xs text-white tracking-wider shadow-lg hover:brightness-110 active:scale-95 transition-all">
+          START MISSION
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- MOBILE & TABLET ON-SCREEN TOUCH CONTROLS -->
+  <div class="fixed bottom-3 left-3 right-3 z-30 flex items-end justify-between pointer-events-none lg:hidden">
+    <!-- D-Pad Left/Right -->
+    <div class="flex gap-2.5 pointer-events-auto">
+      <button id="t-left" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-900/80 border-2 border-purple-500/60 text-purple-300 flex items-center justify-center text-2xl active:bg-purple-600 active:text-white active:scale-95 shadow-lg backdrop-blur-sm">
+        <i class="ph-bold ph-caret-left"></i>
+      </button>
+      <button id="t-right" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-900/80 border-2 border-purple-500/60 text-purple-300 flex items-center justify-center text-2xl active:bg-purple-600 active:text-white active:scale-95 shadow-lg backdrop-blur-sm">
+        <i class="ph-bold ph-caret-right"></i>
+      </button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-end gap-2.5 pointer-events-auto">
+      <button id="t-genre" class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-pink-950/85 border-2 border-pink-500/60 text-pink-300 flex flex-col items-center justify-center font-retro text-[8px] active:bg-pink-600 active:text-white active:scale-95 shadow-lg backdrop-blur-sm">
+        <i class="ph-bold ph-music-notes text-base mb-0.5"></i>
+        <span>MIX</span>
+      </button>
+      <button id="t-shoot" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-950/85 border-2 border-amber-400/70 text-amber-300 flex flex-col items-center justify-center font-retro text-[8px] active:bg-amber-500 active:text-slate-950 active:scale-95 shadow-lg backdrop-blur-sm">
+        <i class="ph-bold ph-lightning text-xl"></i>
+        <span>RIFF</span>
+      </button>
+      <button id="t-jump" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-cyan-950/85 border-2 border-cyan-400/70 text-cyan-300 flex flex-col items-center justify-center font-retro text-[8px] active:bg-cyan-500 active:text-slate-950 active:scale-95 shadow-lg backdrop-blur-sm">
+        <i class="ph-bold ph-arrow-fat-up text-xl"></i>
+        <span>JUMP</span>
+      </button>
+    </div>
+  </div>
+
   <script>
     // =========================================================================
-    // VERSION CONTROL (Increment to bust GitHub Pages caching for assets)
+    // 1. VERSION CONTROL & AUDIO ASSET MANAGEMENT
     // =========================================================================
-    const GAME_VERSION = '1.0.0';
+    const GAME_VERSION = '1.0.2';
 
     function getSoundUrl(filename) {
       return `./sounds/${filename}?v=${GAME_VERSION}`;
     }
 
-    // Audio Asset Paths with Versioning[cite: 1]
-    const AUDIO_TRACKS = {
+    const SOUND_PATHS = {
       phonk: getSoundUrl('phonk.mp3'),
       rock: getSoundUrl('rock.mp3'),
       reggae: getSoundUrl('reggae.mp3'),
@@ -110,325 +182,1432 @@
       jump: getSoundUrl('jump.wav'),
       flask: getSoundUrl('flask.wav'),
       switch: getSoundUrl('switch.wav'),
+      solo_1: getSoundUrl('solo_1.wav'),
+      solo_2: getSoundUrl('solo_2.wav'),
+      solo_3: getSoundUrl('solo_3.wav'),
+      solo_4: getSoundUrl('solo_4.wav'),
       defeat_1: getSoundUrl('defeat_1.wav'),
       defeat_2: getSoundUrl('defeat_2.wav'),
       defeat_3: getSoundUrl('defeat_3.wav'),
       defeat_4: getSoundUrl('defeat_4.wav'),
-      defeat_5: getSoundUrl('defeat_5.wav'),
-      solo_1: getSoundUrl('solo_1.wav'),
-      solo_2: getSoundUrl('solo_2.wav'),
-      solo_3: getSoundUrl('solo_3.wav'),
-      solo_4: getSoundUrl('solo_4.wav')
+      defeat_5: getSoundUrl('defeat_5.wav')
     };
 
-    // Canvas & Context Setup
+    const bgmPool = {};
+    let activeBgm = null;
+    let activeBgmKey = '';
+    let isMuted = false;
+
+    function initAudioPool() {
+      ['phonk', 'rock', 'reggae', 'viral'].forEach(key => {
+        const audio = new Audio(SOUND_PATHS[key]);
+        audio.loop = true;
+        audio.volume = 0.45;
+        bgmPool[key] = audio;
+      });
+    }
+    initAudioPool();
+
+    function playSfx(key, volume = 0.65) {
+      if (isMuted || !SOUND_PATHS[key]) return;
+      try {
+        const sfx = new Audio(SOUND_PATHS[key]);
+        sfx.volume = volume;
+        sfx.play().catch(() => {});
+      } catch (e) {}
+    }
+
+    function playBgm(key) {
+      if (activeBgmKey === key && activeBgm && !activeBgm.paused) return;
+      if (activeBgm) {
+        activeBgm.pause();
+      }
+      activeBgmKey = key;
+      activeBgm = bgmPool[key];
+      if (activeBgm && !isMuted) {
+        activeBgm.currentTime = 0;
+        activeBgm.play().catch(() => {});
+      }
+    }
+
+    // =========================================================================
+    // 2. MUSICAL GENRES (WEAPONS & BUFFS)
+    // =========================================================================
+    const GENRES = [
+      {
+        name: 'PHONK',
+        bgm: 'phonk',
+        solo: 'solo_1',
+        color: '#ec4899',
+        glow: '#f472b6',
+        fireRate: 210,
+        speed: 11,
+        damage: 18,
+        spread: 1,
+        waveAmp: 0,
+        desc: 'Heavy Bass Piercer'
+      },
+      {
+        name: 'ROCK',
+        bgm: 'rock',
+        solo: 'solo_2',
+        color: '#f59e0b',
+        glow: '#fbbf24',
+        fireRate: 300,
+        speed: 13,
+        damage: 14,
+        spread: 3, // Triple chord spread
+        waveAmp: 0,
+        desc: 'Power Chord Triple-Shot'
+      },
+      {
+        name: 'REGGAE',
+        bgm: 'reggae',
+        solo: 'solo_3',
+        color: '#10b981',
+        glow: '#34d399',
+        fireRate: 240,
+        speed: 9.5,
+        damage: 22,
+        spread: 1,
+        waveAmp: 4.5, // Sine wave dub bass
+        desc: 'Resonant Dub Wave'
+      },
+      {
+        name: 'VIRAL',
+        bgm: 'viral',
+        solo: 'solo_4',
+        color: '#06b6d4',
+        glow: '#22d3ee',
+        fireRate: 130,
+        speed: 14,
+        damage: 11,
+        spread: 1,
+        waveAmp: 1.5,
+        desc: 'Hyper-Tempo Synth Rapid'
+      }
+    ];
+
+    // =========================================================================
+    // 3. FIVE THEMED SIDE-SCROLLING LEVELS & BOSS CONFIGS
+    // =========================================================================
+    const LEVELS = [
+      {
+        id: 1,
+        title: "LVL 1: DISINFO DISTRICT",
+        subtitle: "Rescue Dr. Vance from the Tabloid Tower",
+        theme: "cyber",
+        width: 2800,
+        skyTop: "#090418",
+        skyBottom: "#1e1035",
+        platFill: "#1e1b4b",
+        platStroke: "#a855f7",
+        hazardColor: "#ec4899",
+        enemyType: "drone",
+        boss: {
+          name: "BARON VON CLICKBAIT",
+          hp: 320,
+          defeatSfx: "defeat_1",
+          type: "tv_mech",
+          color: "#ec4899"
+        }
+      },
+      {
+        id: 2,
+        title: "LVL 2: BIO-SLUDGE REFINERY",
+        subtitle: "Purify the Pseudo-Serum Vat & Free Dr. Chen",
+        theme: "bio",
+        width: 3000,
+        skyTop: "#021810",
+        skyBottom: "#063726",
+        platFill: "#064e3b",
+        platStroke: "#10b981",
+        hazardColor: "#84cc16",
+        enemyType: "spore",
+        boss: {
+          name: "DR. QUACKENSTEIN",
+          hp: 420,
+          defeatSfx: "defeat_2",
+          type: "alchemist_mech",
+          color: "#10b981"
+        }
+      },
+      {
+        id: 3,
+        title: "LVL 3: ECHO CHAMBER CITADEL",
+        subtitle: "Shatter the Acoustic Mirrors & Save Prof. Kofi",
+        theme: "citadel",
+        width: 3100,
+        skyTop: "#1f0808",
+        skyBottom: "#3b0d1e",
+        platFill: "#3f1d2b",
+        platStroke: "#f59e0b",
+        hazardColor: "#ef4444",
+        enemyType: "spider",
+        boss: {
+          name: "THE RAGEBAIT GOLIATH",
+          hp: 540,
+          defeatSfx: "defeat_3",
+          type: "speaker_titan",
+          color: "#f59e0b"
+        }
+      },
+      {
+        id: 4,
+        title: "LVL 4: DEEPFAKE DYNAMO",
+        subtitle: "Decompile the Hologram Grid & Rescue Dr. Elena",
+        theme: "synth",
+        width: 3200,
+        skyTop: "#041226",
+        skyBottom: "#0f294a",
+        platFill: "#172554",
+        platStroke: "#06b6d4",
+        hazardColor: "#38bdf8",
+        enemyType: "glitch",
+        boss: {
+          name: "PHANTOM DEEPFAKE",
+          hp: 650,
+          defeatSfx: "defeat_4",
+          type: "hologram_lord",
+          color: "#06b6d4"
+        }
+      },
+      {
+        id: 5,
+        title: "LVL 5: THE ALGORITHM CORE",
+        subtitle: "Final Showdown: Overthrow The Masterframe",
+        theme: "core",
+        width: 3400,
+        skyTop: "#14021c",
+        skyBottom: "#2e0729",
+        platFill: "#270938",
+        platStroke: "#f43f5e",
+        hazardColor: "#f43f5e",
+        enemyType: "sentinel",
+        boss: {
+          name: "OMEGA ALGORITHM",
+          hp: 820,
+          defeatSfx: "defeat_5",
+          type: "omega_core",
+          color: "#f43f5e"
+        }
+      }
+    ];
+
+    // =========================================================================
+    // 4. GAME STATE & ENTITIES
+    // =========================================================================
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = 960;
-    canvas.height = 540;
+    const VIEW_W = 960;
+    const VIEW_H = 540;
+    canvas.width = VIEW_W;
+    canvas.height = VIEW_H;
 
-    // HUD Elements
-    const hudLevel = document.getElementById('hud-level');
-    const hudHp = document.getElementById('hud-hp');
-    const hudGenre = document.getElementById('hud-genre');
-    const hudScore = document.getElementById('hud-score');
-    const btnAudioToggle = document.getElementById('btn-audio-toggle');
+    let gameState = 'MENU'; // MENU, PLAYING, LEVEL_CLEAR, GAME_OVER, VICTORY
+    let currentLevelIdx = 0;
+    let genreIdx = 0;
+    let frameCount = 0;
+    let cameraX = 0;
+    let screenShake = 0;
 
-    // Audio Engine
-    let audioMuted = false;
-    let currentBgm = null;
-    const soundCache = {};
-
-    function playSound(name, isLoop = false) {
-      if (audioMuted) return null;
-      try {
-        const audio = new Audio(AUDIO_TRACKS[name]);
-        audio.loop = isLoop;
-        audio.play().catch(() => {});
-        return audio;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function switchBgm(genreName) {
-      if (currentBgm) {
-        currentBgm.pause();
-        currentBgm.currentTime = 0;
-      }
-      currentBgm = playSound(genreName, true);
-    }
-
-    btnAudioToggle.addEventListener('click', () => {
-      audioMuted = !audioMuted;
-      btnAudioToggle.textContent = audioMuted ? '🔇' : '🔊';
-      if (audioMuted && currentBgm) {
-        currentBgm.pause();
-      } else if (!audioMuted && currentBgm) {
-        currentBgm.play().catch(() => {});
-      }
-    });
-
-    // Game Genres & Modes
-    const GENRES = [
-      { name: 'PHONK', color: '#ec4899', bulletSpeed: 10, fireRate: 140 },
-      { name: 'GUITAR', color: '#f59e0b', bulletSpeed: 14, fireRate: 200 },
-      { name: 'REGGAE', color: '#10b981', bulletSpeed: 8, fireRate: 90 }
-    ];
-    let currentGenreIndex = 0;
-
-    // Player State
     const player = {
-      x: 80,
-      y: 380,
-      width: 32,
-      height: 48,
+      x: 100,
+      y: 350,
+      w: 38,
+      h: 54,
       vx: 0,
       vy: 0,
-      speed: 4.8,
-      jumpStrength: -12.5,
-      isGrounded: false,
+      speed: 5.2,
+      jumpPower: -13.2,
+      grounded: false,
+      facing: 1,
       hp: 100,
+      maxHp: 100,
       score: 0,
-      lastShotTime: 0
+      invuln: 0,
+      lastShot: 0,
+      rescuedCount: 0,
+      walkCycle: 0
     };
 
-    // Entities
-    let bullets = [];
+    let platforms = [];
+    let movingPlatforms = [];
+    let hazards = [];
     let flasks = [];
+    let scientists = [];
     let enemies = [];
-    let level = 1;
+    let bullets = [];
+    let enemyBullets = [];
+    let particles = [];
+    let floatingTexts = [];
+    let boss = null;
 
-    // Platforms
-    const platforms = [
-      { x: 0, y: 480, w: 960, h: 60 },
-      { x: 220, y: 380, w: 160, h: 20 },
-      { x: 440, y: 300, w: 160, h: 20 },
-      { x: 660, y: 220, w: 180, h: 20 },
-      { x: 340, y: 160, w: 140, h: 20 }
-    ];
+    // =========================================================================
+    // 5. PROCEDURAL LEVEL BUILDER
+    // =========================================================================
+    function buildLevel(idx) {
+      const cfg = LEVELS[idx];
+      platforms = [];
+      movingPlatforms = [];
+      hazards = [];
+      flasks = [];
+      scientists = [];
+      enemies = [];
+      bullets = [];
+      enemyBullets = [];
+      particles = [];
+      floatingTexts = [];
 
-    // Spawn Pickups
-    function initLevel() {
-      flasks = [
-        { x: 280, y: 340, collected: false },
-        { x: 500, y: 260, collected: false },
-        { x: 720, y: 180, collected: false },
-        { x: 390, y: 120, collected: false }
-      ];
+      player.x = 90;
+      player.y = 340;
+      player.vx = 0;
+      player.vy = 0;
+      player.hp = player.maxHp;
+      player.invuln = 0;
+      player.rescuedCount = 0;
+      cameraX = 0;
 
-      enemies = [
-        { x: 300, y: 350, vx: 1.5, minX: 230, maxX: 360, hp: 30, maxHp: 30 },
-        { x: 520, y: 270, vx: -1.5, minX: 450, maxX: 580, hp: 40, maxHp: 40 },
-        { x: 740, y: 190, vx: 1.8, minX: 680, maxX: 820, hp: 50, maxHp: 50 }
-      ];
+      // Ground Segments with Pit/Hazard Gaps
+      let cursor = 0;
+      while (cursor < cfg.width - 750) {
+        const segW = 340 + Math.floor(Math.random() * 220);
+        platforms.push({ x: cursor, y: 470, w: segW, h: 70, isGround: true });
+        
+        // Add laser/sludge pit between ground blocks
+        const gapW = 90 + Math.floor(Math.random() * 50);
+        if (cursor > 200) {
+          hazards.push({ x: cursor + segW, y: 505, w: gapW, h: 35 });
+          // Bridge platform high above gap
+          platforms.push({
+            x: cursor + segW - 20,
+            y: 340 - (idx % 2) * 30,
+            w: gapW + 40,
+            h: 18,
+            isGround: false
+          });
+        }
+        cursor += segW + gapW;
+      }
 
-      hudLevel.textContent = level;
-      switchBgm('phonk');
+      // Boss Arena Flat Floor
+      const arenaStart = cfg.width - 750;
+      platforms.push({ x: arenaStart, y: 470, w: 800, h: 70, isGround: true });
+      // Arena elevated ledges
+      platforms.push({ x: arenaStart + 90, y: 355, w: 130, h: 18, isGround: false });
+      platforms.push({ x: arenaStart + 480, y: 355, w: 130, h: 18, isGround: false });
+      platforms.push({ x: arenaStart + 285, y: 250, w: 130, h: 18, isGround: false });
+
+      // Elevated Platforms, Moving Platforms, Enemies & Pickups along level
+      const numSections = 6;
+      const secSpan = (arenaStart - 350) / numSections;
+
+      for (let i = 0; i < numSections; i++) {
+        const sx = 300 + i * secSpan;
+        const py1 = 350 - (i % 3) * 45;
+        const pw1 = 150;
+
+        if (i % 2 === 1) {
+          movingPlatforms.push({
+            x: sx,
+            y: py1,
+            w: 130,
+            h: 18,
+            baseX: sx,
+            baseY: py1,
+            rangeX: 70,
+            rangeY: 0,
+            speed: 0.03 + idx * 0.005,
+            phase: i
+          });
+        } else {
+          platforms.push({ x: sx, y: py1, w: pw1, h: 18, isGround: false });
+        }
+
+        // Upper tier platform
+        const py2 = py1 - 105;
+        platforms.push({ x: sx + 70, y: py2, w: 135, h: 18, isGround: false });
+
+        // Flasks (Health & Score)
+        flasks.push({ x: sx + 45, y: py1 - 35, collected: false, heal: 15 });
+        flasks.push({ x: sx + 120, y: py2 - 35, collected: false, heal: 15 });
+
+        // Patrol Enemies
+        enemies.push({
+          x: sx + 40,
+          y: 422,
+          w: 36,
+          h: 44,
+          vx: (2.0 + idx * 0.35) * (i % 2 === 0 ? 1 : -1),
+          minX: sx - 50,
+          maxX: sx + 220,
+          hp: 35 + idx * 12,
+          maxHp: 35 + idx * 12,
+          type: cfg.enemyType,
+          shootTimer: Math.floor(Math.random() * 90),
+          phase: Math.random() * Math.PI * 2
+        });
+
+        // Platform Enemy
+        enemies.push({
+          x: sx + 85,
+          y: py2 - 44,
+          w: 36,
+          h: 44,
+          vx: 1.4,
+          minX: sx + 70,
+          maxX: sx + 170,
+          hp: 30 + idx * 10,
+          maxHp: 30 + idx * 10,
+          type: cfg.enemyType,
+          shootTimer: Math.floor(Math.random() * 100),
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+
+      // 3 Trapped Scientists per Level
+      for (let s = 0; s < 3; s++) {
+        const scX = 480 + s * ((arenaStart - 650) / 2.6);
+        scientists.push({
+          x: scX,
+          y: 416,
+          w: 36,
+          h: 54,
+          freed: false,
+          scientistName: ['Dr. Vance', 'Dr. Chen', 'Prof. Kofi', 'Dr. Elena', 'Dr. Nobel'][(idx + s) % 5]
+        });
+      }
+
+      // Boss Initialization
+      boss = {
+        x: cfg.width - 230,
+        y: 310,
+        baseY: 310,
+        w: 110,
+        h: 140,
+        hp: cfg.boss.hp,
+        maxHp: cfg.boss.hp,
+        name: cfg.boss.name,
+        type: cfg.boss.type,
+        color: cfg.boss.color,
+        defeatSfx: cfg.boss.defeatSfx,
+        active: false,
+        defeated: false,
+        vx: -2.2,
+        minX: arenaStart + 80,
+        maxX: cfg.width - 170,
+        attackTimer: 0,
+        phase: 0,
+        hitFlash: 0
+      };
+
+      updateHud();
+      document.getElementById('hud-world-name').textContent = cfg.title;
+      document.getElementById('boss-hud').classList.add('hidden');
+      playBgm(GENRES[genreIdx].bgm);
     }
 
-    // Input Handling
+    // =========================================================================
+    // 6. DETAILED SPRITE RENDERING (HERO, ENEMIES, SCIENTISTS, BOSSES)
+    // =========================================================================
+    function drawWizard(ctx, p) {
+      ctx.save();
+      ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+      if (p.facing < 0) ctx.scale(-1, 1);
+
+      const genre = GENRES[genreIdx];
+      const bob = p.grounded ? Math.sin(p.walkCycle * 0.35) * 2.5 : -2;
+
+      // Invulnerability blink
+      if (p.invuln > 0 && Math.floor(frameCount / 3) % 2 === 0) {
+        ctx.globalAlpha = 0.45;
+      }
+
+      // Neon Aura
+      ctx.shadowColor = genre.color;
+      ctx.shadowBlur = 14;
+
+      // Flowing Alchemix Cape
+      ctx.fillStyle = '#4c1d95';
+      ctx.beginPath();
+      ctx.moveTo(-10, -8 + bob);
+      ctx.lineTo(-24 - Math.abs(p.vx) * 1.5, 22 + Math.sin(frameCount * 0.2) * 3);
+      ctx.lineTo(-4, 24 + bob);
+      ctx.closePath();
+      ctx.fill();
+
+      // Boots / Legs
+      const legSwing = p.grounded && Math.abs(p.vx) > 0.1 ? Math.sin(p.walkCycle * 0.4) * 7 : 0;
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(-8 + legSwing, 16, 7, 11);
+      ctx.fillRect(2 - legSwing, 16, 7, 11);
+
+      // Wizard Robe Tunic
+      ctx.fillStyle = '#6d28d9';
+      ctx.beginPath();
+      ctx.moveTo(-12, -10 + bob);
+      ctx.lineTo(12, -10 + bob);
+      ctx.lineTo(15, 18 + bob);
+      ctx.lineTo(-15, 18 + bob);
+      ctx.closePath();
+      ctx.fill();
+
+      // Gold Trim Belt
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-13, 4 + bob, 26, 4);
+
+      // Head & Face
+      ctx.fillStyle = '#fde68a';
+      ctx.beginPath();
+      ctx.arc(0, -15 + bob, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cool Neon Visor Sunglasses
+      ctx.fillStyle = genre.color;
+      ctx.fillRect(0, -18 + bob, 10, 4);
+
+      // White Alchemix Beard
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(-6, -11 + bob);
+      ctx.lineTo(8, -11 + bob);
+      ctx.lineTo(2, 2 + bob);
+      ctx.closePath();
+      ctx.fill();
+
+      // Pointed Wizard Hat
+      ctx.fillStyle = '#3b0764';
+      ctx.beginPath();
+      ctx.moveTo(-16, -21 + bob);
+      ctx.lineTo(16, -21 + bob);
+      ctx.lineTo(0, -44 + bob);
+      ctx.closePath();
+      ctx.fill();
+      // Hat Band
+      ctx.fillStyle = genre.color;
+      ctx.fillRect(-11, -24 + bob, 22, 4);
+
+      // Electric Guitar / Sonic Staff
+      ctx.save();
+      ctx.translate(4, 2 + bob);
+      ctx.rotate(-0.18);
+      // Guitar Body
+      ctx.fillStyle = genre.color;
+      ctx.beginPath();
+      ctx.moveTo(-8, -6);
+      ctx.lineTo(8, 0);
+      ctx.lineTo(-6, 8);
+      ctx.lineTo(-2, 0);
+      ctx.closePath();
+      ctx.fill();
+      // Guitar Neck
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(6, -2, 16, 3);
+      // Headstock
+      ctx.fillStyle = genre.color;
+      ctx.fillRect(20, -4, 6, 5);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function drawEnemy(ctx, en) {
+      ctx.save();
+      ctx.translate(en.x + en.w / 2, en.y + en.h / 2);
+      const hover = Math.sin(frameCount * 0.1 + en.phase) * 4;
+
+      if (en.type === 'drone') {
+        // Cyber Media Drone
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.arc(0, hover, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ec4899';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // Rotor blades
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(-20, -18 + hover, 40, 3);
+        // Red Recording Eye
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(en.vx >= 0 ? 5 : -5, hover, 5, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (en.type === 'spore') {
+        // Toxic Bio-Mutant
+        ctx.fillStyle = '#065f46';
+        ctx.beginPath();
+        ctx.arc(0, hover, 16, Math.PI, 0);
+        ctx.lineTo(14, 16 + hover);
+        ctx.lineTo(-14, 16 + hover);
+        ctx.closePath();
+        ctx.fill();
+        // Glowing Pustules
+        ctx.fillStyle = '#a3e635';
+        ctx.beginPath();
+        ctx.arc(-6, -4 + hover, 4, 0, Math.PI * 2);
+        ctx.arc(6, -6 + hover, 3, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (en.type === 'spider') {
+        // Clickbait Crawler Bot
+        ctx.fillStyle = '#451a03';
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2.5;
+        for (let l = -1; l <= 1; l += 2) {
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(l * 18, -8 + Math.sin(frameCount * 0.25) * 4);
+          ctx.lineTo(l * 22, 14);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(0, 2, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(-6, -2, 4, 4);
+        ctx.fillRect(2, -2, 4, 4);
+      } else if (en.type === 'glitch') {
+        // Deepfake Glitch Specter
+        const jitter = (Math.random() - 0.5) * 4;
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.75)';
+        ctx.fillRect(-14 + jitter, -18 + hover, 28, 36);
+        ctx.strokeStyle = '#67e8f9';
+        ctx.strokeRect(-14 - jitter, -18 + hover, 28, 36);
+        ctx.fillStyle = '#083344';
+        ctx.fillRect(-8, -8 + hover, 6, 6);
+        ctx.fillRect(2, -8 + hover, 6, 6);
+      } else {
+        // Algorithm Firewall Sentinel
+        ctx.fillStyle = '#4c0519';
+        ctx.strokeStyle = '#f43f5e';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -20 + hover);
+        ctx.lineTo(18, 0 + hover);
+        ctx.lineTo(0, 20 + hover);
+        ctx.lineTo(-18, 0 + hover);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#fb7185';
+        ctx.beginPath();
+        ctx.arc(0, hover, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Enemy HP Bar
+      if (en.hp < en.maxHp) {
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(-16, -28, 32, 4);
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(-16, -28, (en.hp / en.maxHp) * 32, 4);
+      }
+
+      ctx.restore();
+    }
+
+    function drawBoss(ctx, b) {
+      if (!b || b.defeated) return;
+      ctx.save();
+      ctx.translate(b.x + b.w / 2, b.y + b.h / 2);
+
+      const pulse = Math.sin(frameCount * 0.08) * 6;
+      ctx.shadowColor = b.hitFlash > 0 ? '#ffffff' : b.color;
+      ctx.shadowBlur = 22;
+
+      if (b.type === 'tv_mech') {
+        // BARON VON CLICKBAIT: Giant Broadcast Mech
+        ctx.fillStyle = b.hitFlash > 0 ? '#fff' : '#1e1b4b';
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 4;
+        // Mech Torso
+        ctx.fillRect(-48, -50 + pulse, 96, 85);
+        ctx.strokeRect(-48, -50 + pulse, 96, 85);
+        // CRT Screen Face
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(-38, -40 + pulse, 76, 52);
+        // Evil Eyes & Grin on Screen
+        ctx.fillStyle = '#ec4899';
+        ctx.beginPath();
+        ctx.moveTo(-25, -26 + pulse); ctx.lineTo(-8, -18 + pulse); ctx.lineTo(-25, -14 + pulse);
+        ctx.moveTo(25, -26 + pulse); ctx.lineTo(8, -18 + pulse); ctx.lineTo(25, -14 + pulse);
+        ctx.fill();
+        // Jagged Mouth Waveform
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let x = -28; x <= 28; x += 7) {
+          ctx.lineTo(x, -2 + pulse + (x % 14 === 0 ? -5 : 5));
+        }
+        ctx.stroke();
+        // Dual Broadcast Dish Ears
+        ctx.strokeStyle = '#f472b6';
+        ctx.beginPath();
+        ctx.moveTo(-20, -50 + pulse); ctx.lineTo(-35, -75 + pulse);
+        ctx.moveTo(20, -50 + pulse); ctx.lineTo(35, -75 + pulse);
+        ctx.stroke();
+        // Hover Thrusters
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(-32, 35 + pulse, 20, 12);
+        ctx.fillRect(12, 35 + pulse, 20, 12);
+
+      } else if (b.type === 'alchemist_mech') {
+        // DR. QUACKENSTEIN: Bio-Sludge Tank
+        ctx.fillStyle = b.hitFlash > 0 ? '#fff' : '#064e3b';
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 4;
+        // Glass Vat Dome
+        ctx.beginPath();
+        ctx.arc(0, -15 + pulse, 46, Math.PI, 0);
+        ctx.lineTo(46, 40 + pulse);
+        ctx.lineTo(-46, 40 + pulse);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Bubbling Green Liquid inside
+        ctx.fillStyle = 'rgba(132, 204, 22, 0.55)';
+        ctx.fillRect(-42, 0 + pulse, 84, 38);
+        // Giant Mutant Brain/Skull inside Vat
+        ctx.fillStyle = '#bef264';
+        ctx.beginPath();
+        ctx.arc(0, -10 + pulse, 22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.arc(-8, -12 + pulse, 5, 0, Math.PI * 2);
+        ctx.arc(8, -12 + pulse, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else if (b.type === 'speaker_titan') {
+        // THE RAGEBAIT GOLIATH: Acoustic Wall of Sound
+        ctx.fillStyle = b.hitFlash > 0 ? '#fff' : '#271206';
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 4;
+        ctx.fillRect(-52, -60 + pulse, 104, 115);
+        ctx.strokeRect(-52, -60 + pulse, 104, 115);
+        // Woofer Cones
+        const beatScale = 1 + Math.sin(frameCount * 0.3) * 0.12;
+        [-26, 22].forEach(wy => {
+          ctx.fillStyle = '#1c1917';
+          ctx.beginPath();
+          ctx.arc(0, wy + pulse, 22 * beatScale, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#ef4444';
+          ctx.stroke();
+        });
+
+      } else if (b.type === 'hologram_lord') {
+        // PHANTOM DEEPFAKE: Shifting Poly-Mask
+        ctx.fillStyle = b.hitFlash > 0 ? '#fff' : '#082f49';
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, -65 + pulse);
+        ctx.lineTo(50, -15 + pulse);
+        ctx.lineTo(32, 55 + pulse);
+        ctx.lineTo(-32, 55 + pulse);
+        ctx.lineTo(-50, -15 + pulse);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Glowing Cyber Visor
+        ctx.fillStyle = '#22d3ee';
+        ctx.fillRect(-30, -22 + pulse, 60, 12);
+
+      } else {
+        // OMEGA ALGORITHM: Final Core Matrix
+        ctx.save();
+        ctx.rotate(frameCount * 0.02);
+        ctx.strokeStyle = '#f43f5e';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(-48, -48, 96, 96);
+        ctx.rotate(Math.PI / 4);
+        ctx.strokeStyle = '#a855f7';
+        ctx.strokeRect(-48, -48, 96, 96);
+        ctx.restore();
+
+        ctx.fillStyle = b.hitFlash > 0 ? '#fff' : '#881337';
+        ctx.beginPath();
+        ctx.arc(0, 0, 32 + Math.sin(frameCount * 0.2) * 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fda4af';
+        ctx.beginPath();
+        ctx.arc(0, 0, 12, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawScientist(ctx, sc) {
+      ctx.save();
+      ctx.translate(sc.x + sc.w / 2, sc.y + sc.h / 2);
+
+      const wave = sc.freed ? Math.sin(frameCount * 0.25) * 6 : 0;
+
+      // White Lab Coat
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-10, -6 + wave, 20, 28);
+      // Blue Shirt tie
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(-3, -6 + wave, 6, 14);
+      // Head
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -14 + wave, 8, 0, Math.PI * 2);
+      ctx.fill();
+      // Lab Goggles
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-7, -17 + wave, 14, 4);
+
+      // Laser Cage if not freed yet
+      if (!sc.freed) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-18, -28, 36, 54);
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+        ctx.fillRect(-18, -28, 36, 54);
+        // Bars
+        for (let bx = -10; bx <= 10; bx += 10) {
+          ctx.beginPath();
+          ctx.moveTo(bx, -28);
+          ctx.lineTo(bx, 26);
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // 7. INPUT CONTROLS & GENRE SWITCHING
+    // =========================================================================
     const keys = {};
 
     window.addEventListener('keydown', (e) => {
       keys[e.code] = true;
-      if (e.code === 'KeyQ') switchGenre();
-      if (e.code === 'KeyZ' || e.code === 'Space') shootBullet();
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+        e.preventDefault();
+      }
+      if (gameState !== 'PLAYING') return;
+
+      if (e.code === 'KeyK' || e.code === 'KeyX' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+        cycleGenre();
+      }
+      if (e.code === 'KeyJ' || e.code === 'KeyZ') {
+        fireSonicNote();
+      }
     });
 
     window.addEventListener('keyup', (e) => {
       keys[e.code] = false;
     });
 
-    // Touch Controls Wiring
-    function bindTouch(id, onStart, onEnd) {
-      const el = document.getElementById(id);
-      el.addEventListener('touchstart', (e) => { e.preventDefault(); onStart(); }, { passive: false });
-      el.addEventListener('touchend', (e) => { e.preventDefault(); if (onEnd) onEnd(); }, { passive: false });
-      el.addEventListener('mousedown', () => onStart());
-      el.addEventListener('mouseup', () => { if (onEnd) onEnd(); });
+    function cycleGenre() {
+      genreIdx = (genreIdx + 1) % GENRES.length;
+      const g = GENRES[genreIdx];
+      document.getElementById('hud-genre').textContent = g.name;
+      playSfx('switch', 0.7);
+      playBgm(g.bgm);
+      spawnFloatingText(player.x, player.y - 15, `${g.name} MODE!`, g.color);
     }
 
-    bindTouch('touch-left', () => { keys['ArrowLeft'] = true; }, () => { keys['ArrowLeft'] = false; });
-    bindTouch('touch-right', () => { keys['ArrowRight'] = true; }, () => { keys['ArrowRight'] = false; });
-    bindTouch('touch-jump', () => { if (player.isGrounded) { player.vy = player.jumpStrength; playSound('jump'); } });
-    bindTouch('touch-shoot', () => shootBullet());
-    bindTouch('touch-switch', () => switchGenre());
-
-    function switchGenre() {
-      currentGenreIndex = (currentGenreIndex + 1) % GENRES.length;
-      hudGenre.textContent = GENRES[currentGenreIndex].name;
-      hudGenre.style.color = GENRES[currentGenreIndex].color;
-      playSound('switch');
-      
-      const genreAudios = ['phonk', 'rock', 'reggae'];
-      switchBgm(genreAudios[currentGenreIndex]);
-    }
-
-    function shootBullet() {
+    function fireSonicNote() {
       const now = performance.now();
-      const genre = GENRES[currentGenreIndex];
-      if (now - player.lastShotTime < genre.fireRate) return;
+      const g = GENRES[genreIdx];
+      if (now - player.lastShot < g.fireRate) return;
+      player.lastShot = now;
 
-      player.lastShotTime = now;
-      bullets.push({
-        x: player.x + player.width,
-        y: player.y + player.height / 2,
-        vx: genre.bulletSpeed,
-        color: genre.color
+      playSfx(g.solo, 0.45);
+
+      const angles = g.spread === 3 ? [-0.18, 0, 0.18] : [0];
+      angles.forEach(ang => {
+        bullets.push({
+          x: player.facing > 0 ? player.x + player.w : player.x - 8,
+          y: player.y + player.h * 0.42,
+          baseY: player.y + player.h * 0.42,
+          vx: Math.cos(ang) * g.speed * player.facing,
+          vy: Math.sin(ang) * g.speed,
+          color: g.color,
+          damage: g.damage,
+          waveAmp: g.waveAmp,
+          age: 0
+        });
       });
-      playSound('solo_1');
     }
 
-    // Physics & Update
-    function update() {
-      // Movement
+    // Mobile Touch Bindings
+    function bindTouchButton(id, keyName, customFn) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (keyName) keys[keyName] = true;
+        if (customFn && gameState === 'PLAYING') customFn();
+      });
+      btn.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        if (keyName) keys[keyName] = false;
+      });
+      btn.addEventListener('pointerleave', () => {
+        if (keyName) keys[keyName] = false;
+      });
+    }
+
+    bindTouchButton('t-left', 'ArrowLeft');
+    bindTouchButton('t-right', 'ArrowRight');
+    bindTouchButton('t-jump', 'ArrowUp');
+    bindTouchButton('t-shoot', null, fireSonicNote);
+    bindTouchButton('t-genre', null, cycleGenre);
+    document.getElementById('btn-genre-hud').addEventListener('click', () => {
+      if (gameState === 'PLAYING') cycleGenre();
+    });
+
+    document.getElementById('btn-mute').addEventListener('click', () => {
+      isMuted = !isMuted;
+      document.getElementById('btn-mute').textContent = isMuted ? '🔇' : '🔊';
+      if (isMuted && activeBgm) activeBgm.pause();
+      else if (!isMuted && activeBgm && gameState === 'PLAYING') activeBgm.play().catch(() => {});
+    });
+
+    // =========================================================================
+    // 8. PARTICLES & FLOATING TEXT HELPERS
+    // =========================================================================
+    function spawnParticles(x, y, color, count = 12) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          life: 25 + Math.random() * 15,
+          color
+        });
+      }
+    }
+
+    function spawnFloatingText(x, y, text, color = '#fff') {
+      floatingTexts.push({ x, y, text, color, life: 45 });
+    }
+
+    function updateHud() {
+      document.getElementById('hud-hp-bar').style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
+      document.getElementById('hud-rescued').textContent = `${player.rescuedCount}/3`;
+      document.getElementById('hud-score').textContent = String(player.score).padStart(4, '0');
+    }
+
+    function damagePlayer(amount) {
+      if (player.invuln > 0) return;
+      player.hp -= amount;
+      player.invuln = 45;
+      screenShake = 8;
+      spawnParticles(player.x + player.w / 2, player.y + player.h / 2, '#ef4444', 14);
+      updateHud();
+
+      if (player.hp <= 0) {
+        gameState = 'GAME_OVER';
+        showModal(
+          'SIGNAL LOST',
+          'MISSION FAILED',
+          'Disinformation overwhelmed the broadcast! Recharge your guitar and jump back in.',
+          'RETRY LEVEL'
+        );
+      }
+    }
+
+    // =========================================================================
+    // 9. MAIN PHYSICS & GAMEPLAY LOOP
+    // =========================================================================
+    function updateGame() {
+      if (gameState !== 'PLAYING') return;
+      frameCount++;
+      const cfg = LEVELS[currentLevelIdx];
+
+      if (screenShake > 0) screenShake *= 0.85;
+      if (player.invuln > 0) player.invuln--;
+
+      // Update Moving Platforms
+      movingPlatforms.forEach(mp => {
+        const prevX = mp.x;
+        mp.x = mp.baseX + Math.sin(frameCount * mp.speed + mp.phase) * mp.rangeX;
+        mp.dx = mp.x - prevX;
+      });
+
+      // Horizontal Input
       if (keys['ArrowLeft'] || keys['KeyA']) {
         player.vx = -player.speed;
+        player.facing = -1;
+        player.walkCycle++;
       } else if (keys['ArrowRight'] || keys['KeyD']) {
         player.vx = player.speed;
+        player.facing = 1;
+        player.walkCycle++;
       } else {
-        player.vx = 0;
+        player.vx *= 0.75;
       }
 
-      if ((keys['ArrowUp'] || keys['KeyW']) && player.isGrounded) {
-        player.vy = player.jumpStrength;
-        player.isGrounded = false;
-        playSound('jump');
+      // Continuous fire if holding J/Z
+      if (keys['KeyJ'] || keys['KeyZ']) {
+        fireSonicNote();
       }
 
-      // Gravity
-      player.vy += 0.65;
+      // Jump Input
+      if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space']) && player.grounded) {
+        player.vy = player.jumpPower;
+        player.grounded = false;
+        playSfx('jump', 0.55);
+        spawnParticles(player.x + player.w / 2, player.y + player.h, '#a855f7', 6);
+      }
+
+      // Apply Gravity & Velocity
+      player.vy += 0.62;
+      if (player.vy > 14) player.vy = 14;
       player.x += player.vx;
       player.y += player.vy;
 
-      // Platform collisions
-      player.isGrounded = false;
-      for (const p of platforms) {
+      // Platform Collisions
+      player.grounded = false;
+      const allPlats = [...platforms, ...movingPlatforms];
+      for (const p of allPlats) {
         if (
-          player.x + player.width > p.x &&
+          player.x + player.w > p.x &&
           player.x < p.x + p.w &&
-          player.y + player.height >= p.y &&
-          player.y + player.height <= p.y + 15 &&
+          player.y + player.h >= p.y &&
+          player.y + player.h <= p.y + 20 &&
           player.vy >= 0
         ) {
-          player.y = p.y - player.height;
+          player.y = p.y - player.h;
           player.vy = 0;
-          player.isGrounded = true;
+          player.grounded = true;
+          if (p.dx) player.x += p.dx;
         }
       }
 
-      // Screen Bounds
-      if (player.x < 0) player.x = 0;
-      if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+      // Constrain Player to Level Bounds
+      const minBound = boss && boss.active ? cfg.width - 750 : 0;
+      if (player.x < minBound) player.x = minBound;
+      if (player.x > cfg.width - player.w) player.x = cfg.width - player.w;
 
-      // Bullets Update
+      // Pit / Hazard Check
+      for (const h of hazards) {
+        if (
+          player.x + player.w > h.x &&
+          player.x < h.x + h.w &&
+          player.y + player.h > h.y
+        ) {
+          damagePlayer(25);
+          player.vy = -11;
+        }
+      }
+      if (player.y > VIEW_H + 50) {
+        damagePlayer(35);
+        player.y = 200;
+        player.vy = 0;
+      }
+
+      // Smooth Side-Scrolling Camera
+      const targetCamX = player.x - VIEW_W * 0.35;
+      const maxCamX = cfg.width - VIEW_W;
+      cameraX += (Math.max(0, Math.min(maxCamX, targetCamX)) - cameraX) * 0.12;
+
+      // Collect Flasks
+      flasks.forEach(f => {
+        if (!f.collected && Math.hypot((player.x + 18) - f.x, (player.y + 24) - f.y) < 34) {
+          f.collected = true;
+          player.hp = Math.min(player.maxHp, player.hp + f.heal);
+          player.score += 150;
+          playSfx('flask', 0.65);
+          spawnFloatingText(f.x, f.y, '+150 🧪', '#34d399');
+          updateHud();
+        }
+      });
+
+      // Rescue Trapped Scientists
+      scientists.forEach(sc => {
+        if (
+          !sc.freed &&
+          Math.abs((player.x + player.w / 2) - (sc.x + sc.w / 2)) < 42 &&
+          Math.abs((player.y + player.h / 2) - (sc.y + sc.h / 2)) < 48
+        ) {
+          sc.freed = true;
+          player.rescuedCount++;
+          player.score += 500;
+          playSfx('flask', 0.8);
+          spawnParticles(sc.x + 18, sc.y + 20, '#22d3ee', 20);
+          spawnFloatingText(sc.x, sc.y - 10, `${sc.scientistName} FREED!`, '#22d3ee');
+          updateHud();
+        }
+      });
+
+      // Update Player Sonic Bullets
       for (let i = bullets.length - 1; i >= 0; i--) {
         const b = bullets[i];
         b.x += b.vx;
+        b.age++;
+        if (b.waveAmp > 0) {
+          b.y = b.baseY + Math.sin(b.age * 0.35) * b.waveAmp * 5;
+        } else {
+          b.y += b.vy;
+        }
 
-        // Collision with enemies
+        let hit = false;
+
+        // Check Enemy Hits
         for (let j = enemies.length - 1; j >= 0; j--) {
           const en = enemies[j];
-          if (b.x >= en.x && b.x <= en.x + 28 && b.y >= en.y && b.y <= en.y + 36) {
-            en.hp -= 15;
-            bullets.splice(i, 1);
+          if (b.x > en.x && b.x < en.x + en.w && b.y > en.y && b.y < en.y + en.h) {
+            en.hp -= b.damage;
+            hit = true;
+            spawnParticles(b.x, b.y, b.color, 6);
             if (en.hp <= 0) {
-              enemies.splice(j, 1);
+              spawnParticles(en.x + en.w / 2, en.y + en.h / 2, '#f59e0b', 16);
+              spawnFloatingText(en.x, en.y, '+250', '#fbbf24');
               player.score += 250;
-              hudScore.textContent = player.score;
-              playSound('defeat_1');
+              updateHud();
+              enemies.splice(j, 1);
             }
             break;
           }
         }
 
-        if (b.x > canvas.width) {
+        // Check Boss Hit
+        if (!hit && boss && boss.active && !boss.defeated) {
+          if (b.x > boss.x && b.x < boss.x + boss.w && b.y > boss.y && b.y < boss.y + boss.h) {
+            boss.hp -= b.damage;
+            boss.hitFlash = 5;
+            hit = true;
+            spawnParticles(b.x, b.y, b.color, 8);
+
+            const pct = Math.max(0, Math.ceil((boss.hp / boss.maxHp) * 100));
+            document.getElementById('boss-hp-bar').style.width = `${pct}%`;
+            document.getElementById('boss-hp-text').textContent = `${pct}%`;
+
+            if (boss.hp <= 0) {
+              boss.defeated = true;
+              screenShake = 18;
+              playSfx(boss.defeatSfx, 0.85);
+              spawnParticles(boss.x + boss.w / 2, boss.y + boss.h / 2, boss.color, 45);
+              player.score += 2000;
+              updateHud();
+              document.getElementById('boss-hud').classList.add('hidden');
+
+              setTimeout(() => {
+                if (currentLevelIdx < LEVELS.length - 1) {
+                  gameState = 'LEVEL_CLEAR';
+                  showModal(
+                    `STAGE ${currentLevelIdx + 1} CLEARED!`,
+                    `${boss.name} DEFEATED`,
+                    `Truth restored in this sector! Get ready for ${LEVELS[currentLevelIdx + 1].title}.`,
+                    'NEXT STAGE'
+                  );
+                } else {
+                  gameState = 'VICTORY';
+                  showModal(
+                    'ULTIMATE VICTORY!',
+                    'SCIENCE IS SAVED!',
+                    `You toppled the Omega Algorithm and rescued the world's scientists! Final Score: ${player.score}`,
+                    'PLAY AGAIN'
+                  );
+                }
+              }, 1100);
+            }
+          }
+        }
+
+        if (hit || Math.abs(b.x - player.x) > VIEW_W) {
           bullets.splice(i, 1);
         }
       }
 
-      // Enemies Update
-      for (const en of enemies) {
+      // Update Regular Enemies
+      enemies.forEach(en => {
         en.x += en.vx;
-        if (en.x <= en.minX || en.x >= en.maxX) {
-          en.vx *= -1;
+        if (en.x <= en.minX || en.x >= en.maxX) en.vx *= -1;
+
+        // Touch damage
+        if (
+          player.x + player.w > en.x + 4 &&
+          player.x < en.x + en.w - 4 &&
+          player.y + player.h > en.y + 4 &&
+          player.y < en.y + en.h
+        ) {
+          damagePlayer(18);
+        }
+
+        // Ranged enemy projectiles when near player
+        en.shootTimer++;
+        if (en.shootTimer > 135 && Math.abs(en.x - player.x) < 420) {
+          en.shootTimer = 0;
+          const dir = player.x < en.x ? -1 : 1;
+          enemyBullets.push({
+            x: en.x + en.w / 2,
+            y: en.y + en.h / 2,
+            vx: dir * 5.5,
+            vy: 0,
+            r: 6,
+            color: '#ef4444'
+          });
+        }
+      });
+
+      // Trigger & Update Boss Fight
+      if (boss && !boss.defeated) {
+        if (!boss.active && player.x > cfg.width - 720) {
+          boss.active = true;
+          document.getElementById('boss-name').textContent = `BOSS: ${boss.name}`;
+          document.getElementById('boss-hp-bar').style.width = '100%';
+          document.getElementById('boss-hp-text').textContent = '100%';
+          document.getElementById('boss-hud').classList.remove('hidden');
+        }
+
+        if (boss.active) {
+          if (boss.hitFlash > 0) boss.hitFlash--;
+
+          boss.x += boss.vx;
+          if (boss.x <= boss.minX || boss.x >= boss.maxX) boss.vx *= -1;
+          boss.y = boss.baseY + Math.sin(frameCount * 0.05) * 35;
+
+          // Boss Attack Patterns
+          boss.attackTimer++;
+          const fireInterval = Math.max(48, 85 - currentLevelIdx * 8);
+          if (boss.attackTimer >= fireInterval) {
+            boss.attackTimer = 0;
+            const angleToPlayer = Math.atan2(
+              (player.y + player.h / 2) - (boss.y + boss.h / 2),
+              (player.x + player.w / 2) - (boss.x + boss.w / 2)
+            );
+            // Burst spread
+            [-0.22, 0, 0.22].forEach(offset => {
+              enemyBullets.push({
+                x: boss.x + boss.w / 2,
+                y: boss.y + boss.h / 2,
+                vx: Math.cos(angleToPlayer + offset) * 6.5,
+                vy: Math.sin(angleToPlayer + offset) * 6.5,
+                r: 8,
+                color: boss.color
+              });
+            });
+          }
+
+          // Boss Body Collision
+          if (
+            player.x + player.w > boss.x + 10 &&
+            player.x < boss.x + boss.w - 10 &&
+            player.y + player.h > boss.y + 10 &&
+            player.y < boss.y + boss.h - 10
+          ) {
+            damagePlayer(25);
+          }
         }
       }
 
-      // Flask Collection
-      for (const f of flasks) {
-        if (!f.collected && Math.hypot(player.x - f.x, player.y - f.y) < 32) {
-          f.collected = true;
-          player.score += 100;
-          hudScore.textContent = player.score;
-          playSound('flask');
+      // Update Enemy Projectiles
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const eb = enemyBullets[i];
+        eb.x += eb.vx;
+        eb.y += eb.vy;
+
+        if (
+          eb.x > player.x &&
+          eb.x < player.x + player.w &&
+          eb.y > player.y &&
+          eb.y < player.y + player.h
+        ) {
+          damagePlayer(15);
+          enemyBullets.splice(i, 1);
+          continue;
         }
+
+        if (Math.abs(eb.x - cameraX) > VIEW_W + 200 || eb.y < 0 || eb.y > VIEW_H) {
+          enemyBullets.splice(i, 1);
+        }
+      }
+
+      // Update Particles & Floating Labels
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const pt = particles[i];
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.life--;
+        if (pt.life <= 0) particles.splice(i, 1);
+      }
+
+      for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ft.y -= 1.1;
+        ft.life--;
+        if (ft.life <= 0) floatingTexts.splice(i, 1);
       }
     }
 
-    // Render Loop
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // =========================================================================
+    // 10. SCENE & PARALLAX RENDERING
+    // =========================================================================
+    function renderGame() {
+      const cfg = LEVELS[currentLevelIdx];
+      ctx.save();
 
-      // Background Grid & Stars
-      ctx.fillStyle = '#070312';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (screenShake > 0.5) {
+        ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+      }
 
-      // Platforms
-      for (const p of platforms) {
-        ctx.fillStyle = '#1e1138';
+      // 1. Sky Gradient
+      const grad = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+      grad.addColorStop(0, cfg.skyTop);
+      grad.addColorStop(1, cfg.skyBottom);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+      // 2. Parallax Distant Skyline / Lab Pillars
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+      for (let i = 0; i < 18; i++) {
+        const bx = ((i * 190 - cameraX * 0.25) % (VIEW_W + 200) + (VIEW_W + 200)) % (VIEW_W + 200) - 100;
+        const bh = 140 + (i * 53) % 180;
+        ctx.fillRect(bx, VIEW_H - bh - 70, 95, bh);
+      }
+
+      // World Space Transform
+      ctx.save();
+      ctx.translate(-cameraX, 0);
+
+      // 3. Hazards (Glowing Acid / Laser Pits)
+      hazards.forEach(h => {
+        ctx.fillStyle = cfg.hazardColor;
+        ctx.shadowColor = cfg.hazardColor;
+        ctx.shadowBlur = 15;
+        ctx.fillRect(h.x, h.y + Math.sin(frameCount * 0.15) * 3, h.w, h.h);
+        ctx.shadowBlur = 0;
+      });
+
+      // 4. Platforms & Moving Platforms
+      const allPlats = [...platforms, ...movingPlatforms];
+      allPlats.forEach(p => {
+        ctx.fillStyle = cfg.platFill;
         ctx.fillRect(p.x, p.y, p.w, p.h);
-        ctx.strokeStyle = '#a855f7';
+        ctx.strokeStyle = cfg.platStroke;
         ctx.lineWidth = 2;
         ctx.strokeRect(p.x, p.y, p.w, p.h);
-      }
 
-      // Flasks
-      for (const f of flasks) {
-        if (!f.collected) {
-          ctx.font = '22px sans-serif';
-          ctx.fillText('🧪', f.x, f.y);
-        }
-      }
+        // Neon top surface strip
+        ctx.fillStyle = cfg.platStroke;
+        ctx.fillRect(p.x, p.y, p.w, 4);
+      });
 
-      // Enemies
-      for (const en of enemies) {
-        ctx.font = '26px sans-serif';
-        ctx.fillText('👾', en.x, en.y + 24);
-        
-        // HP Bar
-        ctx.fillStyle = '#ef4444';
-        ctx.fillRect(en.x, en.y - 8, 28, 4);
-        ctx.fillStyle = '#22c55e';
-        ctx.fillRect(en.x, en.y - 8, (en.hp / en.maxHp) * 28, 4);
-      }
+      // 5. Flasks (Glowing Science Beakers)
+      flasks.forEach(f => {
+        if (f.collected) return;
+        const fy = f.y + Math.sin(frameCount * 0.1 + f.x) * 4;
+        ctx.save();
+        ctx.translate(f.x, fy);
+        ctx.fillStyle = '#34d399';
+        ctx.shadowColor = '#10b981';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.moveTo(-4, -8);
+        ctx.lineTo(4, -8);
+        ctx.lineTo(10, 8);
+        ctx.lineTo(-10, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      });
 
-      // Bullets
-      for (const b of bullets) {
+      // 6. Scientists in Cages
+      scientists.forEach(sc => drawScientist(ctx, sc));
+
+      // 7. Enemies & Boss
+      enemies.forEach(en => drawEnemy(ctx, en));
+      drawBoss(ctx, boss);
+
+      // 8. Player (The Alchemix Wizard)
+      drawWizard(ctx, player);
+
+      // 9. Sonic Note Projectiles
+      bullets.forEach(b => {
+        ctx.save();
         ctx.fillStyle = b.color;
         ctx.shadowColor = b.color;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        // Musical Note Stem
+        ctx.fillRect(b.x + 3, b.y - 12, 2.5, 12);
+        ctx.fillRect(b.x + 3, b.y - 12, 6, 4);
+        ctx.restore();
+      });
+
+      // 10. Enemy Projectiles
+      enemyBullets.forEach(eb => {
+        ctx.save();
+        ctx.fillStyle = eb.color;
+        ctx.shadowColor = eb.color;
         ctx.shadowBlur = 10;
         ctx.beginPath();
-        ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
+        ctx.arc(eb.x, eb.y, eb.r, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.restore();
+      });
+
+      // 11. Particles & Floating Combat Text
+      particles.forEach(pt => {
+        ctx.fillStyle = pt.color;
+        ctx.fillRect(pt.x, pt.y, 4, 4);
+      });
+
+      floatingTexts.forEach(ft => {
+        ctx.font = 'bold 12px "Press Start 2P", monospace';
+        ctx.fillStyle = ft.color;
+        ctx.fillText(ft.text, ft.x, ft.y);
+      });
+
+      ctx.restore();
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // 11. MODAL & STATE MANAGEMENT
+    // =========================================================================
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalBadge = document.getElementById('modal-badge');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDesc = document.getElementById('modal-desc');
+    const btnModalAction = document.getElementById('btn-modal-action');
+
+    function showModal(badge, title, desc, btnLabel) {
+      modalBadge.textContent = badge;
+      modalTitle.textContent = title;
+      modalDesc.textContent = desc;
+      btnModalAction.textContent = btnLabel;
+      modalOverlay.classList.remove('hidden');
+    }
+
+    btnModalAction.addEventListener('click', () => {
+      modalOverlay.classList.add('hidden');
+      if (gameState === 'MENU' || gameState === 'VICTORY') {
+        currentLevelIdx = 0;
+        player.score = 0;
+        buildLevel(0);
+      } else if (gameState === 'LEVEL_CLEAR') {
+        currentLevelIdx++;
+        buildLevel(currentLevelIdx);
+      } else if (gameState === 'GAME_OVER') {
+        buildLevel(currentLevelIdx);
       }
+      gameState = 'PLAYING';
+    });
 
-      // Player Sprite & Wand
-      ctx.font = '36px sans-serif';
-      ctx.fillText('🧙‍♂️', player.x - 4, player.y + 36);
+    function mainLoop() {
+      updateGame();
+      renderGame();
+      requestAnimationFrame(mainLoop);
     }
 
-    function loop() {
-      update();
-      draw();
-      requestAnimationFrame(loop);
-    }
-
-    // Initialize and Start
-    initLevel();
-    loop();
+    // Initialize initial backdrop state
+    buildLevel(0);
+    gameState = 'MENU';
+    requestAnimationFrame(mainLoop);
   </script>
 </body>
 </html>
