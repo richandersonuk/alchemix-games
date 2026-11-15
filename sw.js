@@ -1,10 +1,9 @@
 // ============================================================================
-// Increment CACHE_VERSION whenever you deploy changes to GitHub Pages
+// Increment CACHE_VERSION whenever you deploy changes to the Hub
 // ============================================================================
 const CACHE_VERSION = 'v1.0.0';
-const STATIC_CACHE = `alchemix-cache-${CACHE_VERSION}`;
+const STATIC_CACHE = `alchemix-hub-${CACHE_VERSION}`;
 
-// Pre-cache essential runtime assets and CDN libraries
 const ASSETS_TO_PRECACHE = [
   './',
   './index.html',
@@ -13,7 +12,6 @@ const ASSETS_TO_PRECACHE = [
   'https://unpkg.com/@phosphor-icons/web'
 ];
 
-// Install: Fetch & cache shell assets, activate immediately
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => cache.addAll(ASSETS_TO_PRECACHE))
@@ -21,14 +19,13 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: Clean up previous obsolete caches and take control of open tabs
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) =>
+    caches.keys().then((keys) =>
       Promise.all(
-        cacheNames.map((name) => {
-          if (name !== STATIC_CACHE) {
-            return caches.delete(name);
+        keys.map((key) => {
+          if (key !== STATIC_CACHE) {
+            return caches.delete(key);
           }
         })
       )
@@ -37,36 +34,38 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Strategy:
-// 1. Navigation / HTML pages -> Network-First (forces fresh HTML deployments)
-// 2. Static Assets & Scripts -> Stale-While-Revalidate
 self.addEventListener('fetch', (event) => {
-  const req = event.request;
+  const url = new URL(event.request.url);
 
-  // Navigation requests (HTML)
-  if (req.mode === 'navigate') {
+  // OPTION B: Completely bypass the service worker for games
+  if (url.pathname.includes('/science-saviour/')) {
+    return; // Pass through natively to network
+  }
+
+  // Navigation requests for the Hub: Network-First
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      fetch(event.request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(STATIC_CACHE).then((cache) => cache.put(req, responseClone));
+            const clone = networkResponse.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
           }
           return networkResponse;
         })
-        .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
     );
     return;
   }
 
-  // Other assets (fonts, images, scripts)
+  // Shell assets & CDN resources: Stale-While-Revalidate
   event.respondWith(
-    caches.match(req).then((cachedResponse) => {
-      const fetchPromise = fetch(req)
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(STATIC_CACHE).then((cache) => cache.put(req, responseClone));
+            const clone = networkResponse.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
           }
           return networkResponse;
         })
