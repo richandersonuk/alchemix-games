@@ -183,11 +183,11 @@
 
     /* Screen Bezel Inside Card */
     .screen-bezel {
-      background: #020611;
+      background: radial-gradient(circle at 50% 45%, #0c1938 0%, #020611 75%);
       margin: 12px 12px 0 12px;
       border: 2px solid #0f1e36;
       border-radius: 4px;
-      height: 180px;
+      height: 196px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -196,10 +196,18 @@
     }
 
     .screen-bezel img {
-      max-width: 110px;
-      max-height: 110px;
+      width: 158px;
+      height: 158px;
+      max-width: 158px;
+      max-height: 158px;
       object-fit: contain;
-      filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.6));
+      filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 10px rgba(0, 243, 255, 0.45));
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), filter 0.25s ease;
+    }
+
+    .arcade-card:hover .screen-bezel img {
+      transform: translateY(-5px) scale(1.06) rotate(-1.5deg);
+      filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 16px rgba(57, 255, 20, 0.65));
     }
 
     .badge-corner {
@@ -356,7 +364,7 @@
       <!-- Science Saviour -->
       <article class="arcade-card" data-devices="mobile tablet desktop">
         <div class="screen-bezel">
-                  <img src="science-saviour/index.icon.jpeg" alt="Science Saviour Icon">
+          <img src="/science-saviour/cartridge.svg" alt="Science Saviour Cartridge">
           <span class="badge-corner all-devices">PHONE / PC</span>
         </div>
         <div class="card-details">
@@ -369,7 +377,7 @@
       <!-- ChemTycoon -->
       <article class="arcade-card" data-devices="tablet desktop">
         <div class="screen-bezel">
-          <img src="/chem-tycoon/index.apple-touch-icon.png" alt="ChemTycoon Icon" onerror="this.src='/chem-tycoon/icon.svg'">
+          <img src="/chem-tycoon/cartridge.svg" alt="Chem-Tycoon Cartridge">
           <span class="badge-corner desktop-only">TABLET / PC</span>
         </div>
         <div class="card-details">
@@ -381,7 +389,7 @@
       <!-- Orbital Blitz (econfigs) -->
       <article class="arcade-card" data-devices="mobile tablet desktop">
         <div class="screen-bezel">
-          <img src="/econfigs/icon.svg" alt="Orbital Blitz Icon">
+          <img src="/econfigs/cartridge.svg" alt="Orbital Blitz Cartridge">
           <span class="badge-corner all-devices">PHONE / PC</span>
         </div>
         <div class="card-details">

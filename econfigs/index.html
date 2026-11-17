@@ -18,7 +18,34 @@
     --text: #eef6ff;
     --muted: #93accf;
   }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-width: thin;
+    scrollbar-color: #26648e #070d1b;
+  }
+  /* Custom Retro Quantum Scrollbars (WebKit / Chromium / Safari) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #070d1b;
+    border-left: 1px solid #1a2d4e;
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #1b6a94 0%, #38bdf8 50%, #0e7490 100%);
+    border: 2px solid #070d1b;
+    border-radius: 999px;
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.25);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #34d399 0%, #38bdf8 100%);
+  }
+  ::-webkit-scrollbar-corner {
+    background: #070d1b;
+  }
   html, body {
     margin: 0; padding: 0;
     background: radial-gradient(circle at 20% 10%, #132345 0%, #080e1d 60%);
@@ -236,6 +263,7 @@
 <body>
 
 <header class="topbar">
+  <a href="../" class="btn btn-sm btn-slate" title="Quit to Alchemix Arcade Hub" style="text-decoration:none;border-color:#38bdf8;color:#7dd3fc;">◀ Arcade Hub</a>
   <div class="brand">⚛ ORBITAL BLITZ: QUANTUM ARCHITECT</div>
   <div id="hdrXp" class="xp-pill">Lvl 1 • 0 XP</div>
   <button class="btn btn-sm btn-slate" id="btnTopLb">🏆 Scoreboard</button>
