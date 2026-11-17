@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Orbital Blitz: Quantum Architect — Year 12 Chemistry</title>
+<style>
+  :root {
+    --bg: #080e1d;
+    --bg-card: #111b33;
+    --bg-panel: #0d1528;
+    --border: #253b64;
+    --cyan: #38bdf8;
+    --emerald: #34d399;
+    --gold: #fbbf24;
+    --rose: #f43f5e;
+    --violet: #a78bfa;
+    --text: #eef6ff;
+    --muted: #93accf;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: radial-gradient(circle at 20% 10%, #132345 0%, #080e1d 60%);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    touch-action: manipulation;
+  }
+  button, input { font-family: inherit; }
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    background: rgba(11, 18, 36, 0.96);
+    border-bottom: 2px solid #233c68;
+    backdrop-filter: blur(8px);
+  }
+  .brand {
+    font-weight: 800; font-size: 1.08rem; letter-spacing: 0.4px;
+    color: var(--cyan); flex: 1 1 220px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .xp-pill {
+    font-size: 0.85rem; font-weight: 700; color: var(--gold);
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    padding: 5px 10px; border-radius: 999px;
+  }
+  .container {
+    max-width: 1040px; margin: 0 auto; padding: 14px 14px 36px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .card {
+    background: rgba(17, 27, 51, 0.94);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 15px 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
+  .btn {
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 10px;
+    color: #fff; font-weight: 700; font-size: 0.95rem;
+    padding: 10px 15px; min-height: 44px;
+    cursor: pointer; transition: transform 0.08s ease, filter 0.15s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn:hover { filter: brightness(1.12); }
+  .btn:active { transform: scale(0.97); }
+  .btn-sm { min-height: 36px; padding: 6px 11px; font-size: 0.83rem; }
+  .btn-cyan { background: #165d8f; border-color: #38bdf8; }
+  .btn-emerald { background: #13785f; border-color: #34d399; }
+  .btn-rose { background: #8f2247; border-color: #fb7185; }
+  .btn-violet { background: #4e348a; border-color: #a78bfa; }
+  .btn-gold { background: #6b4e16; border-color: #fbbf24; }
+  .btn-slate { background: #1d2b47; border-color: #3a517d; }
+  .btn-choice {
+    width: 100%; min-height: 56px; font-size: 1rem;
+    background: #172442; border-color: #2f497a;
+    text-align: center; justify-content: center;
+  }
+  .btn-choice.correct { background: #10634b !important; border-color: #34d399 !important; }
+  .btn-choice.wrong { background: #701d2d !important; border-color: #fb7185 !important; }
+  .input-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .field {
+    background: #0a1224; color: var(--text);
+    border: 1px solid #2e4a7d; border-radius: 8px;
+    padding: 8px 11px; font-size: 0.94rem; min-height: 38px;
+  }
+  .progress-wrap {
+    flex: 1 1 230px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .bar-track {
+    width: 100%; height: 10px; background: #091021;
+    border-radius: 999px; overflow: hidden; border: 1px solid #243b63;
+  }
+  .bar-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--emerald), var(--cyan));
+    transition: width 0.2s ease;
+  }
+  .spotlight {
+    background: linear-gradient(135deg, rgba(16, 46, 56, 0.96), rgba(15, 31, 58, 0.96));
+    border-color: var(--emerald);
+    display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;
+  }
+  .modes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 12px;
+  }
+  .mode-card {
+    display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+  }
+  .mode-title { font-size: 1.08rem; font-weight: 800; }
+  .mode-desc { font-size: 0.87rem; color: #c7d9f2; line-height: 1.4; flex: 1; }
+  .sector-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sector-pill.active { background: #1b6a94; border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan); }
+
+  /* Gameplay HUD */
+  .hud-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  }
+  .hud-stat { font-weight: 800; font-size: 0.95rem; }
+  .q-header { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .species-badge {
+    min-width: 96px; min-height: 92px; padding: 10px;
+    background: #0a1d38; border: 2px solid var(--cyan); border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .species-sym { font-size: 2rem; font-weight: 900; color: var(--cyan); line-height: 1.1; }
+  .species-sub { font-size: 0.72rem; color: #b7d2f5; margin-top: 4px; font-weight: 600; }
+  .q-body { flex: 1 1 240px; display: flex; flex-direction: column; gap: 6px; }
+  .q-tag { font-size: 0.76rem; font-weight: 800; color: var(--emerald); letter-spacing: 0.5px; }
+  .q-prompt { font-size: 1.16rem; font-weight: 700; line-height: 1.35; }
+  .q-hint { font-size: 0.84rem; color: var(--muted); line-height: 1.35; }
+
+  /* Orbital Box Visualizer & Builder */
+  .orbital-board {
+    display: flex; flex-direction: column; gap: 10px;
+    background: rgba(11, 18, 35, 0.92);
+    border: 1px solid #26416f; border-radius: 14px; padding: 12px;
+  }
+  .board-toolbar { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; align-items: center; }
+  .subshell-flow {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+  }
+  .subshell-group {
+    background: #10192e; border: 1px solid #273e68; border-radius: 10px;
+    padding: 6px 8px 8px; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  }
+  .subshell-title { font-size: 0.82rem; font-weight: 800; color: #8ad2ff; }
+  .boxes-row { display: flex; gap: 5px; }
+  .orb-box {
+    position: relative;
+    width: 56px; height: 68px;
+    background: #0b1222; border: 2px solid #2f436b; border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: default; user-select: none; padding: 0;
+    transition: border-color 0.12s, background 0.12s, transform 0.08s;
+  }
+  .orb-box.editable { cursor: pointer; }
+  .orb-box.editable:hover { background: #14223d; }
+  .orb-box.editable:active { transform: scale(0.95); }
+  .orb-box.occupied { background: #0f252a; border-color: var(--emerald); }
+  .orb-box.full { background: #0d2238; border-color: var(--cyan); }
+  .orb-box.pauli-err { background: #361019; border-color: var(--rose); }
+  .occ-badge {
+    position: absolute; top: 2px; left: 2px;
+    font-size: 0.64rem; font-weight: 800; color: #fff;
+    background: #0e9f79; border-radius: 4px; padding: 1px 4px; line-height: 1.1;
+  }
+  .orb-box.full .occ-badge { background: #1878c2; }
+  .orb-sub-lbl {
+    position: absolute; bottom: 2px; font-size: 0.64rem; color: #8fa6c9; font-weight: 600;
+  }
+  .spins-svg { width: 42px; height: 34px; margin-top: 4px; }
+  .telemetry-bar {
+    display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
+    background: #081022; border: 1px solid #244778; border-radius: 10px; padding: 8px 12px;
+  }
+  .tele-item { display: flex; flex-direction: column; align-items: center; min-width: 72px; }
+  .tele-cap { font-size: 0.69rem; color: #8da6cb; font-weight: 700; text-transform: uppercase; }
+  .tele-val { font-size: 1.08rem; font-weight: 900; color: var(--text); }
+  .tele-val.highlight { color: var(--emerald); font-size: 1.24rem; }
+
+  .choices-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+  }
+  @media (max-width: 660px) {
+    .choices-grid { grid-template-columns: 1fr; }
+    .orb-box { width: 50px; height: 64px; }
+  }
+  .keypad-box {
+    max-width: 320px; margin: 0 auto; width: 100%;
+    background: #0d1629; border: 1px solid #2c4a7d; border-radius: 12px; padding: 12px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .keypad-disp {
+    text-align: center; font-size: 1.65rem; font-weight: 900; color: var(--emerald);
+    background: #070d1b; border-radius: 8px; padding: 6px;
+  }
+  .keypad-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .feedback-card { border-width: 2px; display: flex; flex-direction: column; gap: 8px; }
+  .feedback-card.ok { background: rgba(13, 47, 40, 0.96); border-color: var(--emerald); }
+  .feedback-card.bad { background: rgba(54, 17, 27, 0.96); border-color: var(--rose); }
+  .hidden { display: none !important; }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(4, 7, 15, 0.86);
+    display: flex; align-items: center; justify-content: center; padding: 14px;
+  }
+  .modal-card {
+    width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+    background: #101a31; border: 1.5px solid var(--cyan); border-radius: 16px; padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .lb-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 10px;
+    background: #15223e; border: 1px solid #273e6b;
+  }
+  .lb-row.me { background: #12363e; border-color: var(--emerald); }
+  .species-picker { display: flex; flex-wrap: wrap; gap: 5px; }
+  .sp-chip {
+    min-width: 44px; min-height: 34px; padding: 4px 8px; border-radius: 8px;
+    background: #142038; border: 1px solid #2c4370; color: #dbeafe;
+    font-weight: 700; font-size: 0.82rem; cursor: pointer;
+  }
+  .sp-chip.active { background: #1d6b94; border-color: var(--cyan); color: #fff; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">⚛ ORBITAL BLITZ: QUANTUM ARCHITECT</div>
+  <div id="hdrXp" class="xp-pill">Lvl 1 • 0 XP</div>
+  <button class="btn btn-sm btn-slate" id="btnTopLb">🏆 Scoreboard</button>
+  <button class="btn btn-sm btn-slate" id="btnMute">🔊 Sound</button>
+</header>
+
+<main class="container">
+  <!-- HOME SCREEN -->
+  <section id="screenHome" class="screen">
+    <div class="card input-row">
+      <label style="font-weight:700;font-size:0.9rem;">Callsign:</label>
+      <input id="inpName" class="field" style="width:145px;" maxlength="18" placeholder="Your Name">
+      <label style="font-weight:700;font-size:0.9rem;">Class:</label>
+      <input id="inpClass" class="field" style="width:92px;text-transform:uppercase;" maxlength="10" placeholder="CHEM12">
+      <div class="progress-wrap">
+        <div style="display:flex;justify-content:space-between;font-size:0.84rem;font-weight:700;">
+          <span id="lblRank" style="color:var(--emerald);">Rank: 1s² Cadet</span>
+          <span id="lblStats" style="color:var(--muted);">0% Acc • Streak 0</span>
+        </div>
+        <div class="bar-track"><div id="xpFill" class="bar-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="card spotlight">
+      <div style="flex:1 1 280px;display:flex;flex-direction:column;gap:5px;">
+        <div style="font-size:0.78rem;font-weight:800;color:var(--emerald);">🎯 YEAR 12 EXAM SPOTLIGHT — NEVER MISS THIS AGAIN</div>
+        <div style="font-size:1.1rem;font-weight:800;">"State the total number of occupied orbitals in a nitrogen atom."</div>
+        <div style="font-size:0.86rem;color:#cce3fa;line-height:1.4;">
+          Nitrogen (1s² 2s² 2p³) spreads three 2p electrons singly across 2p<sub>x</sub>, 2p<sub>y</sub>, 2p<sub>z</sub> by Hund's Rule → 1 + 1 + 3 = <strong>5 occupied orbitals</strong>!
+        </div>
+      </div>
+      <button class="btn btn-emerald" id="btnSpotN">Practice Nitrogen &amp; Hund's Rule →</button>
+    </div>
+
+    <div class="modes-grid">
+      <div class="card mode-card" style="border-color:#38bdf8;">
+        <div class="mode-title" style="color:var(--cyan);">1. Quantum Architect</div>
+        <div class="mode-desc">Build orbital box diagrams &amp; drill Year 12 exam questions with instant visual coaching.</div>
+        <button class="btn btn-cyan" id="btnModeArchitect">START ARCHITECT</button>
+      </div>
+      <div class="card mode-card" style="border-color:#fb7185;">
+        <div class="mode-title" style="color:#fda4af;">2. 60s Orbital Blitz</div>
+        <div class="mode-desc">Arcade sprint! Chain streaks up to 8× combo multiplier and climb the class scoreboard.</div>
+        <button class="btn btn-rose" id="btnModeBlitz">PLAY 60s BLITZ</button>
+      </div>
+      <div class="card mode-card" style="border-color:#34d399;">
+        <div class="mode-title" style="color:var(--emerald);">3. Daily Quantum Seed</div>
+        <div class="mode-desc">Same 10 questions for every student today. Compare class scores &amp; copy share card!</div>
+        <button class="btn btn-emerald" id="btnModeDaily">PLAY TODAY'S SEED</button>
+      </div>
+      <div class="card mode-card" style="border-color:#a78bfa;">
+        <div class="mode-title" style="color:#c4b5fd;">4. Examiner's Gauntlet</div>
+        <div class="mode-desc">Master all 5 syllabus sectors from Period 2 atoms to Cr/Cu &amp; transition metal ions.</div>
+        <button class="btn btn-violet" id="btnModeGauntlet">ENTER SECTOR 1</button>
+      </div>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="font-size:0.9rem;font-weight:700;color:#c2dbfa;">Select Syllabus Sector (for Architect &amp; Gauntlet):</div>
+      <div id="sectorPills" class="sector-pills"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;">
+        <button class="btn btn-cyan" id="btnOpenLab">🔬 Open Free Quantum Lab (H–Kr &amp; 28 Ions)</button>
+        <button class="btn btn-gold" id="btnOpenLb">🏆 View Online / Class Scoreboard</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAY SCREEN -->
+  <section id="screenPlay" class="screen hidden">
+    <div class="card" style="display:flex;flex-direction:column;gap:8px;">
+      <div class="hud-row">
+        <button class="btn btn-sm btn-slate" id="btnQuit">← Menu</button>
+        <div id="hudMode" style="flex:1;font-weight:800;color:var(--cyan);font-size:0.95rem;">QUANTUM ARCHITECT</div>
+        <div id="hudProg" class="hud-stat">Q 1/10</div>
+        <div id="hudScore" class="hud-stat" style="color:var(--emerald);">Score: 0</div>
+        <div id="hudCombo" class="hud-stat" style="color:var(--gold);">1× COMBO</div>
+        <button class="btn btn-sm btn-slate" id="btnPeek">👁 Peek Orbitals</button>
+        <button class="btn btn-sm btn-slate" id="btnKeypadToggle">⌨ Keypad: OFF</button>
+      </div>
+      <div id="blitzBarWrap" class="bar-track hidden"><div id="blitzBarFill" class="bar-fill" style="width:100%;background:linear-gradient(90deg,#fb7185,#fbbf24);"></div></div>
+    </div>
+
+    <div class="card q-header">
+      <div class="species-badge">
+        <div id="qBadge" class="species-sym">N</div>
+        <div id="qZ" class="species-sub">Z = 7 | 7e⁻</div>
+      </div>
+      <div class="q-body">
+        <div id="qTag" class="q-tag">EXAM CLASSIC</div>
+        <div id="qPrompt" class="q-prompt">Loading...</div>
+        <div id="qHint" class="q-hint"></div>
+      </div>
+    </div>
+
+    <div id="playBoardWrap"></div>
+
+    <div id="choicesGrid" class="choices-grid"></div>
+    <button id="btnVerifyBuild" class="btn btn-emerald hidden" style="width:100%;min-height:52px;font-size:1.02rem;">✓ VERIFY ORBITAL DIAGRAM</button>
+
+    <div id="keypadWrap" class="keypad-box hidden">
+      <div id="kpDisp" class="keypad-disp">—</div>
+      <div id="kpGrid" class="keypad-grid"></div>
+      <button id="kpSubmit" class="btn btn-emerald" style="width:100%;">LOCK IN ANSWER</button>
+    </div>
+
+    <div id="feedbackCard" class="card feedback-card hidden">
+      <div id="fbTitle" style="font-size:1.1rem;font-weight:800;"></div>
+      <div id="fbBody" style="font-size:0.94rem;line-height:1.45;"></div>
+      <button id="btnNextQ" class="btn btn-cyan" style="align-self:flex-start;">NEXT QUESTION →</button>
+    </div>
+  </section>
+
+  <!-- SUMMARY SCREEN -->
+  <section id="screenSummary" class="screen hidden">
+    <div class="card" style="text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;">
+      <div id="sumTitle" style="font-size:1.4rem;font-weight:900;color:var(--cyan);">SESSION COMPLETE</div>
+      <div id="sumScore" style="font-size:2.4rem;font-weight:900;color:var(--emerald);">0 PTS</div>
+      <div id="sumMetrics" style="font-size:1rem;color:#d6e7ff;"></div>
+      <pre id="sumShare" style="width:100%;text-align:left;white-space:pre-wrap;background:#081020;border:1px solid #264270;border-radius:10px;padding:12px;font-size:0.88rem;color:#dbeafe;margin:0;"></pre>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
+        <button class="btn btn-emerald" id="btnCopyShare">📋 Copy Class Result Card</button>
+        <button class="btn btn-cyan" id="btnPlayAgain">↻ Play Again</button>
+        <button class="btn btn-gold" id="btnSumLb">🏆 View Leaderboard</button>
+        <button class="btn btn-slate" id="btnSumHome">⌂ Command Center</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FREE QUANTUM LAB -->
+  <section id="screenLab" class="screen hidden">
+    <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+        <button class="btn btn-sm btn-slate" id="btnLabHome">← Home</button>
+        <div style="flex:1;font-weight:800;font-size:1.05rem;color:var(--cyan);">🔬 FREE QUANTUM LAB (H–Kr + Year 12 Ions)</div>
+        <button class="btn btn-sm btn-cyan" id="btnLabSandbox">Mode: Auto Ground State</button>
+        <button class="btn btn-sm btn-emerald hidden" id="btnLabCheck">✓ Check My Diagram</button>
+      </div>
+      <div id="labPicker" class="species-picker"></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+      <div id="labInfo" style="font-weight:800;font-size:1rem;"></div>
+      <div id="labBoardWrap"></div>
+      <div id="labStatus" style="font-size:0.93rem;font-weight:700;color:var(--emerald);"></div>
+    </div>
+  </section>
+</main>
+
+<!-- LEADERBOARD MODAL -->
+<div id="lbModal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:1.15rem;font-weight:900;color:var(--gold);">🏆 ONLINE &amp; CLASS SCOREBOARD</div>
+      <button class="btn btn-sm btn-rose" id="btnCloseLb">✕ Close</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <button class="btn btn-sm btn-cyan lb-tab" data-mode="BLITZ">60s Blitz</button>
+      <button class="btn btn-sm btn-slate lb-tab" data-mode="DAILY">Daily Seed</button>
+      <button class="btn btn-sm btn-slate lb-tab" data-mode="GAUNTLET">Gauntlet</button>
+      <button class="btn btn-sm btn-slate" id="btnLbScope">Scope: All Classes</button>
+    </div>
+    <div id="lbRows" style="display:flex;flex-direction:column;gap:7px;"></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="inpApiUrl" class="field" style="flex:1;" placeholder="Optional teacher API URL for live class sync">
+      <button class="btn btn-sm btn-cyan" id="btnSyncApi">Sync</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================================================
+// 1. CHEMISTRY ENGINE (Exact parity with Godot ChemDB)
+// =============================================================================
+const ChemDB = (() => {
+  const SUBSHELL_ORDER = [
+    { name: "1s", n: 1, l: "s", orbitals: 1, capacity: 2 },
+    { name: "2s", n: 2, l: "s", orbitals: 1, capacity: 2 },
+    { name: "2p", n: 2, l: "p", orbitals: 3, capacity: 6 },
+    { name: "3s", n: 3, l: "s", orbitals: 1, capacity: 2 },
+    { name: "3p", n: 3, l: "p", orbitals: 3, capacity: 6 },
+    { name: "4s", n: 4, l: "s", orbitals: 1, capacity: 2 },
+    { name: "3d", n: 3, l: "d", orbitals: 5, capacity: 10 },
+    { name: "4p", n: 4, l: "p", orbitals: 3, capacity: 6 },
+  ];
+  const DISPLAY_ORDER = ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"];
+  const IONIZATION_ORDER = ["4p", "4s", "3d", "3p", "3s", "2p", "2s", "1s"];
+  const SUB_LABELS = {
+    "1s": ["1s"], "2s": ["2s"], "2p": ["2px", "2py", "2pz"],
+    "3s": ["3s"], "3p": ["3px", "3py", "3pz"], "4s": ["4s"],
+    "3d": ["d₁", "d₂", "d₃", "d₄", "d₅"], "4p": ["4px", "4py", "4pz"]
+  };
+  const ELEMENTS = [
+    {z:1,symbol:"H",name:"Hydrogen",period:1},{z:2,symbol:"He",name:"Helium",period:1},
+    {z:3,symbol:"Li",name:"Lithium",period:2},{z:4,symbol:"Be",name:"Beryllium",period:2},
+    {z:5,symbol:"B",name:"Boron",period:2},{z:6,symbol:"C",name:"Carbon",period:2},
+    {z:7,symbol:"N",name:"Nitrogen",period:2},{z:8,symbol:"O",name:"Oxygen",period:2},
+    {z:9,symbol:"F",name:"Fluorine",period:2},{z:10,symbol:"Ne",name:"Neon",period:2},
+    {z:11,symbol:"Na",name:"Sodium",period:3},{z:12,symbol:"Mg",name:"Magnesium",period:3},
+    {z:13,symbol:"Al",name:"Aluminium",period:3},{z:14,symbol:"Si",name:"Silicon",period:3},
+    {z:15,symbol:"P",name:"Phosphorus",period:3},{z:16,symbol:"S",name:"Sulfur",period:3},
+    {z:17,symbol:"Cl",name:"Chlorine",period:3},{z:18,symbol:"Ar",name:"Argon",period:3},
+    {z:19,symbol:"K",name:"Potassium",period:4},{z:20,symbol:"Ca",name:"Calcium",period:4},
+    {z:21,symbol:"Sc",name:"Scandium",period:4},{z:22,symbol:"Ti",name:"Titanium",period:4},
+    {z:23,symbol:"V",name:"Vanadium",period:4},{z:24,symbol:"Cr",name:"Chromium",period:4},
+    {z:25,symbol:"Mn",name:"Manganese",period:4},{z:26,symbol:"Fe",name:"Iron",period:4},
+    {z:27,symbol:"Co",name:"Cobalt",period:4},{z:28,symbol:"Ni",name:"Nickel",period:4},
+    {z:29,symbol:"Cu",name:"Copper",period:4},{z:30,symbol:"Zn",name:"Zinc",period:4},
+    {z:31,symbol:"Ga",name:"Gallium",period:4},{z:32,symbol:"Ge",name:"Germanium",period:4},
+    {z:33,symbol:"As",name:"Arsenic",period:4},{z:34,symbol:"Se",name:"Selenium",period:4},
+    {z:35,symbol:"Br",name:"Bromine",period:4},{z:36,symbol:"Kr",name:"Krypton",period:4}
+  ];
+  const IONS = [
+    {id:"H-",z:1,charge:-1,name:"Hydride ion"},{id:"Li+",z:3,charge:1,name:"Lithium ion"},
+    {id:"Be2+",z:4,charge:2,name:"Beryllium ion"},{id:"N3-",z:7,charge:-3,name:"Nitride ion"},
+    {id:"O2-",z:8,charge:-2,name:"Oxide ion"},{id:"F-",z:9,charge:-1,name:"Fluoride ion"},
+    {id:"Na+",z:11,charge:1,name:"Sodium ion"},{id:"Mg2+",z:12,charge:2,name:"Magnesium ion"},
+    {id:"Al3+",z:13,charge:3,name:"Aluminium ion"},{id:"P3-",z:15,charge:-3,name:"Phosphide ion"},
+    {id:"S2-",z:16,charge:-2,name:"Sulfide ion"},{id:"Cl-",z:17,charge:-1,name:"Chloride ion"},
+    {id:"K+",z:19,charge:1,name:"Potassium ion"},{id:"Ca2+",z:20,charge:2,name:"Calcium ion"},
+    {id:"Sc3+",z:21,charge:3,name:"Scandium(III) ion"},{id:"Ti2+",z:22,charge:2,name:"Titanium(II) ion"},
+    {id:"Ti4+",z:22,charge:4,name:"Titanium(IV) ion"},{id:"V3+",z:23,charge:3,name:"Vanadium(III) ion"},
+    {id:"Cr2+",z:24,charge:2,name:"Chromium(II) ion"},{id:"Cr3+",z:24,charge:3,name:"Chromium(III) ion"},
+    {id:"Mn2+",z:25,charge:2,name:"Manganese(II) ion"},{id:"Fe2+",z:26,charge:2,name:"Iron(II) ion"},
+    {id:"Fe3+",z:26,charge:3,name:"Iron(III) ion"},{id:"Co2+",z:27,charge:2,name:"Cobalt(II) ion"},
+    {id:"Ni2+",z:28,charge:2,name:"Nickel(II) ion"},{id:"Cu+",z:29,charge:1,name:"Copper(I) ion"},
+    {id:"Cu2+",z:29,charge:2,name:"Copper(II) ion"},{id:"Zn2+",z:30,charge:2,name:"Zinc(II) ion"}
+  ];
+  const SUP = {"0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","+":"⁺","-":"⁻"};
+  const toSup = (s) => String(s).split("").map(c => SUP[c] || c).join("");
+  const formatBadge = (sym, charge) => charge === 0 ? sym : (charge === 1 ? sym + "⁺" : (charge === -1 ? sym + "⁻" : (charge > 1 ? sym + toSup(charge + "+") : sym + toSup(Math.abs(charge) + "-"))));
+
+  function createRng(seed) {
+    let s = (seed >>> 0) || Math.floor(Math.random() * 0xffffffff);
+    return {
+      next() { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; },
+      int(n) { return Math.floor(this.next() * n); }
+    };
+  }
+  function shuffleRng(arr, rng) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = rng.int(i + 1);
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function boxElectronCount(box) {
+    if (!Array.isArray(box)) return 0;
+    return box.reduce((acc, v) => acc + (v ? 1 : 0), 0);
+  }
+
+  function buildBoxesFromCounts(counts) {
+    const map = {};
+    for (const s of SUBSHELL_ORDER) {
+      const boxes = Array.from({ length: s.orbitals }, () => [false, false]);
+      let left = counts[s.name] || 0;
+      for (let i = 0; i < s.orbitals && left > 0; i++, left--) boxes[i][0] = true;
+      for (let i = 0; i < s.orbitals && left > 0; i++, left--) boxes[i][1] = true;
+      map[s.name] = boxes;
+    }
+    return map;
+  }
+
+  function computeMetrics(boxesMap) {
+    let totalE = 0, occSub = 0, occOrb = 0, fullOrb = 0, halfOrb = 0, unpaired = 0;
+    const shells = new Set();
+    for (const s of SUBSHELL_ORDER) {
+      let hasE = false;
+      for (const box of (boxesMap[s.name] || [])) {
+        const cnt = boxElectronCount(box);
+        if (cnt > 0) {
+          hasE = true; totalE += cnt; occOrb++;
+          if (cnt >= 2) fullOrb++;
+          else { halfOrb++; unpaired++; }
+        }
+      }
+      if (hasE) { occSub++; shells.add(s.n); }
+    }
+    return {
+      total_electrons: totalE, occupied_shells: shells.size,
+      occupied_subshells: occSub, occupied_orbitals: occOrb,
+      fully_occupied_orbitals: fullOrb, half_filled_orbitals: halfOrb,
+      unpaired_electrons: unpaired
+    };
+  }
+
+  function formatConfig(counts, shellOrder = true) {
+    const ord = shellOrder ? DISPLAY_ORDER : SUBSHELL_ORDER.map(s => s.name);
+    const parts = ord.filter(k => (counts[k] || 0) > 0).map(k => k + toSup(counts[k]));
+    return parts.length ? parts.join(" ") : "(empty)";
+  }
+
+  function formatNoble(counts) {
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    if (total > 18 && counts["1s"] === 2 && counts["2s"] === 2 && counts["2p"] === 6 && counts["3s"] === 2 && counts["3p"] === 6) {
+      const tail = ["3d", "4s", "4p"].filter(k => counts[k] > 0).map(k => k + toSup(counts[k]));
+      return tail.length ? "[Ar] " + tail.join(" ") : "[Ar]";
+    }
+    if (total > 10 && counts["1s"] === 2 && counts["2s"] === 2 && counts["2p"] === 6) {
+      const tail = ["3s", "3p", "3d", "4s", "4p"].filter(k => counts[k] > 0).map(k => k + toSup(counts[k]));
+      return tail.length ? "[Ne] " + tail.join(" ") : "[Ne]";
+    }
+    return formatConfig(counts, true);
+  }
+
+  function computeNeutral(z) {
+    const c = {}; SUBSHELL_ORDER.forEach(s => c[s.name] = 0);
+    let rem = z;
+    for (const s of SUBSHELL_ORDER) {
+      if (rem <= 0) break;
+      const add = Math.min(rem, s.capacity);
+      c[s.name] = add; rem -= add;
+    }
+    if (z === 24) { c["4s"] = 1; c["3d"] = 5; }
+    if (z === 29) { c["4s"] = 1; c["3d"] = 10; }
+    return c;
+  }
+
+  const catalog = {};
+  const allIds = [];
+  function initCatalog() {
+    if (allIds.length) return;
+    for (const el of ELEMENTS) {
+      allIds.push(el.symbol);
+      catalog[el.symbol] = buildSpecies(el.symbol, el.symbol, el.name, el.z, 0, el.period);
+    }
+    for (const ion of IONS) {
+      const el = ELEMENTS[ion.z - 1];
+      allIds.push(ion.id);
+      catalog[ion.id] = buildSpecies(ion.id, el.symbol, ion.name, ion.z, ion.charge, el.period);
+    }
+  }
+
+  function buildSpecies(id, symbol, name, z, charge, period) {
+    const counts = computeNeutral(z);
+    if (charge > 0) {
+      let rem = charge;
+      for (const k of IONIZATION_ORDER) {
+        if (rem <= 0) break;
+        const take = Math.min(counts[k], rem);
+        counts[k] -= take; rem -= take;
+      }
+    } else if (charge < 0) {
+      let addRem = -charge;
+      for (const s of SUBSHELL_ORDER) {
+        if (addRem <= 0) break;
+        const space = s.capacity - counts[s.name];
+        const add = Math.min(space, addRem);
+        counts[s.name] += add; addRem -= add;
+      }
+    }
+    const boxes = buildBoxesFromCounts(counts);
+    const metrics = computeMetrics(boxes);
+    return {
+      id, symbol, display_symbol: formatBadge(symbol, charge),
+      name: charge === 0 ? name + " atom" : name,
+      atomic_number: z, charge, period, total_electrons: z - charge,
+      subshells: counts, orbital_boxes: boxes,
+      config_shell_order: formatConfig(counts, true),
+      config_noble: formatNoble(counts),
+      ...metrics
+    };
+  }
+
+  initCatalog();
+
+  function createEmptyBoxes() {
+    const m = {};
+    SUBSHELL_ORDER.forEach(s => { m[s.name] = Array.from({ length: s.orbitals }, () => [false, false]); });
+    return m;
+  }
+
+  function validateUserBoxes(speciesId, userBoxes) {
+    const sp = catalog[speciesId] || catalog["N"];
+    const metrics = computeMetrics(userBoxes);
+    if (metrics.total_electrons !== sp.total_electrons) {
+      const diff = sp.total_electrons - metrics.total_electrons;
+      const hint = diff > 0 ? `Add ${diff} more electron${diff === 1 ? "" : "s"}.` : `Remove ${-diff} electron${diff === -1 ? "" : "s"}.`;
+      return {
+        valid: false, error_type: "ELECTRON_COUNT",
+        explanation: `${sp.name} (${sp.display_symbol}) requires ${sp.total_electrons} total electrons, but your diagram has ${metrics.total_electrons}. ${hint}`
+      };
+    }
+    for (const s of SUBSHELL_ORDER) {
+      const boxes = userBoxes[s.name] || [];
+      if (boxes.length <= 1) continue;
+      let hasEmpty = false, hasPaired = false, upOnly = 0, downOnly = 0;
+      for (const b of boxes) {
+        const c = boxElectronCount(b);
+        if (c === 0) hasEmpty = true;
+        else if (c === 2) hasPaired = true;
+        else if (c === 1) { if (b[0]) upOnly++; else downOnly++; }
+      }
+      if (hasPaired && hasEmpty) {
+        return {
+          valid: false, error_type: "HUND_VIOLATION",
+          explanation: `Hund's Rule violated in ${s.name}! You paired two electrons in one orbital while another ${s.name} orbital is empty. Spread electrons singly before pairing.`
+        };
+      }
+      if (upOnly > 0 && downOnly > 0) {
+        return {
+          valid: false, error_type: "HUND_VIOLATION",
+          explanation: `Hund's Rule violated in ${s.name}! Singly occupied orbitals must have parallel spins.`
+        };
+      }
+    }
+    const uCounts = {};
+    for (const s of SUBSHELL_ORDER) {
+      uCounts[s.name] = (userBoxes[s.name] || []).reduce((acc, b) => acc + boxElectronCount(b), 0);
+    }
+    const mismatch = SUBSHELL_ORDER.some(s => uCounts[s.name] !== sp.subshells[s.name]);
+    if (mismatch) {
+      if (sp.charge > 0 && sp.atomic_number >= 21 && sp.atomic_number <= 30 && uCounts["4s"] > 0) {
+        return {
+          valid: false, error_type: "CATION_4S_VIOLATION",
+          explanation: `For d-block cations like ${sp.display_symbol}, electrons are ALWAYS removed from 4s BEFORE 3d! Ground state: ${sp.config_noble}.`
+        };
+      }
+      if (sp.charge === 0 && (sp.atomic_number === 24 || sp.atomic_number === 29)) {
+        const reason = sp.atomic_number === 24 ? "half-filled 3d⁵ 4s¹" : "completely filled 3d¹⁰ 4s¹";
+        return {
+          valid: false, error_type: "DBLOCK_EXCEPTION",
+          explanation: `${sp.name} is a Year 12 exception! One 4s electron promotes to 3d for a ${reason} configuration (${sp.config_noble}).`
+        };
+      }
+      return {
+        valid: false, error_type: "AUFBAU_VIOLATION",
+        explanation: `Aufbau Principle violated! Lower-energy subshells must fill before higher-energy ones. Expected: ${sp.config_shell_order}.`
+      };
+    }
+    return {
+      valid: true, error_type: "NONE",
+      explanation: `Spot on! ${sp.name} (${sp.config_shell_order}) has ${sp.occupied_orbitals} total occupied orbitals (${sp.fully_occupied_orbitals} fully paired, ${sp.unpaired_electrons} unpaired).`
+    };
+  }
+
+  function buildIntOptions(correct, distractors, rng) {
+    const chosen = [correct];
+    for (const d of distractors) {
+      if (d >= 0 && d <= 36 && !chosen.includes(d)) chosen.push(d);
+      if (chosen.length === 4) break;
+    }
+    let step = 1;
+    while (chosen.length < 4) {
+      const cand = correct + step;
+      if (cand >= 0 && !chosen.includes(cand)) chosen.push(cand);
+      step = step > 0 ? -step : (-step + 1);
+    }
+    return shuffleRng(chosen, rng).map(String);
+  }
+
+  function poolForSector(sector) {
+    if (sector === 1) return ["N", "C", "O", "F", "B", "Be", "Ne", "N", "O", "Li", "He", "H"];
+    if (sector === 2) return ["Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "N3-", "O2-", "F-", "Na+", "Mg2+", "Al3+", "P3-", "S2-", "Cl-"];
+    if (sector === 3) return ["N", "O", "C", "P", "S", "Si", "V", "Mn", "Fe", "Co", "Ni", "As", "Se"];
+    if (sector === 4) return ["K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Cr", "Cu", "Ga", "Ge", "Br", "Kr"];
+    if (sector === 5) return ["Fe2+", "Fe3+", "Cr2+", "Cr3+", "Cu+", "Cu2+", "Ti2+", "Ti4+", "V3+", "Mn2+", "Co2+", "Ni2+", "Zn2+", "Sc3+", "N", "Cr", "Cu", "P"];
+    return ["N", "O", "C", "F", "P", "S", "Si", "Cl", "N3-", "O2-", "Cr", "Cu", "Mn", "Fe", "Fe2+", "Fe3+", "Cr3+", "Cu2+", "Mn2+", "Ti2+", "V", "Ni", "Zn2+"];
+  }
+
+  function generateQuestion(sector, rng, forceArch = "", forceSpecies = "") {
+    const pool = poolForSector(sector);
+    const sid = (forceSpecies && catalog[forceSpecies]) ? forceSpecies : pool[rng.int(pool.length)];
+    const sp = catalog[sid];
+    let arch = forceArch;
+    if (!arch) {
+      const list = sector === 1
+        ? ["OCCUPIED_ORBITALS", "OCCUPIED_ORBITALS", "UNPAIRED_ELECTRONS", "FULLY_OCCUPIED_ORBITALS", "SUBSHELL_VS_ORBITAL", "BUILD_THE_ATOM", "RULE_VIOLATION_DETECTIVE"]
+        : sector === 3
+          ? ["RULE_VIOLATION_DETECTIVE", "RULE_VIOLATION_DETECTIVE", "OCCUPIED_ORBITALS", "UNPAIRED_ELECTRONS", "BUILD_THE_ATOM"]
+          : ["OCCUPIED_ORBITALS", "OCCUPIED_ORBITALS", "UNPAIRED_ELECTRONS", "FULLY_OCCUPIED_ORBITALS", "SUBSHELL_VS_ORBITAL", "RULE_VIOLATION_DETECTIVE", "BUILD_THE_ATOM", "MYSTERY_SPECIES"];
+      arch = list[rng.int(list.length)];
+    }
+    if (arch === "BUILD_THE_ATOM" && sp.total_electrons > 30) arch = "OCCUPIED_ORBITALS";
+    if (arch === "MYSTERY_SPECIES" && sp.charge !== 0 && !["Fe2+", "Fe3+", "Cr3+", "Cu2+", "Cu+", "Mn2+", "N3-", "O2-"].includes(sid)) arch = "OCCUPIED_ORBITALS";
+
+    if (arch === "UNPAIRED_ELECTRONS") {
+      const ans = sp.unpaired_electrons;
+      return {
+        archetype: arch, input_mode: "CHOICE", species_id: sp.id, badge: sp.display_symbol,
+        z_label: `Z = ${sp.atomic_number} | ${sp.total_electrons}e⁻`,
+        tag: "HUND'S RULE • UNPAIRED SPIN",
+        prompt: `How many unpaired electrons (half-filled orbitals) are in a ground-state ${sp.name}?`,
+        hint: "Spread electrons singly across degenerate p or d orbitals before pairing.",
+        options: buildIntOptions(ans, [ans + 1, Math.max(0, ans - 1), ans + 2, sp.occupied_orbitals, sp.fully_occupied_orbitals, 0, 1, 2, 3], rng),
+        correct_answer: String(ans), show_boxes_pre: false, display_boxes: sp.orbital_boxes,
+        explanation: `${sp.display_symbol} has configuration ${sp.config_shell_order}. ${ans === 0 ? "All orbitals are paired (0 unpaired)." : `Hund's Rule leaves ${ans} singly occupied orbital${ans === 1 ? "" : "s"}.`}`
+      };
+    }
+    if (arch === "FULLY_OCCUPIED_ORBITALS") {
+      const ans = sp.fully_occupied_orbitals;
+      return {
+        archetype: arch, input_mode: "CHOICE", species_id: sp.id, badge: sp.display_symbol,
+        z_label: `Z = ${sp.atomic_number} | ${sp.total_electrons}e⁻`,
+        tag: "PAIRED ORBITAL PRECISION",
+        prompt: `How many orbitals are FULLY occupied (contain a spin pair ↑↓) in a ground-state ${sp.name}?`,
+        hint: "Do NOT count half-filled orbitals (↑). Only count boxes containing 2 paired electrons.",
+        options: buildIntOptions(ans, [sp.occupied_orbitals, sp.unpaired_electrons, sp.occupied_subshells, ans + 1, Math.max(0, ans - 1)], rng),
+        correct_answer: String(ans), show_boxes_pre: false, display_boxes: sp.orbital_boxes,
+        explanation: `${sp.name} (${sp.config_shell_order}) has ${sp.occupied_orbitals} occupied orbitals: ${ans} fully paired (↑↓) and ${sp.unpaired_electrons} half-filled (↑).`
+      };
+    }
+    if (arch === "SUBSHELL_VS_ORBITAL") {
+      const ans = `${sp.occupied_subshells} subshells, ${sp.occupied_orbitals} orbitals`;
+      const raw = [
+        ans,
+        `${sp.occupied_shells} subshells, ${sp.occupied_orbitals} orbitals`,
+        `${sp.occupied_subshells} subshells, ${sp.occupied_subshells} orbitals`,
+        `${sp.occupied_subshells} subshells, ${sp.fully_occupied_orbitals} orbitals`,
+        `${sp.occupied_orbitals} subshells, ${sp.occupied_subshells} orbitals`
+      ];
+      const opts = [];
+      for (const c of raw) if (!opts.includes(c) && opts.length < 4) opts.push(c);
+      while (opts.length < 4) opts.push(`${sp.occupied_subshells} subshells, ${sp.occupied_orbitals + opts.length} orbitals`);
+      return {
+        archetype: arch, input_mode: "CHOICE", species_id: sp.id, badge: sp.display_symbol,
+        z_label: `Z = ${sp.atomic_number} | ${sp.total_electrons}e⁻`,
+        tag: "SHELL vs SUBSHELL vs ORBITAL",
+        prompt: `In a ground-state ${sp.name}, state the number of occupied SUBSHELLS and occupied ORBITALS.`,
+        hint: "Subshells = 1s, 2s, 2p... | Orbitals = individual boxes (s=1, p=3, d=5).",
+        options: shuffleRng(opts, rng), correct_answer: ans, show_boxes_pre: false, display_boxes: sp.orbital_boxes,
+        explanation: `${sp.name} (${sp.config_shell_order}) uses ${sp.occupied_shells} shells, ${sp.occupied_subshells} subshells, and ${sp.occupied_orbitals} occupied orbitals.`
+      };
+    }
+    if (arch === "RULE_VIOLATION_DETECTIVE") {
+      const boxes = JSON.parse(JSON.stringify(sp.orbital_boxes));
+      const counts = sp.subshells;
+      const faults = [];
+      if (counts["2p"] >= 2 && counts["2p"] <= 4) faults.push("HUND_2P");
+      if (counts["3p"] >= 2 && counts["3p"] <= 4) faults.push("HUND_3P");
+      if (counts["3d"] >= 2 && counts["3d"] <= 8) faults.push("HUND_3D");
+      if (counts["1s"] === 2 || counts["2s"] === 2) faults.push("PAULI");
+      if (sp.charge === 0 && (sp.atomic_number === 24 || sp.atomic_number === 29)) faults.push("DBLOCK");
+      if (sp.charge > 0 && sp.atomic_number >= 21 && sp.atomic_number <= 30 && counts["3d"] >= 2) faults.push("CATION_4S");
+      let scenario = (faults.length && rng.next() < 0.78) ? faults[rng.int(faults.length)] : "VALID";
+      let correct = "Valid ground-state configuration (all rules obeyed)";
+      let explain = `All quantum rules (Aufbau, Pauli, Hund's Rule) are obeyed for ${sp.display_symbol} (${sp.config_shell_order}).`;
+      if (scenario === "HUND_2P" || scenario === "HUND_3P") {
+        const sub = scenario === "HUND_2P" ? "2p" : "3p";
+        let left = counts[sub] - 2;
+        boxes[sub] = [[true, true], [left > 0, false], [left > 1, false]];
+        correct = "Violates Hund's Rule (paired electrons while an equal-energy orbital is empty)";
+        explain = `Hund's Rule requires ${sub} electrons to spread singly across all three ${sub} orbitals before pairing!`;
+      } else if (scenario === "HUND_3D") {
+        boxes["3d"] = [[true, true], [true, false], [false, false], [false, false], [false, false]];
+        let left = counts["3d"] - 3;
+        for (let i = 2; i < 5 && left > 0; i++, left--) boxes["3d"][i] = [true, false];
+        correct = "Violates Hund's Rule (paired electrons while an equal-energy orbital is empty)";
+        explain = "In 3d, electrons must singly occupy all 5 degenerate d orbitals before pairing occurs.";
+      } else if (scenario === "PAULI") {
+        if (counts["2s"] === 2) boxes["2s"] = [["↑", "↑"]];
+        else boxes["1s"] = [["↑", "↑"]];
+        correct = "Violates Pauli Exclusion Principle (two electrons with identical spin in one orbital)";
+        explain = "Two electrons in the same orbital must have opposite spins (↑↓), never parallel spins (↑↑).";
+      } else if (scenario === "DBLOCK") {
+        if (sp.atomic_number === 24) {
+          boxes["4s"] = [[true, true]];
+          boxes["3d"] = [[true, false], [true, false], [true, false], [true, false], [false, false]];
+          explain = "Chromium (Cr) promotes one 4s electron to achieve half-filled 3d⁵ 4s¹ stability.";
+        } else {
+          boxes["4s"] = [[true, true]];
+          boxes["3d"] = [[true, true], [true, true], [true, true], [true, true], [true, false]];
+          explain = "Copper (Cu) promotes one 4s electron to achieve filled 3d¹⁰ 4s¹ stability.";
+        }
+        correct = "Misses d-block stability exception (should promote a 4s electron to 3d)";
+      } else if (scenario === "CATION_4S") {
+        const fake = { ...counts, "4s": 2, "3d": counts["3d"] - 2 };
+        Object.assign(boxes, buildBoxesFromCounts(fake));
+        correct = "Ionization error (4s electrons must be removed BEFORE 3d electrons)";
+        explain = `For transition metal cations like ${sp.display_symbol}, outer 4s electrons are ALWAYS removed first!`;
+      }
+      const choices = [
+        "Valid ground-state configuration (all rules obeyed)",
+        "Violates Hund's Rule (paired electrons while an equal-energy orbital is empty)",
+        "Violates Pauli Exclusion Principle (two electrons with identical spin in one orbital)",
+        (scenario === "DBLOCK" || scenario === "CATION_4S") ? correct : "Violates Aufbau Principle (2p populated before lower-energy 2s is full)"
+      ];
+      return {
+        archetype: arch, input_mode: "CHOICE", species_id: sp.id, badge: sp.display_symbol,
+        z_label: `Z = ${sp.atomic_number} | ${sp.total_electrons}e⁻`,
+        tag: "QUANTUM DETECTIVE • SPOT THE FLAW",
+        prompt: `Inspect this orbital box diagram for ground-state ${sp.name} (${sp.display_symbol}). Which statement is correct?`,
+        hint: "Check: (1) Lowest energy filled? (2) Opposite spins in paired boxes? (3) Singly occupied before pairing?",
+        options: shuffleRng(choices, rng), correct_answer: correct,
+        show_boxes_pre: true, display_boxes: boxes, explanation: explain
+      };
+    }
+    if (arch === "BUILD_THE_ATOM") {
+      return {
+        archetype: arch, input_mode: "BUILD", species_id: sp.id, badge: sp.display_symbol,
+        z_label: `Z = ${sp.atomic_number} | Target: ${sp.total_electrons}e⁻`,
+        tag: "QUANTUM ARCHITECT • BUILD ORBITALS",
+        prompt: `Construct the ground-state orbital box diagram for ${sp.name} (${sp.display_symbol}), then verify!`,
+        hint: "Tap a box to cycle: Empty → ↑ → ↑↓ → Empty. Obey Aufbau, Pauli, and Hund's Rule!",
+        options: [], correct_answer: String(sp.occupied_orbitals),
+        show_boxes_pre: true, display_boxes: createEmptyBoxes(),
+        explanation: `${sp.name} (${sp.display_symbol}) has ${sp.occupied_orbitals} occupied orbitals (${sp.config_shell_order}).`
+      };
+    }
+    if (arch === "MYSTERY_SPECIES") {
+      const cStr = sp.charge > 0 ? `+${sp.charge}` : String(sp.charge);
+      const clue = sp.charge === 0
+        ? `Identify the neutral Period ${sp.period} atom with ${sp.occupied_orbitals} occupied orbitals and ${sp.unpaired_electrons} unpaired electron${sp.unpaired_electrons === 1 ? "" : "s"}.`
+        : `Identify the ${cStr} ion with ${sp.config_noble} configuration (${sp.occupied_orbitals} occupied orbitals, ${sp.unpaired_electrons} unpaired electron${sp.unpaired_electrons === 1 ? "" : "s"}).`;
+      const cands = sp.charge === 0
+        ? ELEMENTS.filter(e => e.period === sp.period && e.symbol !== sp.id).map(e => e.symbol)
+        : IONS.filter(i => i.id !== sp.id && !((i.z - i.charge) === sp.total_electrons && i.charge === sp.charge)).map(i => i.id);
+      shuffleRng(cands, rng);
+      const opts = [sp.display_symbol];
+      for (const cid of cands) {
+        const d = catalog[cid].display_symbol;
+        if (!opts.includes(d)) opts.push(d);
+        if (opts.length === 4) break;
+      }
+      return {
+        archetype: arch, input_mode: "CHOICE", species_id: sp.id, badge: "?",
+        z_label: "CLUE DEDUCTION", tag: "MYSTERY SPECIES • REVERSE ENGINEER",
+        prompt: clue, hint: "Work backwards from occupied orbitals and unpaired electrons to find the electron count.",
+        options: shuffleRng(opts, rng), correct_answer: sp.display_symbol,
+        show_boxes_pre: false, display_boxes: sp.orbital_boxes,
+        explanation: `The answer is ${sp.name} (${sp.display_symbol}): ${sp.config_shell_order} → ${sp.occupied_orbitals} occupied orbitals, ${sp.unpaired_electrons} unpaired e⁻.`
+      };
+    }
+    // Default: OCCUPIED_ORBITALS
+    const ans = sp.occupied_orbitals;
+    const dist = [sp.total_electrons, sp.occupied_subshells, sp.fully_occupied_orbitals, sp.occupied_shells, ans - 1, ans + 1, ans + 2];
+    if (sp.unpaired_electrons >= 2) dist.unshift(sp.fully_occupied_orbitals + Math.ceil(sp.unpaired_electrons / 2));
+    const parts = SUBSHELL_ORDER.filter(s => sp.subshells[s.name] > 0).map(s => `${s.name}(${sp.orbital_boxes[s.name].filter(b => boxElectronCount(b) > 0).length})`);
+    return {
+      archetype: "OCCUPIED_ORBITALS", input_mode: "CHOICE", species_id: sp.id, badge: sp.display_symbol,
+      z_label: `Z = ${sp.atomic_number} | ${sp.total_electrons}e⁻`,
+      tag: "EXAM CLASSIC • ORBITAL COUNT",
+      prompt: `State the total number of occupied orbitals in a ground-state ${sp.name}.`,
+      hint: "Remember: an orbital is 'occupied' if it contains 1 OR 2 electrons. Apply Hund's Rule to p and d subshells!",
+      options: buildIntOptions(ans, dist, rng), correct_answer: String(ans),
+      show_boxes_pre: false, display_boxes: sp.orbital_boxes,
+      explanation: `${sp.name} (${sp.display_symbol}) has configuration ${sp.config_shell_order}. Occupied orbitals per subshell: ${parts.join(" + ")} = ${ans} total occupied orbitals.`
+    };
+  }
+
+  return {
+    SUBSHELL_ORDER, SUB_LABELS, ELEMENTS, IONS, catalog, allIds,
+    createRng, createEmptyBoxes, buildBoxesFromCounts, computeMetrics,
+    formatConfig, validateUserBoxes, generateQuestion, buildIntOptions, boxElectronCount
+  };
+})();
+
+// =============================================================================
+// 2. WEB AUDIO PROCEDURAL SOUND SYNTHESIZER
+// =============================================================================
+const SoundFX = (() => {
+  let ctx = null;
+  let muted = false;
+  function ensureCtx() {
+    if (!ctx && (window.AudioContext || window.webkitAudioContext)) {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+  }
+  function tone(f1, f2, dur, type = "sine", gainVal = 0.14, delay = 0) {
+    if (muted) return;
+    ensureCtx();
+    if (!ctx) return;
+    const t0 = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(f1, t0);
+    osc.frequency.linearRampToValueAtTime(f2, t0 + dur);
+    g.gain.setValueAtTime(0.001, t0);
+    g.gain.linearRampToValueAtTime(gainVal, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.02);
+  }
+  return {
+    get muted() { return muted; },
+    toggleMute() { muted = !muted; return muted; },
+    spinUp() { tone(523.25, 659.25, 0.08, "sine", 0.13); },
+    spinDown() { tone(659.25, 783.99, 0.09, "sine", 0.13); },
+    clearBox() { tone(330, 220, 0.07, "triangle", 0.1); },
+    correct(combo = 1) {
+      const shift = Math.pow(2, Math.min(combo - 1, 10) / 12);
+      [523.25, 659.25, 783.99].forEach((f, i) => tone(f * shift, f * shift, 0.13, "sine", 0.12, i * 0.05));
+    },
+    wrong() { tone(185, 146, 0.22, "sawtooth", 0.09); tone(196, 150, 0.22, "sawtooth", 0.07); },
+    fanfare() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, f, 0.18, "sine", 0.13, i * 0.07)); }
+  };
+})();
+
+// =============================================================================
+// 3. STATE & LEADERBOARD PERSISTENCE
+// =============================================================================
+const STORAGE_KEY = "orbital_blitz_save_v1";
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function dailySeedNum() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+const RANK_TITLES = ["1s² Cadet", "2p Apprentice", "Hund's Tactician", "Aufbau Navigator", "3d Specialist", "Quantum Architect", "Nobel Laureate"];
+let state = {
+  player_name: "Chemist12",
+  class_code: "CHEM12",
+  xp: 0,
+  best_streak: 0,
+  total_answered: 0,
+  total_correct: 0,
+  nitrogen_mastered: 0,
+  api_url: "",
+  leaderboards: {
+    BLITZ: [
+      { name: "Dr_Orbital", class_code: "CHEM12", score: 2450, accuracy: 96, max_combo: 11, date: todayKey(), rival: true },
+      { name: "HundsHero_12A", class_code: "CHEM12", score: 1980, accuracy: 92, max_combo: 9, date: todayKey(), rival: true },
+      { name: "NitrogenNinja", class_code: "CHEM12", score: 1620, accuracy: 89, max_combo: 7, date: todayKey(), rival: true },
+      { name: "AufbauAce", class_code: "12SCI", score: 1340, accuracy: 85, max_combo: 6, date: todayKey(), rival: true },
+      { name: "PauliPro", class_code: "CHEM12", score: 980, accuracy: 80, max_combo: 5, date: todayKey(), rival: true }
+    ],
+    DAILY: [
+      { name: "HundsHero_12A", class_code: "CHEM12", score: 1820, accuracy: 100, max_combo: 10, date: todayKey(), rival: true },
+      { name: "NitrogenNinja", class_code: "CHEM12", score: 1490, accuracy: 90, max_combo: 6, date: todayKey(), rival: true }
+    ],
+    GAUNTLET: [
+      { name: "Dr_Orbital", class_code: "CHEM12", score: 2800, accuracy: 95, max_combo: 12, date: todayKey(), rival: true },
+      { name: "AufbauAce", class_code: "CHEM12", score: 2100, accuracy: 88, max_combo: 8, date: todayKey(), rival: true }
+    ]
+  }
+};
+try {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+  if (saved) state = { ...state, ...saved, leaderboards: { ...state.leaderboards, ...(saved.leaderboards || {}) } };
+} catch (_) {}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+}
+function getLevel() { return Math.max(1, 1 + Math.floor(Math.sqrt(state.xp / 120))); }
+function getRankTitle() { return RANK_TITLES[Math.min(getLevel() - 1, RANK_TITLES.length - 1)]; }
+
+// =============================================================================
+// 4. ORBITAL BOARD WIDGET BUILDER
+// =============================================================================
+function renderSpinSvg(box) {
+  if (typeof box[0] === "string" || typeof box[1] === "string") {
+    const a1 = box[0] === "↑" ? `<path d="M12,30 V6 M7,12 L12,5 L17,12" stroke="#fb7185" stroke-width="2.8" fill="none" stroke-linecap="round"/>` : "";
+    const a2 = box[1] === "↑" ? `<path d="M30,30 V6 M25,12 L30,5 L35,12" stroke="#fb7185" stroke-width="2.8" fill="none" stroke-linecap="round"/>` : "";
+    return `<svg class="spins-svg" viewBox="0 0 42 34">${a1}${a2}</svg>`;
+  }
+  const [up, down] = box;
+  if (up && down) {
+    return `<svg class="spins-svg" viewBox="0 0 42 34">
+      <path d="M13,29 V6 M8,12 L13,5 L18,12" stroke="#38bdf8" stroke-width="2.7" fill="none" stroke-linecap="round"/>
+      <path d="M29,5 V28 M24,22 L29,29 L34,22" stroke="#fbbf24" stroke-width="2.7" fill="none" stroke-linecap="round"/>
+    </svg>`;
+  }
+  if (up) {
+    return `<svg class="spins-svg" viewBox="0 0 42 34">
+      <path d="M21,29 V6 M15,12 L21,5 L27,12" stroke="#34d399" stroke-width="2.9" fill="none" stroke-linecap="round"/>
+    </svg>`;
+  }
+  if (down) {
+    return `<svg class="spins-svg" viewBox="0 0 42 34">
+      <path d="M21,5 V28 M15,22 L21,29 L27,22" stroke="#fbbf24" stroke-width="2.9" fill="none" stroke-linecap="round"/>
+    </svg>`;
+  }
+  return `<svg class="spins-svg" viewBox="0 0 42 34"></svg>`;
+}
+
+function createOrbitalBoard(container, opts) {
+  let boxes = JSON.parse(JSON.stringify(opts.boxes || ChemDB.createEmptyBoxes()));
+  let interactive = Boolean(opts.interactive);
+  let showTelemetry = opts.showTelemetry !== false;
+  let showBadges = opts.showBadges !== false;
+  let maxHint = opts.maxHint || 36;
+
+  function draw() {
+    let highestIdx = 3;
+    if (maxHint > 30) highestIdx = 7;
+    else if (maxHint > 18) highestIdx = 6;
+    else if (maxHint > 10) highestIdx = 4;
+    ChemDB.SUBSHELL_ORDER.forEach((s, idx) => {
+      if ((boxes[s.name] || []).some(b => ChemDB.boxElectronCount(b) > 0)) highestIdx = Math.max(highestIdx, idx);
+    });
+
+    let runningOcc = 0;
+    const counts = {};
+    let subHtml = "";
+    ChemDB.SUBSHELL_ORDER.forEach((s, idx) => {
+      const subBoxes = boxes[s.name] || [];
+      counts[s.name] = subBoxes.reduce((a, b) => a + ChemDB.boxElectronCount(b), 0);
+      if (idx > highestIdx) return;
+      const labels = ChemDB.SUB_LABELS[s.name] || [];
+      let boxesHtml = "";
+      subBoxes.forEach((b, bi) => {
+        const cnt = ChemDB.boxElectronCount(b);
+        const isPauli = (typeof b[0] === "string");
+        if (cnt > 0) runningOcc++;
+        const cls = ["orb-box", interactive ? "editable" : "", isPauli ? "pauli-err" : (cnt >= 2 ? "full" : (cnt === 1 ? "occupied" : ""))].filter(Boolean).join(" ");
+        const badge = (cnt > 0 && showBadges) ? `<span class="occ-badge">#${runningOcc}</span>` : "";
+        boxesHtml += `<button type="button" class="${cls}" data-sub="${s.name}" data-idx="${bi}">${badge}${renderSpinSvg(b)}<span class="orb-sub-lbl">${labels[bi] || s.name}</span></button>`;
+      });
+      subHtml += `<div class="subshell-group"><div class="subshell-title">${s.name}</div><div class="boxes-row">${boxesHtml}</div></div>`;
+    });
+
+    const toolbar = interactive ? `<div class="board-toolbar">
+      <span style="font-size:0.8rem;color:var(--muted);font-weight:700;">Quick Core:</span>
+      <button type="button" class="btn btn-sm btn-slate core-btn" data-e="2">[He] 1s²</button>
+      <button type="button" class="btn btn-sm btn-slate core-btn" data-e="10">[Ne] 1s²..2p⁶</button>
+      <button type="button" class="btn btn-sm btn-slate core-btn" data-e="18">[Ar] 1s²..3p⁶</button>
+      <button type="button" class="btn btn-sm btn-rose" id="boardClearBtn">Clear All</button>
+    </div>` : "";
+
+    const m = ChemDB.computeMetrics(boxes);
+    const tele = showTelemetry ? `
+      <div style="text-align:center;font-size:0.88rem;color:#b8d7ff;font-weight:700;">Configuration: ${ChemDB.formatConfig(counts, true)}</div>
+      <div class="telemetry-bar">
+        <div class="tele-item"><span class="tele-cap">Total e⁻</span><span class="tele-val">${m.total_electrons}</span></div>
+        <div class="tele-item"><span class="tele-cap">Shells</span><span class="tele-val">${m.occupied_shells}</span></div>
+        <div class="tele-item"><span class="tele-cap">Subshells</span><span class="tele-val">${m.occupied_subshells}</span></div>
+        <div class="tele-item"><span class="tele-cap">Occupied Orbitals</span><span class="tele-val highlight">${m.occupied_orbitals}</span></div>
+        <div class="tele-item"><span class="tele-cap">Paired (↑↓)</span><span class="tele-val" style="color:var(--cyan);">${m.fully_occupied_orbitals}</span></div>
+        <div class="tele-item"><span class="tele-cap">Unpaired (↑)</span><span class="tele-val" style="color:var(--gold);">${m.unpaired_electrons}</span></div>
+      </div>` : "";
+
+    container.innerHTML = `<div class="orbital-board">${toolbar}<div class="subshell-flow">${subHtml}</div>${tele}</div>`;
+
+    if (interactive) {
+      container.querySelectorAll(".orb-box.editable").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const sub = btn.dataset.sub, i = Number(btn.dataset.idx);
+          const [u, d] = boxes[sub][i];
+          if (!u && !d) { boxes[sub][i] = [true, false]; SoundFX.spinUp(); }
+          else if (u && !d) { boxes[sub][i] = [true, true]; SoundFX.spinDown(); }
+          else { boxes[sub][i] = [false, false]; SoundFX.clearBox(); }
+          draw();
+        });
+      });
+      container.querySelectorAll(".core-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          let rem = Number(btn.dataset.e);
+          const countsCore = {};
+          ChemDB.SUBSHELL_ORDER.forEach(s => { const add = Math.min(rem, s.capacity); countsCore[s.name] = add; rem -= add; });
+          boxes = ChemDB.buildBoxesFromCounts(countsCore);
+          SoundFX.spinDown();
+          draw();
+        });
+      });
+      const clr = container.querySelector("#boardClearBtn");
+      if (clr) clr.addEventListener("click", () => { boxes = ChemDB.createEmptyBoxes(); SoundFX.clearBox(); draw(); });
+    }
+  }
+  draw();
+  return {
+    getBoxes: () => boxes,
+    setState(newOpts) {
+      if (newOpts.boxes !== undefined) boxes = JSON.parse(JSON.stringify(newOpts.boxes));
+      if (newOpts.interactive !== undefined) interactive = newOpts.interactive;
+      if (newOpts.showTelemetry !== undefined) showTelemetry = newOpts.showTelemetry;
+      if (newOpts.showBadges !== undefined) showBadges = newOpts.showBadges;
+      if (newOpts.maxHint !== undefined) maxHint = newOpts.maxHint;
+      draw();
+    }
+  };
+}
+
+// =============================================================================
+// 5. UI CONTROLLER & GAME FLOW
+// =============================================================================
+const SECTORS = {
+  1: "Sector 1: Period 1–2 & Nitrogen Trap",
+  2: "Sector 2: Period 3 & Main-Group Ions",
+  3: "Sector 3: Hund's Rule Detective",
+  4: "Sector 4: d-Block & Cr/Cu Exceptions",
+  5: "Sector 5: Transition Metal Ions & Exam Mix"
+};
+
+let selectedSector = 1;
+let activeMode = "ARCHITECT";
+let rng = ChemDB.createRng();
+let score = 0, combo = 0, maxCombo = 0, qIdx = 0, qTotal = 10;
+let blitzTime = 60, blitzTimerId = null;
+let qLocked = false, buildStep2 = false, peekVisible = false, keypadMode = false;
+let currentQ = null, resultsHistory = [];
+let playBoard = null, labBoard = null;
+let labSpecies = "N", labSandbox = false;
+let lbTab = "BLITZ", lbClassOnly = false;
+let kpValue = "";
+
+const $ = id => document.getElementById(id);
+
+function showScreen(name) {
+  ["screenHome", "screenPlay", "screenSummary", "screenLab"].forEach(id => $(id).classList.add("hidden"));
+  $(name).classList.remove("hidden");
+  if (name === "screenHome") refreshHomeUI();
+}
+
+function refreshHomeUI() {
+  const lvl = getLevel();
+  const prevXp = Math.pow(lvl - 1, 2) * 120;
+  const nextXp = Math.pow(lvl, 2) * 120;
+  const pct = Math.min(100, Math.round(((state.xp - prevXp) / Math.max(120, nextXp - prevXp)) * 100));
+  $("hdrXp").textContent = `Lvl ${lvl} (${getRankTitle()}) • ${state.xp} XP`;
+  $("lblRank").textContent = `Rank: ${getRankTitle()} (Lvl ${lvl})`;
+  const acc = state.total_answered ? Math.round((100 * state.total_correct) / state.total_answered) : 0;
+  $("lblStats").textContent = `${acc}% Acc (${state.total_correct}/${state.total_answered}) • Best Streak ${state.best_streak} • N Mastered ${state.nitrogen_mastered}×`;
+  $("xpFill").style.width = `${pct}%`;
+  $("inpName").value = state.player_name;
+  $("inpClass").value = state.class_code;
+}
+
+function selectSector(s) {
+  selectedSector = s;
+  $("btnModeGauntlet").textContent = `ENTER SECTOR ${s}`;
+  document.querySelectorAll(".sector-pill").forEach(btn => {
+    btn.classList.toggle("active", Number(btn.dataset.s) === s);
+  });
+}
+
+function startMode(mode, sector = 1, prioritySpecies = "") {
+  activeMode = mode;
+  selectedSector = Math.max(1, sector);
+  score = 0; combo = 0; maxCombo = 0; qIdx = 0; resultsHistory = [];
+  qLocked = false; buildStep2 = false; peekVisible = false;
+  if (blitzTimerId) { clearInterval(blitzTimerId); blitzTimerId = null; }
+
+  if (mode === "DAILY") {
+    rng = ChemDB.createRng(dailySeedNum());
+    qTotal = 10;
+    $("blitzBarWrap").classList.add("hidden");
+    $("hudMode").textContent = `DAILY QUANTUM SEED (${todayKey()})`;
+  } else if (mode === "BLITZ") {
+    rng = ChemDB.createRng();
+    qTotal = 999; blitzTime = 60.0;
+    $("blitzBarWrap").classList.remove("hidden");
+    $("blitzBarFill").style.width = "100%";
+    $("hudMode").textContent = "60s ORBITAL BLITZ";
+    let lastTs = performance.now();
+    blitzTimerId = setInterval(() => {
+      const now = performance.now();
+      blitzTime = Math.max(0, blitzTime - (now - lastTs) / 1000);
+      lastTs = now;
+      $("hudProg").textContent = `${blitzTime.toFixed(1)}s`;
+      $("blitzBarFill").style.width = `${(blitzTime / 60) * 100}%`;
+      if (blitzTime <= 0) { clearInterval(blitzTimerId); blitzTimerId = null; finishSession(); }
+    }, 100);
+  } else if (mode === "GAUNTLET") {
+    rng = ChemDB.createRng(); qTotal = 10;
+    $("blitzBarWrap").classList.add("hidden");
+    $("hudMode").textContent = `EXAMINER'S GAUNTLET • SECTOR ${selectedSector}`;
+  } else {
+    rng = ChemDB.createRng(); qTotal = 10;
+    $("blitzBarWrap").classList.add("hidden");
+    $("hudMode").textContent = `QUANTUM ARCHITECT • SECTOR ${selectedSector}`;
+  }
+  showScreen("screenPlay");
+  loadNextQuestion(prioritySpecies);
+}
+
+function comboMult() { return Math.min(8, 1 + Math.floor(combo / 2)); }
+
+function loadNextQuestion(prioritySpecies = "") {
+  qIdx++; qLocked = false; buildStep2 = false; kpValue = ""; $("kpDisp").textContent = "—";
+  $("feedbackCard").classList.add("hidden");
+  const qSector = (activeMode === "BLITZ" || activeMode === "DAILY") ? 0 : selectedSector;
+  let forceArch = prioritySpecies === "N" ? "OCCUPIED_ORBITALS" : "";
+  if (activeMode === "BLITZ") {
+    const fast = ["OCCUPIED_ORBITALS", "OCCUPIED_ORBITALS", "UNPAIRED_ELECTRONS", "FULLY_OCCUPIED_ORBITALS", "RULE_VIOLATION_DETECTIVE", "SUBSHELL_VS_ORBITAL"];
+    forceArch = fast[rng.int(fast.length)];
+  }
+  currentQ = ChemDB.generateQuestion(qSector, rng, forceArch, prioritySpecies);
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const sp = ChemDB.catalog[currentQ.species_id];
+  $("qTag").textContent = currentQ.tag;
+  $("qBadge").textContent = currentQ.badge;
+  $("qZ").textContent = currentQ.z_label;
+  $("qPrompt").textContent = currentQ.prompt;
+  $("qHint").textContent = currentQ.hint;
+  $("hudScore").textContent = `Score: ${score}`;
+  $("hudCombo").textContent = `${comboMult()}× COMBO (${combo})`;
+  if (activeMode !== "BLITZ") $("hudProg").textContent = `Q ${qIdx}/${qTotal}`;
+
+  const isBuild = currentQ.input_mode === "BUILD";
+  const showPre = currentQ.show_boxes_pre;
+  if (!playBoard) playBoard = createOrbitalBoard($("playBoardWrap"), { boxes: ChemDB.createEmptyBoxes(), interactive: false });
+
+  if (isBuild) {
+    $("playBoardWrap").classList.remove("hidden");
+    playBoard.setState({ boxes: ChemDB.createEmptyBoxes(), interactive: true, showTelemetry: false, showBadges: false, maxHint: sp.total_electrons });
+    $("btnVerifyBuild").classList.remove("hidden");
+    $("choicesGrid").classList.add("hidden");
+    $("keypadWrap").classList.add("hidden");
+    $("btnPeek").classList.add("hidden");
+    $("btnKeypadToggle").classList.add("hidden");
+  } else if (showPre) {
+    $("playBoardWrap").classList.remove("hidden");
+    playBoard.setState({ boxes: currentQ.display_boxes, interactive: false, showTelemetry: false, showBadges: false, maxHint: sp.total_electrons });
+    $("btnVerifyBuild").classList.add("hidden");
+    $("choicesGrid").classList.remove("hidden");
+    $("keypadWrap").classList.add("hidden");
+    $("btnPeek").classList.add("hidden");
+    $("btnKeypadToggle").classList.add("hidden");
+    renderChoiceButtons();
+  } else {
+    $("btnVerifyBuild").classList.add("hidden");
+    $("btnPeek").classList.toggle("hidden", activeMode === "BLITZ");
+    if (peekVisible && activeMode !== "BLITZ") {
+      $("playBoardWrap").classList.remove("hidden");
+      playBoard.setState({ boxes: ChemDB.createEmptyBoxes(), interactive: true, showTelemetry: false, showBadges: true, maxHint: sp.total_electrons });
+    } else {
+      $("playBoardWrap").classList.add("hidden");
+    }
+    const isNum = /^\d+$/.test(currentQ.correct_answer);
+    $("btnKeypadToggle").classList.toggle("hidden", !isNum);
+    if (keypadMode && isNum) {
+      $("choicesGrid").classList.add("hidden");
+      $("keypadWrap").classList.remove("hidden");
+    } else {
+      $("choicesGrid").classList.remove("hidden");
+      $("keypadWrap").classList.add("hidden");
+      renderChoiceButtons();
+    }
+  }
+}
+
+function renderChoiceButtons() {
+  const grid = $("choicesGrid");
+  grid.innerHTML = "";
+  currentQ.options.forEach(opt => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn btn-choice";
+    b.textContent = opt;
+    b.addEventListener("click", () => handleChoice(opt));
+    grid.appendChild(b);
+  });
+}
+
+function handleChoice(val) {
+  if (qLocked) return;
+  const ok = String(val).trim() === String(currentQ.correct_answer).trim();
+  resolveQuestion(ok, currentQ.explanation, val);
+}
+
+function resolveQuestion(isRight, explanation, chosen) {
+  qLocked = true;
+  resultsHistory.push(isRight);
+  const sp = ChemDB.catalog[currentQ.species_id];
+  if (isRight) {
+    combo++; maxCombo = Math.max(maxCombo, combo);
+    const mult = comboMult();
+    let pts = (currentQ.input_mode === "BUILD" ? 120 : 100) * mult;
+    if (keypadMode && /^\d+$/.test(currentQ.correct_answer)) pts += 40 * mult;
+    score += pts;
+    if (activeMode === "BLITZ") blitzTime = Math.min(60, blitzTime + 1.5);
+    SoundFX.correct(combo);
+  } else {
+    combo = 0;
+    SoundFX.wrong();
+  }
+
+  state.total_answered++;
+  if (isRight) {
+    state.total_correct++;
+    if (sp.id === "N") state.nitrogen_mastered++;
+    state.xp += 25 + Math.min(combo * 5, 40);
+  } else {
+    state.xp += 5;
+  }
+  if (combo > state.best_streak) state.best_streak = combo;
+  saveState();
+
+  document.querySelectorAll(".btn-choice").forEach(b => {
+    b.disabled = true;
+    if (b.textContent === currentQ.correct_answer) b.classList.add("correct");
+    else if (b.textContent === chosen && !isRight) b.classList.add("wrong");
+  });
+
+  $("playBoardWrap").classList.remove("hidden");
+  playBoard.setState({ boxes: sp.orbital_boxes, interactive: false, showTelemetry: true, showBadges: true, maxHint: sp.total_electrons });
+  $("btnVerifyBuild").classList.add("hidden");
+  $("keypadWrap").classList.add("hidden");
+
+  const fb = $("feedbackCard");
+  fb.className = `card feedback-card ${isRight ? "ok" : "bad"}`;
+  fb.classList.remove("hidden");
+  $("fbTitle").textContent = isRight ? `✓ CORRECT! (${comboMult()}× Multiplier)` : `✕ EXAM TRAP! Correct Answer: ${currentQ.correct_answer}`;
+  $("fbTitle").style.color = isRight ? "var(--emerald)" : "#fda4af";
+  $("fbBody").textContent = explanation;
+  $("hudScore").textContent = `Score: ${score}`;
+  $("hudCombo").textContent = `${comboMult()}× COMBO (${combo})`;
+  $("btnNextQ").textContent = (activeMode !== "BLITZ" && qIdx >= qTotal) ? "FINISH SESSION →" : "NEXT QUESTION →";
+}
+
+function finishSession() {
+  if (blitzTimerId) { clearInterval(blitzTimerId); blitzTimerId = null; }
+  SoundFX.fanfare();
+  const totalN = resultsHistory.length;
+  const okN = resultsHistory.filter(Boolean).length;
+  const acc = totalN ? Math.round((100 * okN) / totalN) : 0;
+  const boardMode = activeMode === "ARCHITECT" ? "GAUNTLET" : activeMode;
+  const entry = {
+    name: (state.player_name || "Chemist12").trim(),
+    class_code: (state.class_code || "CHEM12").trim().toUpperCase(),
+    score, accuracy: acc, max_combo: maxCombo, date: todayKey(), is_player: true
+  };
+  const board = state.leaderboards[boardMode] || [];
+  board.push(entry);
+  board.sort((a, b) => (b.score - a.score) || (b.accuracy - a.accuracy));
+  state.leaderboards[boardMode] = board.slice(0, 30);
+  saveState();
+
+  if (state.api_url) {
+    fetch(state.api_url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...entry, mode: boardMode }) }).catch(() => {});
+  }
+
+  $("sumTitle").textContent = `${$("hudMode").textContent} COMPLETE!`;
+  $("sumScore").textContent = `${score} PTS`;
+  $("sumMetrics").textContent = `Correct: ${okN} / ${totalN} (${acc}%)  •  Max Combo: ${maxCombo}  •  Rank: ${getRankTitle()}`;
+  const squares = resultsHistory.map(r => r ? "🟩" : "🟥").join("");
+  const verify = (score * 31 + okN * 17 + maxCombo * 7) % 9973;
+  $("sumShare").textContent = `⚛️ ORBITAL BLITZ • ${boardMode === "DAILY" ? `Daily Quantum Seed (${todayKey()})` : boardMode}\n[${entry.class_code}] ${entry.name} | Score: ${score} | Acc: ${acc}% | Max Combo: ${maxCombo}× | #QB-${String(verify).padStart(4, "0")}\n${squares}`;
+  $("btnCopyShare").textContent = "📋 Copy Class Result Card";
+  showScreen("screenSummary");
+}
+
+function renderLab() {
+  const sp = ChemDB.catalog[labSpecies];
+  document.querySelectorAll(".sp-chip").forEach(c => c.classList.toggle("active", c.dataset.id === labSpecies));
+  $("labInfo").textContent = `${sp.name} (${sp.display_symbol}) • Z = ${sp.atomic_number} | ${sp.total_electrons} electrons | Noble shorthand: ${sp.config_noble}`;
+  if (!labBoard) labBoard = createOrbitalBoard($("labBoardWrap"), { boxes: sp.orbital_boxes, interactive: labSandbox });
+  if (!labSandbox) {
+    labBoard.setState({ boxes: sp.orbital_boxes, interactive: false, showTelemetry: true, showBadges: true, maxHint: sp.total_electrons });
+    $("labStatus").style.color = "var(--emerald)";
+    $("labStatus").textContent = `Ground state: ${sp.config_shell_order} → ${sp.occupied_orbitals} occupied orbitals (${sp.fully_occupied_orbitals} paired, ${sp.unpaired_electrons} unpaired).`;
+  } else {
+    labBoard.setState({ boxes: ChemDB.createEmptyBoxes(), interactive: true, showTelemetry: true, showBadges: true, maxHint: sp.total_electrons });
+    $("labStatus").style.color = "var(--cyan)";
+    $("labStatus").textContent = `Sandbox active: click orbital boxes to construct ${sp.display_symbol} (${sp.total_electrons}e⁻), then press Check My Diagram.`;
+  }
+}
+
+function renderLeaderboard() {
+  document.querySelectorAll(".lb-tab").forEach(b => {
+    b.className = `btn btn-sm ${b.dataset.mode === lbTab ? "btn-cyan" : "btn-slate"} lb-tab`;
+  });
+  const rows = (state.leaderboards[lbTab] || []).filter(r => {
+    if (lbTab === "DAILY" && r.date !== todayKey() && !r.rival) return false;
+    if (lbClassOnly && String(r.class_code || "").toUpperCase() !== String(state.class_code || "").toUpperCase()) return false;
+    return true;
+  });
+  const box = $("lbRows");
+  box.innerHTML = rows.length ? "" : `<div style="color:var(--muted);">No entries yet for this filter — play a round to claim #1!</div>`;
+  rows.forEach((r, idx) => {
+    const div = document.createElement("div");
+    div.className = `lb-row ${r.is_player ? "me" : ""}`;
+    const rk = document.createElement("strong");
+    rk.style.width = "34px";
+    rk.style.color = idx < 3 ? "var(--gold)" : "#a8c1e3";
+    rk.textContent = `#${idx + 1}`;
+    const nm = document.createElement("span");
+    nm.style.flex = "1";
+    nm.style.fontWeight = "700";
+    nm.textContent = `${r.name} [${r.class_code}]`;
+    const meta = document.createElement("span");
+    meta.style.color = "var(--muted)";
+    meta.style.fontSize = "0.84rem";
+    meta.textContent = `${r.accuracy}% | ${r.max_combo}×`;
+    const sc = document.createElement("strong");
+    sc.style.color = "var(--emerald)";
+    sc.textContent = `${r.score} pts`;
+    div.append(rk, nm, meta, sc);
+    box.appendChild(div);
+  });
+}
+
+// =============================================================================
+// 6. WIRE EVENTS & INIT
+// =============================================================================
+(function init() {
+  // Sector pills
+  Object.entries(SECTORS).forEach(([k, label]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = `btn btn-sm btn-slate sector-pill ${Number(k) === 1 ? "active" : ""}`;
+    b.dataset.s = k;
+    b.textContent = label;
+    b.addEventListener("click", () => selectSector(Number(k)));
+    $("sectorPills").appendChild(b);
+  });
+
+  // Lab species picker
+  ChemDB.allIds.forEach(id => {
+    const sp = ChemDB.catalog[id];
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "sp-chip"; b.dataset.id = id;
+    b.textContent = sp.display_symbol;
+    b.addEventListener("click", () => { labSpecies = id; renderLab(); });
+    $("labPicker").appendChild(b);
+  });
+
+  // Keypad buttons
+  ["1", "2", "3", "⌫", "4", "5", "6", "CLR", "7", "8", "9", "0"].forEach(k => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = `btn btn-sm ${/^\d$/.test(k) ? "btn-slate" : "btn-rose"}`;
+    b.textContent = k;
+    b.addEventListener("click", () => {
+      if (k === "⌫") kpValue = kpValue.slice(0, -1);
+      else if (k === "CLR") kpValue = "";
+      else if (kpValue.length < 2) kpValue += k;
+      $("kpDisp").textContent = kpValue || "—";
+    });
+    $("kpGrid").appendChild(b);
+  });
+  $("kpSubmit").addEventListener("click", () => { if (kpValue) handleChoice(kpValue); });
+
+  $("inpName").addEventListener("input", e => { state.player_name = e.target.value; saveState(); });
+  $("inpClass").addEventListener("input", e => { state.class_code = e.target.value.toUpperCase(); saveState(); });
+  $("btnSpotN").addEventListener("click", () => startMode("ARCHITECT", 1, "N"));
+  $("btnModeArchitect").addEventListener("click", () => startMode("ARCHITECT", selectedSector));
+  $("btnModeBlitz").addEventListener("click", () => startMode("BLITZ", 0));
+  $("btnModeDaily").addEventListener("click", () => startMode("DAILY", 0));
+  $("btnModeGauntlet").addEventListener("click", () => startMode("GAUNTLET", selectedSector));
+  $("btnQuit").addEventListener("click", () => { if (blitzTimerId) { clearInterval(blitzTimerId); blitzTimerId = null; } showScreen("screenHome"); });
+  $("btnNextQ").addEventListener("click", () => { if (activeMode !== "BLITZ" && qIdx >= qTotal) finishSession(); else loadNextQuestion(); });
+
+  $("btnVerifyBuild").addEventListener("click", () => {
+    if (qLocked || buildStep2) return;
+    const res = ChemDB.validateUserBoxes(currentQ.species_id, playBoard.getBoxes());
+    if (res.valid) {
+      buildStep2 = true;
+      SoundFX.spinDown();
+      const sp = ChemDB.catalog[currentQ.species_id];
+      const occ = sp.occupied_orbitals;
+      currentQ.options = ChemDB.buildIntOptions(occ, [sp.total_electrons, sp.occupied_subshells, sp.fully_occupied_orbitals, occ - 1, occ + 1], rng);
+      playBoard.setState({ boxes: sp.orbital_boxes, interactive: false, showTelemetry: false, showBadges: true, maxHint: sp.total_electrons });
+      $("btnVerifyBuild").classList.add("hidden");
+      $("qPrompt").textContent = `Diagram verified! Step 2: Lock in the total number of occupied orbitals in ${sp.name}.`;
+      $("qHint").textContent = "Count the highlighted #1, #2... orbital boxes you just built!";
+      $("choicesGrid").classList.remove("hidden");
+      renderChoiceButtons();
+    } else {
+      resolveQuestion(false, res.explanation, res.error_type);
+    }
+  });
+
+  $("btnPeek").addEventListener("click", () => {
+    peekVisible = !peekVisible;
+    $("btnPeek").textContent = peekVisible ? "👁 Hide Scratchpad" : "👁 Peek Orbitals";
+    if (!qLocked && currentQ.input_mode !== "BUILD" && !currentQ.show_boxes_pre) renderQuestion();
+  });
+  $("btnKeypadToggle").addEventListener("click", () => {
+    keypadMode = !keypadMode;
+    $("btnKeypadToggle").textContent = keypadMode ? "⌨ Keypad: ON (+40)" : "⌨ Keypad: OFF";
+    if (!qLocked && currentQ.input_mode === "CHOICE") renderQuestion();
+  });
+  $("btnMute").addEventListener("click", () => { $("btnMute").textContent = SoundFX.toggleMute() ? "🔇 Muted" : "🔊 Sound"; });
+
+  $("btnOpenLab").addEventListener("click", () => { showScreen("screenLab"); renderLab(); });
+  $("btnLabHome").addEventListener("click", () => showScreen("screenHome"));
+  $("btnLabSandbox").addEventListener("click", () => {
+    labSandbox = !labSandbox;
+    $("btnLabSandbox").textContent = labSandbox ? "Mode: Interactive Sandbox" : "Mode: Auto Ground State";
+    $("btnLabCheck").classList.toggle("hidden", !labSandbox);
+    renderLab();
+  });
+  $("btnLabCheck").addEventListener("click", () => {
+    const res = ChemDB.validateUserBoxes(labSpecies, labBoard.getBoxes());
+    $("labStatus").textContent = res.explanation;
+    $("labStatus").style.color = res.valid ? "var(--emerald)" : "var(--rose)";
+    if (res.valid) SoundFX.correct(2); else SoundFX.wrong();
+  });
+
+  $("btnCopyShare").addEventListener("click", () => {
+    navigator.clipboard?.writeText($("sumShare").textContent).catch(() => {});
+    $("btnCopyShare").textContent = "✓ Copied to Clipboard!";
+  });
+  $("btnPlayAgain").addEventListener("click", () => startMode(activeMode, selectedSector));
+  $("btnSumHome").addEventListener("click", () => showScreen("screenHome"));
+
+  const openLb = () => { $("lbModal").classList.remove("hidden"); $("inpApiUrl").value = state.api_url || ""; renderLeaderboard(); };
+  $("btnTopLb").addEventListener("click", openLb);
+  $("btnOpenLb").addEventListener("click", openLb);
+  $("btnSumLb").addEventListener("click", openLb);
+  $("btnCloseLb").addEventListener("click", () => $("lbModal").classList.add("hidden"));
+  document.querySelectorAll(".lb-tab").forEach(b => b.addEventListener("click", () => { lbTab = b.dataset.mode; renderLeaderboard(); }));
+  $("btnLbScope").addEventListener("click", () => {
+    lbClassOnly = !lbClassOnly;
+    $("btnLbScope").textContent = lbClassOnly ? `Scope: Class ${state.class_code || "CHEM12"}` : "Scope: All Classes";
+    renderLeaderboard();
+  });
+  $("btnSyncApi").addEventListener("click", () => {
+    state.api_url = $("inpApiUrl").value.trim(); saveState();
+    if (state.api_url) {
+      fetch(`${state.api_url}?mode=${encodeURIComponent(lbTab)}&class=${encodeURIComponent(state.class_code)}`)
+        .then(r => r.json()).then(arr => {
+          if (Array.isArray(arr)) {
+            state.leaderboards[lbTab] = [...state.leaderboards[lbTab], ...arr].sort((a, b) => b.score - a.score).slice(0, 30);
+            saveState(); renderLeaderboard();
+          }
+        }).catch(() => {});
+    }
+  });
+
+  // Keyboard shortcuts for PC
+  window.addEventListener("keydown", e => {
+    if ($("screenPlay").classList.contains("hidden") || !$("lbModal").classList.contains("hidden")) return;
+    if (qLocked && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); $("btnNextQ").click(); return; }
+    if (!qLocked && !$("choicesGrid").classList.contains("hidden") && ["1", "2", "3", "4"].includes(e.key)) {
+      const btn = $("choicesGrid").children[Number(e.key) - 1];
+      if (btn) btn.click();
+    } else if (!qLocked && !$("keypadWrap").classList.contains("hidden")) {
+      if (/^\d$/.test(e.key) && kpValue.length < 2) { kpValue += e.key; $("kpDisp").textContent = kpValue; }
+      else if (e.key === "Backspace") { kpValue = kpValue.slice(0, -1); $("kpDisp").textContent = kpValue || "—"; }
+      else if (e.key === "Enter" && kpValue) handleChoice(kpValue);
+    }
+  });
+
+  refreshHomeUI();
+  showScreen("screenHome");
+})();
+</script>
+</body>
+</html>
