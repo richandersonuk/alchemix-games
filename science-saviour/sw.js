@@ -1,4 +1,4 @@
-const CACHE_NAME = 'science-saviour-v1.0.1'; // <-- Bump this version number on every update
+const CACHE_NAME = 'science-saviour-v1.0.2'; // <-- Bump this version number on every update
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

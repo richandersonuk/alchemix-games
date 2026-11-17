@@ -1,10 +1,12 @@
-const CACHE_NAME = 'alchemix-arcade-v2';
+const CACHE_NAME = 'alchemix-arcade-v3';
 
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/chem-tycoon/index.apple-touch-icon.png'
+  '/science-saviour/cartridge.svg',
+  '/chem-tycoon/cartridge.svg',
+  '/econfigs/cartridge.svg'
 ];
 
 self.addEventListener('install', (event) => {

@@ -510,6 +510,9 @@
               <i class="ph-bold ph-arrow-counter-clockwise"></i> New Run (Stage 1)
             </button>
           </div>
+          <a href="../" class="w-full py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+            <i class="ph-bold ph-house"></i> Quit to Arcade Hub
+          </a>
         </div>
       </div>
     </div>
@@ -546,6 +549,9 @@
           <button id="btn-victory-replay" class="w-full py-2.5 rounded-xl bg-purple-900/50 hover:bg-purple-800/70 border border-purple-500/50 text-purple-200 text-xs font-bold transition">
             Play Encore Campaign (Stage 1)
           </button>
+          <a href="../" class="w-full py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+            <i class="ph-bold ph-house"></i> Quit to Arcade Hub
+          </a>
         </div>
       </div>
     </div>
@@ -568,6 +574,9 @@
           <button id="btn-pause-audio" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-bold transition">
             Audio & Equaliser Mixer
           </button>
+          <a href="../" class="w-full py-2.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/70 border border-rose-500/40 text-rose-200 text-xs font-bold transition flex items-center justify-center gap-1.5">
+            <i class="ph-bold ph-house"></i> Quit to Arcade Hub
+          </a>
         </div>
       </div>
     </div>
@@ -2641,11 +2650,11 @@
       if (dir < 0) ctx.scale(-1, 1);
 
       if (bp.isBoss) {
-        // Boss Projectiles: Distinct per boss & high (Duck) vs low (Jump)
+        // Boss Projectiles: Distinct per boss & high (Duck) vs low (Jump) — pure graphical sprites (no text prompts)
         if (bp.isHigh) {
           switch (bp.sourceType) {
             case 'principal':
-              // Supersonic Detention Megaphone Blast + Flying Detention Slip
+              // Supersonic Detention Megaphone Blast + Flying Detention Slip with Red Wax Stamp
               ctx.strokeStyle = '#fbbf24';
               ctx.lineWidth = 2.5;
               for (let i = 0; i < 3; i++) {
@@ -2660,9 +2669,18 @@
               ctx.roundRect(-34, -9, 44, 18, 3);
               ctx.fill();
               ctx.stroke();
+              // Ruled lines & crimson seal stamp on the slip
+              ctx.strokeStyle = '#fca5a5';
+              ctx.lineWidth = 1.2;
+              ctx.beginPath();
+              ctx.moveTo(-29, -4); ctx.lineTo(-4, -4);
+              ctx.moveTo(-29, 0);  ctx.lineTo(-8, 0);
+              ctx.moveTo(-29, 4);  ctx.lineTo(-12, 4);
+              ctx.stroke();
               ctx.fillStyle = '#dc2626';
-              ctx.font = 'bold 8px monospace';
-              ctx.fillText('DETENTION!', -31, -1);
+              ctx.beginPath();
+              ctx.arc(2, 1, 4.5, 0, Math.PI * 2);
+              ctx.fill();
               break;
 
             case 'conspiracist_boss':
@@ -2678,9 +2696,13 @@
                 ctx.lineTo(x, Math.sin(x * 0.3 + t) * 7);
               }
               ctx.stroke();
+              // Glowing plasma nodes along the wave
               ctx.fillStyle = '#fde047';
-              ctx.font = 'bold 8px monospace';
-              ctx.fillText('5G BEAM', -18, 3);
+              for (let n = -24; n <= 24; n += 24) {
+                ctx.beginPath();
+                ctx.arc(n, 0, 3.2, 0, Math.PI * 2);
+                ctx.fill();
+              }
               break;
 
             case 'tv_mogul':
@@ -2709,9 +2731,18 @@
               ctx.closePath();
               ctx.fill();
               ctx.stroke();
+              // Drawn digital padlock icon & circuit trace inside lance
+              ctx.strokeStyle = '#ef4444';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.arc(-18, -2, 3.2, Math.PI, 0);
+              ctx.stroke();
               ctx.fillStyle = '#ef4444';
-              ctx.font = 'bold 8px monospace';
-              ctx.fillText('🔒BAN_404', -32, 3);
+              ctx.fillRect(-22, -2, 8, 6);
+              ctx.strokeStyle = '#34d399';
+              ctx.beginPath();
+              ctx.moveTo(-10, 0); ctx.lineTo(22, 0);
+              ctx.stroke();
               break;
 
             default:
@@ -2728,18 +2759,16 @@
               ctx.roundRect(-14, -8, 48, 16, 8);
               ctx.fill();
               ctx.stroke();
-              ctx.fillStyle = '#14532d';
-              ctx.font = 'bold 8px monospace';
-              ctx.fillText('$SMOG$', -6, 3);
+              // Industrial hazard stripes & warhead fin
+              ctx.fillStyle = '#1e293b';
+              ctx.fillRect(-4, -7, 6, 14);
+              ctx.fillRect(8, -7, 6, 14);
+              ctx.fillStyle = '#dc2626';
+              ctx.beginPath();
+              ctx.arc(24, 0, 4, 0, Math.PI * 2);
+              ctx.fill();
               break;
           }
-          // Subtle tactical duck indicator badge above beam
-          ctx.save();
-          if (dir < 0) ctx.scale(-1, 1);
-          ctx.fillStyle = '#fbbf24';
-          ctx.font = 'bold 8px monospace';
-          ctx.fillText('▼ DUCK [S]', -24, -13);
-          ctx.restore();
         } else {
           // Low Boss Attacks (Jump Over)
           switch (bp.sourceType) {
@@ -2814,12 +2843,6 @@
               ctx.fill();
               break;
           }
-          ctx.save();
-          if (dir < 0) ctx.scale(-1, 1);
-          ctx.fillStyle = '#f472b6';
-          ctx.font = 'bold 8px monospace';
-          ctx.fillText('▲ JUMP [W]', -24, -13);
-          ctx.restore();
         }
         ctx.restore();
         return;
@@ -4063,7 +4086,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.0.1')
+        navigator.serviceWorker.register('./sw.js?v=1.0.2')
           .then(reg => console.log('Game SW registered for Science Saviour', reg.scope))
           .catch(err => console.error('ServiceWorker registration failed:', err));
       });
