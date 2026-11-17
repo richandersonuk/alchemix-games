@@ -1,236 +1,363 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full w-full bg-slate-950 text-slate-100 select-none">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>The Alchemix Arcade | games.alchemix.uk</title>
-
-  <!-- PWA & Mobile Web Meta -->
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#020106">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Alchemix">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
-
-  <!-- Tailwind CSS & Phosphor Icons CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Alchemix Arcade | Science Revision Games</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b1626">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600;700;800;900&display=swap');
+    :root {
+      --bg-color: #070d18;
+      --card-bg: #0f1c30;
+      --card-border: #1e3352;
+      --accent: #22d3c5;
+      --accent-hover: #14b8a6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --badge-mobile: #4ade80;
+      --badge-desktop: #fbbf24;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
-      font-family: 'Outfit', sans-serif;
-      background: radial-gradient(circle at 50% 20%, #1e1035 0%, #070312 60%, #020106 100%);
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1rem;
     }
 
-    .font-retro {
-      font-family: 'Press Start 2P', monospace;
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      max-width: 640px;
     }
 
-    .scanlines {
-      background: linear-gradient(
-        to bottom,
-        rgba(255,255,255,0),
-        rgba(255,255,255,0) 50%,
-        rgba(0, 0, 0, 0.25) 50%,
-        rgba(0, 0, 0, 0.25)
-      );
-      background-size: 100% 4px;
-      pointer-events: none;
+    header h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #f8fafc 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
     }
 
-    .neon-glow-purple {
-      box-shadow: 0 0 30px -10px rgba(168, 85, 247, 0.45);
+    header p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 0.4rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: #070d18;
+      border-color: var(--accent);
+    }
+
+    /* Arcade Grid */
+    .arcade-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 360px));
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 800px;
+      justify-content: center;
+    }
+
+    .game-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(34, 211, 197, 0.4);
+      box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .game-card.hidden {
+      display: none !important;
+    }
+
+    .card-media {
+      position: relative;
+      width: 100%;
+      height: 180px;
+      background: #070d18;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .card-media img {
+      max-width: 100px;
+      max-height: 100px;
+      object-fit: contain;
+    }
+
+    .device-pill {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 9999px;
+      backdrop-filter: blur(8px);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .device-pill.mobile-ok {
+      background: rgba(74, 222, 128, 0.15);
+      color: var(--badge-mobile);
+      border: 1px solid rgba(74, 222, 128, 0.35);
+    }
+
+    .device-pill.desktop-only {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--badge-desktop);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+    }
+
+    .card-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .card-body h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .card-body p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      line-height: 1.45;
+      margin-bottom: 1.25rem;
+      flex-grow: 1;
+    }
+
+    .play-btn {
+      display: inline-block;
+      text-align: center;
+      background: var(--accent);
+      color: #070d18;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 0.65rem 1.25rem;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .play-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    /* Modal */
+    .warning-modal {
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      background: #0f1c30;
+      color: var(--text-main);
+      padding: 1.5rem;
+      max-width: 420px;
+      margin: auto;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+    }
+
+    .warning-modal::backdrop {
+      background: rgba(7, 13, 24, 0.8);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content h3 {
+      font-size: 1.15rem;
+      margin-bottom: 0.5rem;
+      color: #fbbf24;
+    }
+
+    .modal-content p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+      margin-bottom: 1.25rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--card-border);
+      padding: 0.5rem 1rem;
+      border-radius: 0.4rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .btn-primary-action {
+      background: var(--accent);
+      color: #070d18;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.4rem;
+      font-weight: 700;
+      font-size: 0.85rem;
     }
   </style>
 </head>
-
-<body class="h-screen max-h-screen flex flex-col justify-between overflow-hidden relative">
-  <div class="fixed inset-0 scanlines z-30 pointer-events-none"></div>
-
-  <!-- NAVIGATION BAR -->
-  <header class="w-full border-b border-purple-500/20 bg-slate-950/80 backdrop-blur-md z-40 px-4 sm:px-6 py-2.5 shrink-0">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <a href="./" class="flex items-center gap-2.5 group">
-        <div class="w-8 h-8 rounded-lg bg-purple-900/60 border border-amber-400 flex items-center justify-center text-base shadow-[0_0_12px_rgba(245,158,11,0.4)] group-hover:scale-105 transition-transform">
-          🧙‍♂️
-        </div>
-        <div>
-          <span class="font-retro text-[11px] sm:text-xs text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 font-bold tracking-wider">THE ALCHEMIX</span>
-          <span class="block text-[8px] text-cyan-400 font-retro tracking-widest">ARCADE HUB</span>
-        </div>
-      </a>
-      <div class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-pink-950/60 border border-pink-500/40 text-[9px] font-retro text-pink-300">
-        <span>⚡</span> NO INSTALLS • ZERO DELAY
-      </div>
-    </div>
+<body>
+  <header>
+    <h1>The Alchemix Arcade</h1>
+    <p>Gamified STEM revision, interactive chemical engineering simulations, and WJEC specification learning applets.</p>
   </header>
 
-  <!-- MAIN VIEWPORT CONTENT -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-col justify-center relative z-20 min-h-0">
-    
-    <!-- HERO HEADER -->
-    <div class="text-center max-w-xl mx-auto mb-3 sm:mb-5 shrink-0">
-      <div class="inline-flex sm:hidden items-center gap-1.5 px-2 py-0.5 rounded-full bg-pink-950/60 border border-pink-500/40 text-[9px] font-retro text-pink-300 mb-1.5">
-        <span>⚡</span> BROWSER MINI-GAMES
+  <nav class="filter-bar" aria-label="Game device filter">
+    <button class="filter-btn active" data-filter="all">All Games</button>
+    <button class="filter-btn" data-filter="mobile">📱 Phone Friendly</button>
+    <button class="filter-btn" data-filter="desktop">🖥️ Tablet & Desktop</button>
+  </nav>
+
+  <main class="arcade-grid">
+    <!-- Science Saviour -->
+    <article class="game-card" data-devices="mobile tablet desktop">
+      <div class="card-media">
+        <img src="/science-saviour/icon.png" alt="The Alchemix: Science Saviour" onerror="this.src='/science-saviour/icon.svg'">
+        <span class="device-pill mobile-ok">📱 Mobile & Desktop</span>
       </div>
-      <h1 class="text-2xl sm:text-4xl font-black tracking-tight text-white mb-1">
-        Select Your <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">Adventure</span>
-      </h1>
-      <p class="text-xs sm:text-sm text-slate-300 line-clamp-1 sm:line-clamp-none">
-        Pure musical alchemy and science-fueled gaming playable directly in your browser.
-      </p>
-    </div>
-
-    <!-- CARDS GRID -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-5 items-stretch max-h-[calc(100vh-210px)] overflow-y-auto md:overflow-visible pr-0.5">
-
-      <!-- GAME 1: SCIENCE SAVIOUR (CLICKABLE PANEL) -->
-      <a href="./science-saviour/" class="group relative rounded-2xl bg-slate-900/90 border-2 border-purple-500/70 overflow-hidden flex flex-col neon-glow-purple hover:border-pink-500 transition-all duration-200 transform hover:-translate-y-1 active:scale-[0.98] cursor-pointer">
-        <div class="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-[8px] font-retro text-slate-950 font-bold uppercase tracking-wider shadow">
-          PLAYABLE NOW
-        </div>
-
-        <div class="h-28 sm:h-32 bg-gradient-to-br from-indigo-950 via-purple-900 to-slate-950 relative flex items-center justify-center overflow-hidden border-b border-purple-500/30 shrink-0">
-          <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#ec4899_1px,transparent_1px)] [background-size:12px_12px]"></div>
-          <div class="relative flex flex-col items-center group-hover:scale-110 transition-transform duration-200">
-            <div class="text-4xl filter drop-shadow-[0_0_15px_rgba(168,85,247,0.8)]">🧙‍♂️</div>
-            <div class="flex items-center gap-1.5 mt-1">
-              <span class="text-sm">🧪</span>
-              <span class="text-sm">🎸</span>
-              <span class="text-sm">⚡</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center gap-1.5 text-[9px] font-retro text-pink-400 mb-1">
-              <span>ACTION</span>
-              <span>•</span>
-              <span>5 LEVELS</span>
-            </div>
-            <h2 class="text-base sm:text-lg font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors leading-tight">
-              Science Saviour
-            </h2>
-            <p class="text-[11px] sm:text-xs text-slate-300 leading-snug mb-2.5 line-clamp-2">
-              Rescue scientists, shoot neon sound waves to Brazilian Phonk, and topple corrupt media bosses!
-            </p>
-
-            <div class="flex flex-wrap gap-1 mb-3">
-              <span class="px-1.5 py-0.5 rounded bg-purple-950 border border-purple-700/60 text-[9px] font-mono text-purple-300">🎶 Audio</span>
-              <span class="px-1.5 py-0.5 rounded bg-pink-950 border border-pink-700/60 text-[9px] font-mono text-pink-300">📱 Touch</span>
-              <span class="px-1.5 py-0.5 rounded bg-amber-950 border border-amber-700/60 text-[9px] font-mono text-amber-300">👾 5 Bosses</span>
-            </div>
-          </div>
-
-          <div class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 font-retro text-[10px] text-white text-center tracking-wider shadow group-hover:brightness-110 flex items-center justify-center gap-1.5 transition-all">
-            <span>TAP TO PLAY</span>
-            <i class="ph-bold ph-arrow-right"></i>
-          </div>
-        </div>
-      </a>
-
-      <!-- GAME 2: BEAT SYNTHESIZER -->
-      <div class="relative rounded-2xl bg-slate-900/40 border border-slate-800 overflow-hidden flex flex-col opacity-60">
-        <div class="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-[8px] font-retro text-slate-400 font-bold uppercase tracking-wider">
-          DEV
-        </div>
-
-        <div class="h-28 sm:h-32 bg-slate-950 relative flex items-center justify-center border-b border-slate-800 shrink-0">
-          <div class="text-3xl text-slate-600">🎛️⚡🧪</div>
-        </div>
-
-        <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
-          <div>
-            <div class="text-[9px] font-retro text-slate-500 mb-1">PUZZLE • EPISODE 2</div>
-            <h2 class="text-base sm:text-lg font-bold text-slate-300 mb-1.5 leading-tight">Beat Synthesizer</h2>
-            <p class="text-[11px] sm:text-xs text-slate-400 leading-snug mb-2.5 line-clamp-2">
-              Synthesize chemical formulas by matching rhythm polyrhythms to defuse rogue experiments.
-            </p>
-          </div>
-
-          <div class="w-full py-2 px-3 rounded-xl bg-slate-800/40 border border-slate-700/50 text-[10px] font-retro text-slate-500 text-center tracking-wider cursor-not-allowed">
-            COMING SOON
-          </div>
-        </div>
+      <div class="card-body">
+        <h2>Science Saviour</h2>
+        <p>Defeat syllabus bosses across 5 laboratory sectors with genre-shifting musical note attacks.</p>
+        <a href="/science-saviour/" class="play-btn">Play Now</a>
       </div>
+    </article>
 
-      <!-- GAME 3: CYBER DEFENDER -->
-      <div class="relative rounded-2xl bg-slate-900/40 border border-slate-800 overflow-hidden flex flex-col opacity-60">
-        <div class="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-[8px] font-retro text-slate-400 font-bold uppercase tracking-wider">
-          CONCEPT
-        </div>
-
-        <div class="h-28 sm:h-32 bg-slate-950 relative flex items-center justify-center border-b border-slate-800 shrink-0">
-          <div class="text-3xl text-slate-600">🌐🚀🛡️</div>
-        </div>
-
-        <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
-          <div>
-            <div class="text-[9px] font-retro text-slate-500 mb-1">SHOOTER • EPISODE 3</div>
-            <h2 class="text-base sm:text-lg font-bold text-slate-300 mb-1.5 leading-tight">Algorithm Rush</h2>
-            <p class="text-[11px] sm:text-xs text-slate-400 leading-snug mb-2.5 line-clamp-2">
-              Survive waves of ragebait bots and deepfakes across cyberspace in a vertical retro blaster.
-            </p>
-          </div>
-
-          <div class="w-full py-2 px-3 rounded-xl bg-slate-800/40 border border-slate-700/50 text-[10px] font-retro text-slate-500 text-center tracking-wider cursor-not-allowed">
-            COMING SOON
-          </div>
-        </div>
+    <!-- ChemTycoon -->
+    <article class="game-card" data-devices="tablet desktop">
+      <div class="card-media">
+        <img src="/chem-tycoon/index.apple-touch-icon.png" alt="ChemTycoon">
+        <span class="device-pill desktop-only">🖥️ Tablet / Desktop</span>
       </div>
-
-    </div>
+      <div class="card-body">
+        <h2>ChemTycoon</h2>
+        <p>Manage and scale 11 industrial chemical processes (Haber, Contact, Cracking) aligned with KS3, GCSE, and A-Level.</p>
+        <a href="/chem-tycoon/" class="play-btn" data-requires="tablet">Launch Plant</a>
+      </div>
+    </article>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="border-t border-purple-500/20 bg-slate-950/90 py-2.5 px-4 text-center relative z-20 shrink-0">
-    <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-[11px] text-slate-400">
-      <div class="flex items-center gap-2">
-        <span>© 2026 The Alchemix</span>
-        <span>•</span>
-        <span class="text-purple-400 font-mono">games.alchemix.uk</span>
-      </div>
-      <div class="text-[10px] text-slate-500">
-        Empowering scientific truth with high-energy beats & games.
+  <!-- Mobile warning dialog for Tablet/Desktop games -->
+  <dialog id="device-modal" class="warning-modal">
+    <div class="modal-content">
+      <h3>⚠️ Screen Size Advisory</h3>
+      <p><strong>ChemTycoon</strong> is optimised for tablet and desktop viewports (minimum 768px width) due to process schematics and equipment panels. Layouts and controls may feel cramped on a phone.</p>
+      <div class="modal-actions">
+        <button id="cancel-launch" class="btn-secondary">Stay in Arcade</button>
+        <a id="confirm-launch" href="#" class="btn-primary-action">Continue Anyway</a>
       </div>
     </div>
-  </footer>
+  </dialog>
 
-  <!-- SERVICE WORKER REGISTRATION (GITHUB PAGES CACHE-BUSTING) -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        const swUrl = './sw.js?v=1.0.0';
+    // 1. Device Category Filter
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.game-card');
 
-        navigator.serviceWorker.register(swUrl).then((registration) => {
-          registration.update();
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
 
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-                window.location.reload();
-              }
-            });
-          });
-        }).catch((err) => {
-          console.error('Service Worker registration failed:', err);
+        const filter = btn.dataset.filter;
+        cards.forEach(card => {
+          const supported = card.dataset.devices.split(' ');
+          if (filter === 'all' || supported.includes(filter)) {
+            card.classList.remove('hidden');
+          } else {
+            card.classList.add('hidden');
+          }
         });
       });
+    });
 
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
+    // 2. Intercept launches under 768px for Tablet/Desktop targets
+    const modal = document.getElementById('device-modal');
+    const confirmBtn = document.getElementById('confirm-launch');
+    const cancelBtn = document.getElementById('cancel-launch');
+    const tabletLinks = document.querySelectorAll('a[data-requires="tablet"]');
+
+    tabletLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        if (window.innerWidth < 768) {
+          e.preventDefault();
+          confirmBtn.setAttribute('href', link.getAttribute('href'));
+          modal.showModal();
         }
+      });
+    });
+
+    cancelBtn.addEventListener('click', () => modal.close());
+
+    // 3. Register Root Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
       });
     }
   </script>
-
 </body>
 </html>
