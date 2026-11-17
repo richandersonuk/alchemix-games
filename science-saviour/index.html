@@ -141,8 +141,12 @@
         </div>
       </div>
 
-      <!-- Right: Scoreboard, Keybinds, Touch Toggle, Audio Mixer, Mute, Fullscreen -->
+      <!-- Right: Pause, Scoreboard, Keybinds, Touch Toggle, Audio Mixer, Mute, Fullscreen -->
       <div class="flex items-center gap-1.5 md:gap-2 pointer-events-auto">
+        <button id="btn-pause-game" title="Pause Game [P / Esc]" class="h-10 w-10 md:h-11 md:w-11 rounded-xl hud-pill border-emerald-500/40 flex items-center justify-center text-emerald-300 hover:text-white hover:bg-emerald-900/50 transition">
+          <i id="pause-icon" class="ph-bold ph-pause text-lg"></i>
+        </button>
+
         <button id="btn-open-scoreboard" title="Live Scoreboard" class="h-10 w-10 md:h-11 md:w-11 rounded-xl hud-pill border-amber-500/50 flex items-center justify-center text-amber-300 hover:text-white hover:bg-amber-800/50 transition">
           <i class="ph-fill ph-trophy text-lg"></i>
         </button>
@@ -376,16 +380,25 @@
           </button>
         </div>
 
-        <div class="bg-slate-950/80 border border-purple-500/40 rounded-2xl p-3.5 mb-4">
+        <div id="scoreboard-viewonly-banner" class="bg-slate-950/70 border border-slate-700/70 rounded-2xl px-3.5 py-2.5 mb-4 text-[11px] text-slate-300 flex items-center justify-between hidden">
+          <span class="flex items-center gap-2"><i class="ph-bold ph-eye text-sky-400 text-sm"></i> Viewing Hall of Science Saviours (View-Only)</span>
+          <span class="text-[10px] text-slate-400">Finish a run to post</span>
+        </div>
+
+        <div id="scoreboard-submit-box" class="bg-slate-950/80 border border-purple-500/40 rounded-2xl p-3.5 mb-4 hidden">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-bold text-purple-300">Post Your Current Run Score</span>
             <span id="modal-current-score" class="font-pixel text-xs text-amber-300">0 PTS</span>
           </div>
-          <div class="flex gap-2">
+          <div id="scoreboard-form-row" class="flex gap-2">
             <input id="input-player-name" type="text" maxlength="16" placeholder="Enter Callsign (e.g. ALCHEMIX)" class="flex-1 bg-slate-900 border border-slate-700 focus:border-purple-500 rounded-xl px-3 py-2 text-xs text-white uppercase tracking-wider outline-none" />
             <button id="btn-submit-score" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 font-extrabold text-xs hover:brightness-110 transition">
               POST SCORE
             </button>
+          </div>
+          <div id="scoreboard-locked-banner" class="hidden mt-1 bg-emerald-950/60 border border-emerald-500/50 rounded-xl px-3 py-2 text-[11px] text-emerald-300 font-semibold flex items-center gap-2">
+            <i class="ph-fill ph-lock-key text-emerald-400 text-sm"></i>
+            <span id="scoreboard-locked-text">Score submitted &amp; locked for this run! Start a new run to post again.</span>
           </div>
           <div id="profanity-warning" class="text-[11px] text-rose-400 font-semibold mt-1.5 hidden">
             ⚠️ Keep it clean! Profanity or inappropriate callsigns are blocked by the Lab Filter.
@@ -393,6 +406,169 @@
         </div>
 
         <div class="flex-1 overflow-y-auto space-y-1.5 pr-1" id="scoreboard-list"></div>
+      </div>
+    </div>
+
+    <!-- LEVEL COMPLETE MODAL -->
+    <div id="level-complete-modal" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+      <div class="max-w-md w-full bg-gradient-to-b from-emerald-950/95 via-slate-900 to-slate-950 border-2 border-emerald-400/70 rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
+        <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 mb-3 shadow-inner">
+          <span id="lc-scientist-icon" class="text-4xl">🧑‍🔬</span>
+        </div>
+        <div class="font-pixel text-[10px] text-emerald-300 tracking-widest uppercase mb-1" id="lc-stage-badge">STAGE 1 CLEARED!</div>
+        <h2 id="lc-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-amber-200 to-sky-300 mb-1">
+          CHEMISTRY TEACHER RESCUED!
+        </h2>
+        <p id="lc-quote" class="text-xs text-slate-300 italic mb-4">
+          "Thank you, Alchemix! The periodic table is safe from Principal McBully's detention!"
+        </p>
+
+        <!-- Stage Score Breakdown -->
+        <div class="bg-slate-950/85 border border-emerald-500/30 rounded-2xl p-3.5 text-xs space-y-2 mb-4 text-left">
+          <div class="flex justify-between items-center text-slate-300">
+            <span>Scientist Rescue Bonus:</span>
+            <span class="font-pixel text-[10px] text-emerald-400">+1500 PTS</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-300">
+            <span>Lab Flasks Recovered (<span id="lc-flasks-ratio" class="text-emerald-300 font-bold">3/3</span>):</span>
+            <span id="lc-flask-bonus" class="font-pixel text-[10px] text-amber-300">+1000 PTS</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-300">
+            <span>Remaining Health Bonus (<span id="lc-hp-remaining" class="text-rose-300 font-bold">100%</span>):</span>
+            <span id="lc-hp-bonus" class="font-pixel text-[10px] text-sky-300">+1000 PTS</span>
+          </div>
+          <div class="border-t border-slate-800 pt-2 flex justify-between items-center font-bold">
+            <span class="text-purple-300 uppercase tracking-wider text-[11px]">Total Run Score:</span>
+            <span id="lc-total-score" class="font-pixel text-xs text-amber-400">004500</span>
+          </div>
+        </div>
+
+        <!-- Next Stage Preview -->
+        <div class="bg-purple-950/40 border border-purple-500/40 rounded-xl px-3.5 py-2.5 mb-4 text-left flex items-center justify-between">
+          <div>
+            <div class="text-[9px] uppercase tracking-widest text-purple-300 font-bold">UP NEXT</div>
+            <div id="lc-next-stage" class="font-pixel text-[10px] text-white mt-0.5">STAGE 2: THE STREET</div>
+            <div id="lc-next-boss" class="text-[11px] text-rose-300">Boss: Dish-Head Conspiracist</div>
+          </div>
+          <i class="ph-bold ph-arrow-circle-right text-2xl text-emerald-400"></i>
+        </div>
+
+        <button id="btn-next-stage" class="w-full py-3.5 rounded-2xl font-pixel text-[11px] bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 text-slate-950 font-extrabold shadow-lg shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98] transition">
+          NEXT STAGE [ENTER / SPACE]
+        </button>
+      </div>
+    </div>
+
+    <!-- DEATH / STAGE FAILED MODAL -->
+    <div id="death-modal" class="absolute inset-0 bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+      <div class="max-w-md w-full bg-gradient-to-b from-rose-950/95 via-slate-900 to-slate-950 border-2 border-rose-500/70 rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
+        <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-rose-500/20 border border-rose-400/50 mb-3 animate-pulse">
+          <span class="text-4xl">💥🎸🧪</span>
+        </div>
+        <div class="font-pixel text-[10px] text-rose-400 tracking-widest uppercase mb-1">AMPLIFIER OVERLOADED!</div>
+        <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-300 to-red-500 mb-1">
+          MISINFORMATION PREVAILED
+        </h2>
+        <p id="death-cause" class="text-xs text-rose-200 font-semibold mb-3">
+          Defeated in Stage 1: The School
+        </p>
+
+        <!-- Run Summary & Tactical Hint -->
+        <div class="bg-slate-950/85 border border-rose-500/30 rounded-2xl p-3.5 text-xs space-y-2 mb-4 text-left">
+          <div class="flex justify-between items-center text-slate-300">
+            <span>Stage Reached:</span>
+            <span id="death-stage-name" class="font-pixel text-[10px] text-purple-300">STAGE 1</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-300">
+            <span>Stage Flasks Collected:</span>
+            <span id="death-flasks" class="font-pixel text-[10px] text-emerald-300">0/3</span>
+          </div>
+          <div class="flex justify-between items-center font-bold border-t border-slate-800 pt-2">
+            <span class="text-amber-300">Current Score:</span>
+            <span id="death-score" class="font-pixel text-xs text-amber-400">000000</span>
+          </div>
+        </div>
+
+        <div class="bg-amber-950/40 border border-amber-500/40 rounded-xl p-3 mb-4 text-left">
+          <div class="text-[10px] font-bold text-amber-300 uppercase tracking-wider mb-0.5 flex items-center gap-1">
+            <i class="ph-fill ph-lightbulb"></i> Lab Tactical Tip
+          </div>
+          <p id="death-tip" class="text-[11px] text-slate-300 leading-relaxed">
+            Switch genres with [Q] until the enemy clutches its ears in shock! Hold [S] to duck under high boss beams.
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <button id="btn-retry-stage" class="w-full py-3.5 rounded-2xl font-pixel text-[11px] bg-gradient-to-r from-rose-600 via-amber-500 to-purple-600 text-white font-bold shadow-lg shadow-rose-600/30 hover:scale-[1.02] active:scale-[0.98] transition">
+            RETRY STAGE [ENTER / SPACE]
+          </button>
+          <div class="flex gap-2">
+            <button id="btn-death-scoreboard" class="flex-1 py-2.5 rounded-xl bg-amber-500/20 border border-amber-500/50 text-amber-300 text-xs font-bold hover:bg-amber-500/30 transition flex items-center justify-center gap-1.5">
+              <i class="ph-fill ph-trophy"></i> Post Score
+            </button>
+            <button id="btn-death-restart" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <i class="ph-bold ph-arrow-counter-clockwise"></i> New Run (Stage 1)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRAND CAMPAIGN VICTORY MODAL -->
+    <div id="victory-modal" class="absolute inset-0 bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+      <div class="max-w-lg w-full bg-gradient-to-b from-amber-950/95 via-purple-950/95 to-slate-950 border-2 border-amber-400/80 rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
+        <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-amber-500/20 border border-amber-400/60 mb-2 shadow-inner">
+          <span class="text-4xl">🏆🧙‍♂️⚛️</span>
+        </div>
+        <div class="font-pixel text-[10px] text-amber-300 tracking-widest uppercase mb-1">ALL 5 STAGES CONQUERED!</div>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-emerald-300 to-purple-300 mb-1">
+          SCIENCE IS SAVED!
+        </h2>
+        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+          Baron Von Greenwash's misinformation empire has crumbled! All five captive scientists are free and peer-reviewed truth rings out across the world!
+        </p>
+
+        <div class="grid grid-cols-2 gap-2.5 bg-slate-950/85 border border-amber-500/40 rounded-2xl p-4 mb-4 text-left text-xs">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase">Final Score</div>
+            <div id="victory-final-score" class="font-pixel text-sm text-amber-300 mt-0.5">025000</div>
+          </div>
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase">Saviour Rank</div>
+            <div id="victory-rank" class="font-pixel text-sm text-emerald-400 mt-0.5">S+ NOBEL ROCKSTAR</div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <button id="btn-victory-scoreboard" class="w-full py-3.5 rounded-2xl font-pixel text-[11px] bg-gradient-to-r from-amber-400 via-rose-500 to-purple-600 text-slate-950 font-extrabold shadow-lg shadow-amber-500/30 hover:scale-[1.02] active:scale-[0.98] transition">
+            RECORD NAME IN HALL OF SAVIOURS 🏆
+          </button>
+          <button id="btn-victory-replay" class="w-full py-2.5 rounded-xl bg-purple-900/50 hover:bg-purple-800/70 border border-purple-500/50 text-purple-200 text-xs font-bold transition">
+            Play Encore Campaign (Stage 1)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAUSE MODAL -->
+    <div id="pause-modal" class="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+      <div class="max-w-sm w-full bg-slate-900 border-2 border-purple-500/60 rounded-3xl p-6 text-center shadow-2xl">
+        <div class="font-pixel text-xs text-purple-300 mb-1">GAME PAUSED</div>
+        <p id="pause-stage-label" class="text-xs text-slate-400 mb-5">STAGE 1: THE SCHOOL</p>
+        <div class="flex flex-col gap-2.5">
+          <button id="btn-resume-game" class="w-full py-3 rounded-xl font-pixel text-[10px] bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-bold hover:brightness-110 transition">
+            RESUME [P / ESC]
+          </button>
+          <button id="btn-pause-retry" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold transition">
+            Restart Current Stage
+          </button>
+          <button id="btn-pause-controls" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-bold transition">
+            Customize Controls
+          </button>
+          <button id="btn-pause-audio" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-bold transition">
+            Audio & Equaliser Mixer
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1045,6 +1221,22 @@
     let bossProjectiles = [];
     let particles = [];
     let activeBoss = null;
+    let stageBannerTimer = 0;
+    let lastDamageSource = 'Misinformation Hazard';
+    let lastDamageTip = 'Switch genres with [Q] until the enemy clutches its ears in shock! Hold [S] to duck under high boss beams.';
+
+    const ENEMY_PROJECTILE_SPECS = {
+      bully:        { label: 'F-',       w: 36, h: 16, speed: 4.6, color: '#f8fafc', accent: '#ef4444', name: 'Hall Bully Spitball Plane' },
+      skater:       { label: 'SPRAY',    w: 34, h: 18, speed: 4.9, color: '#2dd4bf', accent: '#f43f5e', name: 'TikTok Skater Aerosol Can' },
+      conspiracist: { label: '5G?!',     w: 40, h: 20, speed: 4.5, color: '#f97316', accent: '#fde047', name: '5G Conspiracy Megaphone Wave' },
+      podcaster:    { label: 'ALPHA',    w: 38, h: 16, speed: 4.7, color: '#ef4444', accent: '#fbbf24', name: 'Unverified Alpha Supplement Pill' },
+      anchor:       { label: 'PANIC!',   w: 46, h: 18, speed: 4.8, color: '#dc2626', accent: '#ffffff', name: 'Breaking Panic News Ticker' },
+      drone:        { label: 'BAIT',     w: 38, h: 18, speed: 5.2, color: '#38bdf8', accent: '#ef4444', name: 'Clickbait Paparazzi Flash Bolt' },
+      influencer:   { label: '#DETOX',   w: 38, h: 20, speed: 4.8, color: '#ec4899', accent: '#38bdf8', name: 'Clout Ring-Light Halo' },
+      trollbot:     { label: '0101',     w: 40, h: 18, speed: 5.0, color: '#10b981', accent: '#052e16', name: 'Corrupted Binary Ratio Packet' },
+      spin_doctor:  { label: 'ECO™',     w: 40, h: 20, speed: 4.7, color: '#84cc16', accent: '#a855f7', name: 'Greenwashed Sludge Barrel' },
+      enforcer:     { label: 'NDA!',     w: 42, h: 18, speed: 5.2, color: '#eab308', accent: '#ef4444', name: 'Corporate Cease-and-Desist Taser' }
+    };
 
     // 5 Agreed Story Levels: School, Street, TV News Studio, The Internet, Science Laboratory
     const LEVEL_SPECS = [
@@ -1055,6 +1247,9 @@
         bgBottom: '#070312',
         gridColor: 'rgba(168, 85, 247, 0.14)',
         enemyTypes: ['bully', 'skater'],
+        scientistName: 'CHEMISTRY TEACHER',
+        scientistIcon: '🧪',
+        scientistQuote: '"Brilliant riff, Alchemix! The periodic table is back on the classroom wall and Principal McBully\'s pseudoscience detention is over!"',
         boss: {
           name: 'PRINCIPAL MCBULLY',
           type: 'principal',
@@ -1071,6 +1266,9 @@
         bgBottom: '#040814',
         gridColor: 'rgba(56, 189, 248, 0.14)',
         enemyTypes: ['conspiracist', 'podcaster'],
+        scientistName: 'CHIEF ASTRONOMER',
+        scientistIcon: '🔭',
+        scientistQuote: '"The Dish-Head\'s tin-foil jamming array is shattered! Our orbital telescopes have locked back onto the cosmos!"',
         boss: {
           name: 'DISH-HEAD CONSPIRACIST',
           type: 'conspiracist_boss',
@@ -1087,6 +1285,9 @@
         bgBottom: '#09020a',
         gridColor: 'rgba(244, 63, 94, 0.14)',
         enemyTypes: ['anchor', 'drone'],
+        scientistName: 'LEAD VIROLOGIST',
+        scientistIcon: '🧬',
+        scientistQuote: '"Chroma-Mogul 9000 is off the air! Real peer-reviewed epidemiology is broadcasting on every channel!"',
         boss: {
           name: 'CHROMA-MOGUL 9000',
           type: 'tv_mogul',
@@ -1103,6 +1304,9 @@
         bgBottom: '#020c0e',
         gridColor: 'rgba(16, 185, 129, 0.18)',
         enemyTypes: ['influencer', 'trollbot'],
+        scientistName: 'COMPUTER SCIENTIST',
+        scientistIcon: '💻',
+        scientistQuote: '"The Shadowban Algorithm\'s rage-bait neural core is rebooted! Open-source truth is trending worldwide!"',
         boss: {
           name: 'SHADOWBAN ALGORITHM',
           type: 'algorithm',
@@ -1119,6 +1323,9 @@
         bgBottom: '#0a0202',
         gridColor: 'rgba(234, 179, 8, 0.15)',
         enemyTypes: ['spin_doctor', 'enforcer'],
+        scientistName: 'CHIEF SCIENCE LAUREATE',
+        scientistIcon: '⚛️',
+        scientistQuote: '"Baron Von Greenwash\'s toxic spin machine is history! Science, music, and truth have triumphed!"',
         boss: {
           name: 'BARON VON GREENWASH',
           type: 'ceo',
@@ -1129,6 +1336,18 @@
         }
       }
     ];
+
+    function clearInputKeys() {
+      keys.left = false;
+      keys.right = false;
+      keys.jump = false;
+      keys.duck = false;
+      keys.shoot = false;
+      ['btn-left', 'btn-right', 'btn-duck', 'btn-jump', 'btn-attack'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+    }
 
     function addScore(pts, x, y) {
       score += pts;
@@ -1143,6 +1362,7 @@
       currentLevel = lvlIdx % LEVEL_SPECS.length;
       const spec = LEVEL_SPECS[currentLevel];
 
+      clearInputKeys();
       player.isCrouching = false;
       player.h = player.normalH;
       player.x = 90;
@@ -1150,9 +1370,11 @@
       player.vx = 0;
       player.vy = 0;
       player.hp = 100;
+      player.invulnTimer = 0.6;
       player.isGrounded = true;
       flasksCollected = 0;
       cameraX = 0;
+      stageBannerTimer = 2.6;
 
       platforms = [{ x: -120, y: 500, w: 3200, h: 100, type: 'ground' }];
       obstacles = [];
@@ -1260,6 +1482,8 @@
         phase: 1,
         phase2Weakness: spec.boss.phase2Weakness,
         attackTimer: 0,
+        nextAttackIsHigh: true,
+        recoilTimer: 0,
         danceTimer: 0,
         shockTimer: 0,
         defeated: false,
@@ -1274,6 +1498,8 @@
 
       document.getElementById('hud-stage-name').innerText = spec.title;
       document.getElementById('hud-stage-sub').innerText = spec.sub;
+      document.getElementById('boss-phase-tag').innerText = 'PHASE 1';
+      document.getElementById('boss-hint').innerText = 'Watch its reaction: Ear-clutch = Weak! Head-bop = Immune!';
       updateFlaskHUD();
       updateHealthHUD();
       hideBossHUD();
@@ -1375,6 +1601,8 @@
     }
 
     function update(dt) {
+      if (stageBannerTimer > 0) stageBannerTimer = Math.max(0, stageBannerTimer - dt);
+
       // Crouch state with anchored feet
       const wantsToCrouch = keys.duck && player.isGrounded;
       if (wantsToCrouch && !player.isCrouching) {
@@ -1461,10 +1689,12 @@
         } else if (obs.type === 'steam_vent') {
           obs.timer = (obs.timer + dt) % 2.8;
           if (obs.timer < 1.1 && checkCollision(player, { x: obs.x, y: obs.y - 48, w: obs.w, h: 48 })) {
-            damagePlayer(14);
+            damagePlayer(14, 'Pressurized Steam Vent', 'Time your jumps over steam grates when the vapor plume subsides!');
           }
-        } else if ((obs.type === 'firewall' || obs.type === 'acid') && checkCollision(player, obs)) {
-          damagePlayer(20);
+        } else if (obs.type === 'firewall' && checkCollision(player, obs)) {
+          damagePlayer(20, 'Cyber Firewall Barrier', 'Use the elevated platforms or double-jump [W] twice to clear red firewall walls!');
+        } else if (obs.type === 'acid' && checkCollision(player, obs)) {
+          damagePlayer(20, 'Toxic Greenwash Acid Spill', 'Jump across platforms to avoid stepping in neon chemical spills!');
         }
       }
 
@@ -1537,22 +1767,28 @@
 
         e.shootCooldown -= dt;
         const dist = Math.abs((e.x + e.w / 2) - (player.x + player.w / 2));
-        if (e.shootCooldown <= 0 && dist < 430) {
+        if (e.shootCooldown <= 0 && dist < 430 && e.shockTimer <= 0) {
           e.shootCooldown = Math.random() * 2.2 + 2.0;
           const toRight = player.x > e.x;
+          const pSpec = ENEMY_PROJECTILE_SPECS[e.type] || ENEMY_PROJECTILE_SPECS.bully;
           bossProjectiles.push({
-            x: toRight ? e.x + e.w : e.x - 36,
-            y: 434,
-            vx: toRight ? 4.4 : -4.4,
-            text: 'FAKE!',
-            color: '#ef4444',
-            w: 40,
-            h: 18
+            x: toRight ? e.x + e.w : e.x - pSpec.w,
+            y: 436,
+            vx: toRight ? pSpec.speed : -pSpec.speed,
+            text: pSpec.label,
+            color: pSpec.color,
+            accent: pSpec.accent,
+            w: pSpec.w,
+            h: pSpec.h,
+            sourceType: e.type,
+            sourceName: pSpec.name,
+            isBoss: false,
+            age: 0
           });
         }
 
         if (checkCollision(player, e)) {
-          damagePlayer(12);
+          damagePlayer(12, `Collided with ${e.type.replace('_', ' ').toUpperCase()}`, `Keep your distance and fire musical notes with [SPACE]. Switch styles with [Q] to stun them!`);
         }
       });
 
@@ -1572,9 +1808,11 @@
 
           if (activeBoss.danceTimer > 0) activeBoss.danceTimer -= dt;
           if (activeBoss.shockTimer > 0) activeBoss.shockTimer -= dt;
+          if (activeBoss.recoilTimer > 0) activeBoss.recoilTimer -= dt;
 
           activeBoss.attackTimer += dt;
-          if (activeBoss.attackTimer > (activeBoss.phase === 1 ? 2.3 : 1.55)) {
+          const attackInterval = activeBoss.phase === 1 ? 2.3 : 1.55;
+          if (activeBoss.attackTimer > attackInterval) {
             activeBoss.attackTimer = 0;
             executeBossAttack(activeBoss);
           }
@@ -1584,14 +1822,20 @@
       for (let i = bossProjectiles.length - 1; i >= 0; i--) {
         const bp = bossProjectiles[i];
         bp.x += bp.vx;
+        bp.age = (bp.age || 0) + dt;
 
         if (checkCollision(player, bp)) {
-          damagePlayer(16);
+          const tip = bp.isBoss
+            ? (bp.isHigh
+                ? 'Hold [S] or Down Arrow to CROUCH under high Boss Beams!'
+                : 'Tap [W] or Up Arrow to JUMP over low Boss Shockwaves!')
+            : 'Jump with [W] or crouch with [S] to dodge enemy projectiles while firing back!';
+          damagePlayer(16, bp.sourceName || 'Enemy Projectile', tip);
           bossProjectiles.splice(i, 1);
           continue;
         }
 
-        if (bp.x < cameraX - 120 || bp.x > cameraX + V_WIDTH + 120) {
+        if (bp.x < cameraX - 140 || bp.x > cameraX + V_WIDTH + 140) {
           bossProjectiles.splice(i, 1);
         }
       }
@@ -1599,17 +1843,9 @@
       if (activeBoss && activeBoss.defeated && !activeBoss.scientist.rescued) {
         if (checkCollision(player, activeBoss.scientist)) {
           activeBoss.scientist.rescued = true;
-          addScore(1500, activeBoss.scientist.x, activeBoss.scientist.y);
-          spawnSparks(activeBoss.scientist.x + 25, activeBoss.scientist.y + 45, '#fbbf24', 35);
-
-          setTimeout(() => {
-            if (currentLevel < LEVEL_SPECS.length - 1) {
-              initLevel(currentLevel + 1);
-            } else {
-              scoreboard.renderTable();
-              document.getElementById('scoreboard-modal').classList.remove('hidden');
-            }
-          }, 600);
+          sound.triggerSFX('flask');
+          spawnSparks(activeBoss.scientist.x + 25, activeBoss.scientist.y + 45, '#fbbf24', 40);
+          triggerStageComplete();
         }
       }
 
@@ -1668,39 +1904,125 @@
     }
 
     function executeBossAttack(boss) {
-      const highAttack = Math.random() > 0.45;
+      const highAttack = boss.nextAttackIsHigh;
+      boss.nextAttackIsHigh = Math.random() > 0.45;
+      boss.recoilTimer = 0.35;
+
+      const bossAttackNames = {
+        principal:         highAttack ? "Principal's Detention Bullhorn Blast" : "Principal's Sliding Censored Textbooks",
+        conspiracist_boss: highAttack ? "Orbital 5G Mind-Control Beam" : "Rolling Flat-Earth Dome Platter",
+        tv_mogul:          highAttack ? "SMPTE Color-Bar Static Laser" : "Studio Camera Dolly Shockwave",
+        algorithm:         highAttack ? "Shadowban Padlock Cyber-Lance" : "Corrupted Firewall Glitch Wave",
+        ceo:               highAttack ? "Golden Parachute Smog Missile" : "Radioactive Greenwash Sludge Wave"
+      };
+
       if (highAttack) {
         bossProjectiles.push({
-          x: boss.x - 20,
-          y: 432,
+          x: boss.x - 24,
+          y: 430,
           vx: -5.8,
-          text: '⚡DUCK! BEAM⚡',
+          text: 'DUCK!',
           color: '#fbbf24',
-          w: 76,
-          h: 20
+          accent: '#ef4444',
+          w: 82,
+          h: 22,
+          sourceType: boss.type,
+          sourceName: bossAttackNames[boss.type] || 'High Boss Beam',
+          isBoss: true,
+          isHigh: true,
+          age: 0
         });
       } else {
         bossProjectiles.push({
-          x: boss.x - 20,
-          y: 476,
-          vx: -4.8,
-          text: '🌊JUMP! WAVE',
+          x: boss.x - 24,
+          y: 474,
+          vx: -4.9,
+          text: 'JUMP!',
           color: '#ec4899',
-          w: 68,
-          h: 22
+          accent: '#38bdf8',
+          w: 74,
+          h: 24,
+          sourceType: boss.type,
+          sourceName: bossAttackNames[boss.type] || 'Low Boss Wave',
+          isBoss: true,
+          isHigh: false,
+          age: 0
         });
       }
     }
 
-    function damagePlayer(amount) {
-      if (player.invulnTimer > 0) return;
-      player.hp -= amount;
+    function damagePlayer(amount, sourceLabel = 'Enemy Attack', tipText = null) {
+      if (player.invulnTimer > 0 || gameState !== 'PLAYING') return;
+      player.hp = Math.max(0, player.hp - amount);
       player.invulnTimer = 0.85;
+      lastDamageSource = sourceLabel;
+      if (tipText) lastDamageTip = tipText;
       updateHealthHUD();
-      spawnSparks(player.x + player.w / 2, player.y + player.h / 2, '#ef4444', 12);
+      spawnSparks(player.x + player.w / 2, player.y + player.h / 2, '#ef4444', 14);
 
       if (player.hp <= 0) {
-        initLevel(currentLevel);
+        triggerDeathScreen();
+      }
+    }
+
+    function triggerDeathScreen() {
+      gameState = 'DEAD';
+      clearInputKeys();
+      sound.triggerSFX('defeat');
+      spawnSparks(player.x + player.w / 2, player.y + player.h / 2, '#fbbf24', 32);
+
+      const spec = LEVEL_SPECS[currentLevel];
+      document.getElementById('death-cause').innerText = `Knocked out by: ${lastDamageSource}`;
+      document.getElementById('death-stage-name').innerText = spec.title;
+      document.getElementById('death-flasks').innerText = `${flasksCollected}/3`;
+      document.getElementById('death-score').innerText = String(score).padStart(6, '0');
+      document.getElementById('death-tip').innerText = lastDamageTip;
+      document.getElementById('death-modal').classList.remove('hidden');
+    }
+
+    function triggerStageComplete() {
+      clearInputKeys();
+      const spec = LEVEL_SPECS[currentLevel];
+      const rescueBonus = 1500;
+      const flaskBonus = flasksCollected === 3 ? 1000 : flasksCollected * 250;
+      const hpPct = Math.max(0, Math.round((player.hp / player.maxHp) * 100));
+      const hpBonus = hpPct * 10;
+
+      addScore(rescueBonus + flaskBonus + hpBonus, activeBoss.scientist.x, activeBoss.scientist.y);
+
+      if (currentLevel < LEVEL_SPECS.length - 1) {
+        gameState = 'LEVEL_COMPLETE';
+        const nextSpec = LEVEL_SPECS[currentLevel + 1];
+        document.getElementById('lc-scientist-icon').innerText = spec.scientistIcon || '🧑‍🔬';
+        document.getElementById('lc-stage-badge').innerText = `STAGE ${currentLevel + 1} CLEARED!`;
+        document.getElementById('lc-title').innerText = `${spec.scientistName} RESCUED!`;
+        document.getElementById('lc-quote').innerText = spec.scientistQuote;
+        document.getElementById('lc-flasks-ratio').innerText = `${flasksCollected}/3`;
+        document.getElementById('lc-flask-bonus').innerText = `+${flaskBonus} PTS`;
+        document.getElementById('lc-hp-remaining').innerText = `${hpPct}%`;
+        document.getElementById('lc-hp-bonus').innerText = `+${hpBonus} PTS`;
+        document.getElementById('lc-total-score').innerText = String(score).padStart(6, '0');
+        document.getElementById('lc-next-stage').innerText = nextSpec.title;
+        document.getElementById('lc-next-boss').innerText = `Boss: ${nextSpec.boss.name}`;
+        document.getElementById('level-complete-modal').classList.remove('hidden');
+      } else {
+        gameState = 'VICTORY';
+        document.getElementById('victory-final-score').innerText = String(score).padStart(6, '0');
+        const rank = score >= 22000 ? 'S+ NOBEL ROCKSTAR' : score >= 16000 ? 'S PEER-REVIEW LEGEND' : score >= 11000 ? 'A SENIOR ALCHEMIST' : 'B LAB SAVIOUR';
+        document.getElementById('victory-rank').innerText = rank;
+        document.getElementById('victory-modal').classList.remove('hidden');
+      }
+    }
+
+    function togglePauseGame() {
+      if (gameState === 'PLAYING') {
+        gameState = 'PAUSED';
+        clearInputKeys();
+        document.getElementById('pause-stage-label').innerText = LEVEL_SPECS[currentLevel].title;
+        document.getElementById('pause-modal').classList.remove('hidden');
+      } else if (gameState === 'PAUSED') {
+        document.getElementById('pause-modal').classList.add('hidden');
+        gameState = 'PLAYING';
       }
     }
 
@@ -1750,21 +2072,17 @@
       });
 
       bossProjectiles.forEach(bp => {
-        ctx.save();
-        ctx.fillStyle = bp.color;
-        ctx.beginPath();
-        ctx.roundRect(bp.x, bp.y, bp.w, bp.h, 6);
-        ctx.fill();
-        ctx.fillStyle = '#090514';
-        ctx.font = 'bold 9px monospace';
-        ctx.fillText(bp.text, bp.x + 5, bp.y + 13);
-        ctx.restore();
+        renderThemedProjectile(bp);
       });
 
       renderTheAlchemix(player);
       renderParticles();
 
       ctx.restore();
+
+      if (stageBannerTimer > 0 && gameState === 'PLAYING') {
+        renderStageBanner(spec, stageBannerTimer);
+      }
     }
 
     // Reusable Detailed Erlenmeyer Science Flask (Conical Base + Cylindrical Neck + Flared Lip + Bubbles)
@@ -2280,66 +2598,1070 @@
 
       ctx.save();
       ctx.translate(Math.round(e.x), Math.round(e.y));
+      // Enemy Health Bar when damaged
+      if (e.hp < e.maxHp) {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(4, -8, 36, 5);
+        ctx.fillStyle = '#f43f5e';
+        ctx.fillRect(5, -7, Math.max(0, (e.hp / e.maxHp) * 34), 3);
+      }
       if (isGrooving) {
         ctx.fillStyle = '#34d399';
         ctx.font = 'bold 14px sans-serif';
-        ctx.fillText('♪ VIBING! ♫', -6, -12);
+        ctx.fillText('♪ VIBING! ♫', -6, -14);
       } else if (isShocked) {
         ctx.fillStyle = '#fbbf24';
         ctx.font = 'bold 12px sans-serif';
-        ctx.fillText('⚡ TOO LOUD! ⚡', -14, -12);
+        ctx.fillText('⚡ TOO LOUD! ⚡', -14, -14);
       } else if (e.speechText) {
         const txt = e.speechText;
         ctx.font = 'bold 9px sans-serif';
         const tw = Math.min(115, ctx.measureText(txt).width + 12);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
         ctx.beginPath();
-        ctx.roundRect(22 - tw / 2, -26, tw, 17, 5);
+        ctx.roundRect(22 - tw / 2, -28, tw, 17, 5);
         ctx.fill();
         ctx.fillStyle = '#0f172a';
-        ctx.fillText(txt.substring(0, 20), 26 - tw / 2, -14);
+        ctx.fillText(txt.substring(0, 20), 26 - tw / 2, -16);
       }
       ctx.restore();
     }
 
+    /* ==========================================================================
+       10B. THEMED ENEMY & BOSS PROJECTILE SPRITES
+       ========================================================================== */
+    function renderThemedProjectile(bp) {
+      ctx.save();
+      const cx = bp.x + bp.w / 2;
+      const cy = bp.y + bp.h / 2;
+      const dir = bp.vx >= 0 ? 1 : -1;
+      const t = Date.now() / 100;
+
+      ctx.translate(cx, cy);
+      if (dir < 0) ctx.scale(-1, 1);
+
+      if (bp.isBoss) {
+        // Boss Projectiles: Distinct per boss & high (Duck) vs low (Jump)
+        if (bp.isHigh) {
+          switch (bp.sourceType) {
+            case 'principal':
+              // Supersonic Detention Megaphone Blast + Flying Detention Slip
+              ctx.strokeStyle = '#fbbf24';
+              ctx.lineWidth = 2.5;
+              for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(-10 + i * 14, 0, 7 + i * 2.5, -0.7, 0.7);
+                ctx.stroke();
+              }
+              ctx.fillStyle = '#fef2f2';
+              ctx.strokeStyle = '#ef4444';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.roundRect(-34, -9, 44, 18, 3);
+              ctx.fill();
+              ctx.stroke();
+              ctx.fillStyle = '#dc2626';
+              ctx.font = 'bold 8px monospace';
+              ctx.fillText('DETENTION!', -31, -1);
+              break;
+
+            case 'conspiracist_boss':
+              // Orbital 5G Mind-Control Microwave Ray
+              ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
+              ctx.beginPath();
+              ctx.roundRect(-40, -10, 80, 20, 10);
+              ctx.fill();
+              ctx.strokeStyle = '#a855f7';
+              ctx.lineWidth = 2.2;
+              ctx.beginPath();
+              for (let x = -36; x <= 36; x += 8) {
+                ctx.lineTo(x, Math.sin(x * 0.3 + t) * 7);
+              }
+              ctx.stroke();
+              ctx.fillStyle = '#fde047';
+              ctx.font = 'bold 8px monospace';
+              ctx.fillText('5G BEAM', -18, 3);
+              break;
+
+            case 'tv_mogul':
+              // SMPTE Color-Bar Broadcast Laser
+              const bars = ['#f8fafc', '#facc15', '#38bdf8', '#22c55e', '#ec4899', '#ef4444', '#3b82f6'];
+              bars.forEach((c, idx) => {
+                ctx.fillStyle = c;
+                ctx.fillRect(-38 + idx * 11, -9, 11, 18);
+              });
+              ctx.strokeStyle = '#ffffff';
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(-38, -9, 77, 18);
+              break;
+
+            case 'algorithm':
+              // Shadowban Padlock Cyber-Lance
+              ctx.fillStyle = '#052e16';
+              ctx.strokeStyle = '#10b981';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(-38, -8);
+              ctx.lineTo(24, -8);
+              ctx.lineTo(40, 0);
+              ctx.lineTo(24, 8);
+              ctx.lineTo(-38, 8);
+              ctx.closePath();
+              ctx.fill();
+              ctx.stroke();
+              ctx.fillStyle = '#ef4444';
+              ctx.font = 'bold 8px monospace';
+              ctx.fillText('🔒BAN_404', -32, 3);
+              break;
+
+            default:
+              // Baron CEO Golden Parachute Smog Missile
+              ctx.fillStyle = '#475569';
+              ctx.beginPath();
+              ctx.arc(-28, -2, 8, 0, Math.PI * 2);
+              ctx.arc(-18, 3, 7, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = '#eab308';
+              ctx.strokeStyle = '#fef08a';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.roundRect(-14, -8, 48, 16, 8);
+              ctx.fill();
+              ctx.stroke();
+              ctx.fillStyle = '#14532d';
+              ctx.font = 'bold 8px monospace';
+              ctx.fillText('$SMOG$', -6, 3);
+              break;
+          }
+          // Subtle tactical duck indicator badge above beam
+          ctx.save();
+          if (dir < 0) ctx.scale(-1, 1);
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 8px monospace';
+          ctx.fillText('▼ DUCK [S]', -24, -13);
+          ctx.restore();
+        } else {
+          // Low Boss Attacks (Jump Over)
+          switch (bp.sourceType) {
+            case 'principal':
+              // Sliding Stack of Censored Textbooks
+              ctx.fillStyle = '#991b1b';
+              ctx.fillRect(-32, 0, 64, 11);
+              ctx.fillStyle = '#fef3c7';
+              ctx.fillRect(-28, 3, 56, 5);
+              ctx.fillStyle = '#1e3a8a';
+              ctx.fillRect(-26, -10, 52, 10);
+              ctx.fillStyle = '#fde047';
+              ctx.fillRect(-22, -7, 44, 4);
+              break;
+
+            case 'conspiracist_boss':
+              // Rolling Flat-Earth Snowglobe Platter
+              ctx.fillStyle = '#94a3b8';
+              ctx.beginPath();
+              ctx.ellipse(0, 6, 34, 6, 0, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = '#38bdf8';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(0, 6, 26, Math.PI, 0);
+              ctx.stroke();
+              ctx.fillStyle = '#22c55e';
+              ctx.fillRect(-16, 1, 32, 4);
+              break;
+
+            case 'tv_mogul':
+              // Studio Camera Dolly & Coax Spark Wave
+              ctx.fillStyle = '#1e293b';
+              ctx.fillRect(-30, -6, 60, 14);
+              ctx.fillStyle = '#ef4444';
+              ctx.beginPath();
+              ctx.arc(20, 0, 6, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = '#38bdf8';
+              ctx.beginPath();
+              ctx.arc(-18, 9, 4, 0, Math.PI * 2);
+              ctx.arc(16, 9, 4, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+
+            case 'algorithm':
+              // Corrupted Red Matrix Firewall Wave
+              ctx.fillStyle = '#dc2626';
+              ctx.beginPath();
+              ctx.moveTo(-34, 11);
+              for (let x = -34; x <= 34; x += 8) {
+                ctx.lineTo(x, -9 + Math.abs(Math.sin(x + t)) * 12);
+              }
+              ctx.lineTo(34, 11);
+              ctx.closePath();
+              ctx.fill();
+              break;
+
+            default:
+              // Baron CEO Radioactive Greenwash Sludge Tsunami
+              ctx.fillStyle = '#22c55e';
+              ctx.beginPath();
+              ctx.moveTo(-34, 11);
+              ctx.quadraticCurveTo(-18, -14, 0, -4);
+              ctx.quadraticCurveTo(18, -14, 34, 11);
+              ctx.closePath();
+              ctx.fill();
+              ctx.fillStyle = '#bef264';
+              ctx.beginPath();
+              ctx.arc(-10, 2, 3.5, 0, Math.PI * 2);
+              ctx.arc(10, 4, 2.5, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+          }
+          ctx.save();
+          if (dir < 0) ctx.scale(-1, 1);
+          ctx.fillStyle = '#f472b6';
+          ctx.font = 'bold 8px monospace';
+          ctx.fillText('▲ JUMP [W]', -24, -13);
+          ctx.restore();
+        }
+        ctx.restore();
+        return;
+      }
+
+      // Regular Enemy Projectiles: 10 Bespoke Themed Sprites
+      switch (bp.sourceType) {
+        case 'bully':
+          // Crumpled F-Grade Paper Airplane
+          ctx.fillStyle = '#f8fafc';
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(18, 0);
+          ctx.lineTo(-16, -8);
+          ctx.lineTo(-10, 0);
+          ctx.lineTo(-16, 8);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#dc2626';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.fillText('F-', -8, 4);
+          break;
+
+        case 'skater':
+          // Spinning Neon Spray-Paint Can + Mist
+          ctx.save();
+          ctx.rotate(t * 0.9);
+          ctx.fillStyle = '#0d9488';
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(-10, -6, 20, 12, 3);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#fde047';
+          ctx.fillRect(10, -3, 4, 6);
+          ctx.restore();
+          ctx.fillStyle = 'rgba(244, 63, 94, 0.55)';
+          ctx.beginPath();
+          ctx.arc(-14, Math.sin(t) * 3, 4, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+
+        case 'conspiracist':
+          // 5G Tin-Foil Megaphone Sonic Rings
+          ctx.strokeStyle = '#f97316';
+          ctx.lineWidth = 2;
+          for (let r = 0; r < 3; r++) {
+            ctx.beginPath();
+            ctx.arc(-10 + r * 9, 0, 5 + r * 2.5, -0.8, 0.8);
+            ctx.stroke();
+          }
+          ctx.fillStyle = '#fde047';
+          ctx.font = 'bold 8px monospace';
+          ctx.fillText('5G!', -16, 3);
+          break;
+
+        case 'podcaster':
+          // Two-Tone "ALPHA PILL" Capsule
+          ctx.save();
+          ctx.rotate(Math.sin(t * 0.8) * 0.25);
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.roundRect(-16, -6, 16, 12, [6, 0, 0, 6]);
+          ctx.fill();
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.roundRect(0, -6, 16, 12, [0, 6, 6, 0]);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(-10, -4, 12, 2);
+          ctx.restore();
+          break;
+
+        case 'anchor':
+          // Breaking Panic Lower-Third Broadcast Banner
+          ctx.fillStyle = '#991b1b';
+          ctx.strokeStyle = '#f8fafc';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(-22, -8, 44, 16, 3);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#fef08a';
+          ctx.font = 'bold 8px monospace';
+          ctx.fillText('PANIC!', -14, 3);
+          break;
+
+        case 'drone':
+          // Red Clickbait Arrow & Camera Flash Orb
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.arc(-8, 0, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.moveTo(-4, -4);
+          ctx.lineTo(8, -4);
+          ctx.lineTo(8, -8);
+          ctx.lineTo(18, 0);
+          ctx.lineTo(8, 8);
+          ctx.lineTo(8, 4);
+          ctx.lineTo(-4, 4);
+          ctx.closePath();
+          ctx.fill();
+          break;
+
+        case 'influencer':
+          // Glowing Neon Ring-Light & Clout Heart
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, 0, 8, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = '#ec4899';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.fillText('♥', -4, 4);
+          break;
+
+        case 'trollbot':
+          // Corrupted Binary Glitch Packet
+          ctx.fillStyle = '#052e16';
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 1.5;
+          ctx.fillRect(-18, -8, 36, 16);
+          ctx.strokeRect(-18, -8, 36, 16);
+          ctx.fillStyle = '#34d399';
+          ctx.font = 'bold 8px monospace';
+          ctx.fillText('01!BOT', -15, 3);
+          break;
+
+        case 'spin_doctor':
+          // Leaking Greenwashed Toxic Barrel
+          ctx.fillStyle = '#3f6212';
+          ctx.strokeStyle = '#a3e635';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(-14, -8, 28, 16, 4);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#a855f7';
+          ctx.beginPath();
+          ctx.arc(8, 5, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ecfccb';
+          ctx.font = 'bold 7px sans-serif';
+          ctx.fillText('ECO', -10, 2);
+          break;
+
+        default:
+          // Corporate Enforcer High-Voltage NDA Taser Bolt
+          ctx.fillStyle = '#eab308';
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(-18, -5);
+          ctx.lineTo(0, -8);
+          ctx.lineTo(-4, 0);
+          ctx.lineTo(18, 2);
+          ctx.lineTo(0, 8);
+          ctx.lineTo(4, 1);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          break;
+      }
+
+      ctx.restore();
+    }
+
+    /* ==========================================================================
+       10C. 5 BESPOKE, NUANCED, MULTI-LAYERED BOSS VECTOR SPRITES
+       ========================================================================== */
     function renderDetailedBoss(b) {
       ctx.save();
       ctx.translate(Math.round(b.x), Math.round(b.y));
 
-      if (b.danceTimer > 0) {
-        ctx.translate(0, Math.sin(Date.now() / 85) * 10);
-      } else if (b.shockTimer > 0) {
-        ctx.translate(Math.sin(Date.now() / 25) * 9, 0);
+      const now = Date.now();
+      const isGrooving = b.danceTimer > 0;
+      const isShocked = b.shockTimer > 0;
+      const isPhase2 = b.phase === 2;
+      const breathe = Math.sin(now / 220) * 2.5;
+      const recoil = b.recoilTimer > 0 ? Math.sin(b.recoilTimer * Math.PI * 3) * 7 : 0;
+
+      if (isGrooving) {
+        const bop = Math.abs(Math.sin(now / 90)) * -10;
+        const sway = Math.sin(now / 130) * 0.08;
+        ctx.translate(48, 80 + bop);
+        ctx.rotate(sway);
+        ctx.translate(-48, -80);
+      } else if (isShocked) {
+        ctx.translate(Math.sin(now / 22) * 8, Math.cos(now / 30) * 3);
+      } else {
+        ctx.translate(recoil, 0);
       }
 
-      ctx.fillStyle = b.phase === 1 ? '#4c1d95' : '#881337';
-      ctx.strokeStyle = b.phase === 1 ? '#a855f7' : '#f43f5e';
-      ctx.lineWidth = 3;
+      // Ground Shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
       ctx.beginPath();
-      ctx.roundRect(8, 34, 80, 120, 12);
+      ctx.ellipse(48, 158, 44, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Phase 2 Enraged Aura
+      if (isPhase2) {
+        const pulse = 0.25 + Math.abs(Math.sin(now / 140)) * 0.25;
+        ctx.strokeStyle = `rgba(244, 63, 94, ${pulse})`;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.roundRect(-4, -6, b.w + 8, b.h + 8, 22);
+        ctx.stroke();
+      }
+
+      // Pre-Attack Charge Telegraph (0.45s before firing)
+      const interval = isPhase2 ? 1.55 : 2.3;
+      if (b.attackTimer > interval - 0.48) {
+        const chargeY = b.nextAttackIsHigh ? 92 : 136;
+        const chargeColor = b.nextAttackIsHigh ? '#fbbf24' : '#ec4899';
+        ctx.fillStyle = chargeColor;
+        ctx.globalAlpha = 0.65 + Math.sin(now / 35) * 0.3;
+        ctx.beginPath();
+        ctx.arc(-8, chargeY, 10 + Math.sin(now / 40) * 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      switch (b.type) {
+        case 'principal':
+          renderBossPrincipal(ctx, b, now, breathe, isShocked, isGrooving, isPhase2);
+          break;
+        case 'conspiracist_boss':
+          renderBossConspiracist(ctx, b, now, breathe, isShocked, isGrooving, isPhase2);
+          break;
+        case 'tv_mogul':
+          renderBossTvMogul(ctx, b, now, breathe, isShocked, isGrooving, isPhase2);
+          break;
+        case 'algorithm':
+          renderBossAlgorithm(ctx, b, now, breathe, isShocked, isGrooving, isPhase2);
+          break;
+        default:
+          renderBossCeo(ctx, b, now, breathe, isShocked, isGrooving, isPhase2);
+          break;
+      }
+
+      // Status Callout Banner above Boss
+      if (isShocked) {
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('⚡ CRITICAL EAR-SHATTER! ⚡', -26, -18);
+      } else if (isGrooving) {
+        ctx.fillStyle = '#34d399';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('🎶 IMMUNE GROOVE! SWITCH [Q] 🎶', -38, -18);
+      }
+
+      ctx.restore();
+    }
+
+    // BOSS 1: PRINCIPAL MCBULLY (Authoritarian Academic Juggernaut)
+    function renderBossPrincipal(ctx, b, now, breathe, isShocked, isGrooving, isPhase2) {
+      // Dress Shoes & Slacks
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(22, 128, 20, 32);
+      ctx.fillRect(54, 128, 20, 32);
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.roundRect(14, 150, 28, 10, 4);
+      ctx.roundRect(52, 150, 28, 10, 4);
+      ctx.fill();
+
+      // Broad-Shouldered Pinstripe Tweed Jacket
+      ctx.fillStyle = isPhase2 ? '#450a0a' : '#1e293b';
+      ctx.strokeStyle = isPhase2 ? '#f87171' : '#64748b';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(6, 44 + breathe, 84, 88, 14);
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = b.phase === 1 ? '#38bdf8' : '#fbbf24';
-      ctx.beginPath();
-      ctx.arc(48, 92, 22 + Math.sin(Date.now() / 120) * 3, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#e2e8f0';
-      ctx.beginPath();
-      ctx.roundRect(22, 4, 52, 32, 8);
-      ctx.fill();
-
-      ctx.fillStyle = b.shockTimer > 0 ? '#fbbf24' : '#ef4444';
-      ctx.fillRect(30, 14, 12, 8);
-      ctx.fillRect(54, 14, 12, 8);
-
-      if (b.shockTimer > 0) {
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(6, 6, 14, 28);
-        ctx.fillRect(76, 6, 14, 28);
+      // Subtle Vertical Pinstripes
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      for (let px = 16; px < 84; px += 10) {
+        ctx.beginPath();
+        ctx.moveTo(px, 46 + breathe);
+        ctx.lineTo(px, 130 + breathe);
+        ctx.stroke();
       }
 
+      // Crisp Shirt V-Neck & Crimson Power Tie
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(34, 44 + breathe);
+      ctx.lineTo(62, 44 + breathe);
+      ctx.lineTo(48, 78 + breathe);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(45, 48 + breathe);
+      ctx.lineTo(51, 48 + breathe);
+      ctx.lineTo(54, 106 + breathe);
+      ctx.lineTo(48, 114 + breathe);
+      ctx.lineTo(42, 106 + breathe);
+      ctx.closePath();
+      ctx.fill();
+
+      // Gold "DETENTION" Championship Belt Buckle
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(8, 114 + breathe, 80, 12);
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.roundRect(32, 111 + breathe, 32, 18, 4);
+      ctx.fill();
+      ctx.fillStyle = '#451a03';
+      ctx.font = 'bold 8px monospace';
+      ctx.fillText('RULE', 37, 123 + breathe);
+
+      // Left Arm: Giant Brass "SILENCE!" Bullhorn Cannon
+      ctx.save();
+      ctx.translate(10, 76 + breathe);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(-16, -8, 20, 16);
+      ctx.fillStyle = '#f59e0b';
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-12, -8);
+      ctx.lineTo(-34, -20);
+      ctx.lineTo(-34, 20);
+      ctx.lineTo(-12, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // Right Arm: Giant Wooden Hall-Pass / Ruler Cleaver
+      ctx.save();
+      ctx.translate(84, 72 + breathe);
+      ctx.rotate(Math.sin(now / 180) * 0.15);
+      ctx.fillStyle = '#d97706';
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 2;
+      ctx.fillRect(-4, -36, 14, 62);
+      ctx.strokeRect(-4, -36, 14, 62);
+      for (let ry = -30; ry < 22; ry += 8) {
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(-4, ry, 6, 2);
+      }
+      ctx.restore();
+
+      // Neck & Scowling Head
+      ctx.fillStyle = isPhase2 ? '#fca5a5' : '#fdba74';
+      ctx.beginPath();
+      ctx.roundRect(24, 10 + breathe * 0.5, 48, 38, 12);
+      ctx.fill();
+
+      // Phase 2 Steam Puffing from Ears
+      if (isPhase2) {
+        ctx.fillStyle = 'rgba(248, 250, 252, 0.75)';
+        const puff = (now / 60) % 14;
+        ctx.beginPath();
+        ctx.arc(16 - puff, 24 - puff * 0.4, 5, 0, Math.PI * 2);
+        ctx.arc(80 + puff, 24 - puff * 0.4, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Academic Mortarboard Cap & Swinging Gold Tassel
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.moveTo(8, 12 + breathe * 0.5);
+      ctx.lineTo(48, 2 + breathe * 0.5);
+      ctx.lineTo(88, 12 + breathe * 0.5);
+      ctx.lineTo(48, 20 + breathe * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(48, 10 + breathe * 0.5);
+      ctx.lineTo(16, 14 + breathe * 0.5);
+      ctx.lineTo(14 + Math.sin(now / 150) * 3, 28 + breathe * 0.5);
+      ctx.stroke();
+
+      // Thick Horn-Rimmed Glasses & Bushy Mustache
+      ctx.strokeStyle = '#020617';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(28, 20 + breathe * 0.5, 16, 11);
+      ctx.strokeRect(50, 20 + breathe * 0.5, 16, 11);
+      ctx.fillStyle = isShocked ? '#fbbf24' : '#ef4444';
+      ctx.fillRect(33, 23 + breathe * 0.5, 6, 5);
+      ctx.fillRect(55, 23 + breathe * 0.5, 6, 5);
+
+      // Mustache & Scowl
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.roundRect(32, 34 + breathe * 0.5, 30, 6, 3);
+      ctx.fill();
+
+      if (isShocked) {
+        // Hands Clapping Over Ears in Pain
+        ctx.fillStyle = '#fdba74';
+        ctx.beginPath();
+        ctx.roundRect(12, 16, 12, 24, 5);
+        ctx.roundRect(72, 16, 12, 24, 5);
+        ctx.fill();
+      } else if (isGrooving) {
+        // Cool Deal-With-It Shades
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(26, 20 + breathe * 0.5, 42, 9);
+      }
+    }
+
+    // BOSS 2: DISH-HEAD CONSPIRACIST (Parabolic Satellite Foil Mech-Hermit)
+    function renderBossConspiracist(ctx, b, now, breathe, isShocked, isGrooving, isPhase2) {
+      // Heavy Rubber Insulated Boots
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(24, 130, 18, 30);
+      ctx.fillRect(54, 130, 18, 30);
+
+      // Copper-Coil Backpack Generator
+      ctx.fillStyle = '#334155';
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(68, 42 + breathe, 24, 66, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // Tattered Trenchcoat Pinned with Red-String "EVIDENCE" Photos
+      ctx.fillStyle = isPhase2 ? '#431407' : '#713f12';
+      ctx.strokeStyle = '#ca8a04';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(14, 48 + breathe);
+      ctx.lineTo(82, 48 + breathe);
+      ctx.lineTo(88, 136 + breathe);
+      ctx.lineTo(8, 136 + breathe);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Pinned Polaroid Clues & Red Conspiracy Yarn across Chest
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(24, 64 + breathe);
+      ctx.lineTo(64, 78 + breathe);
+      ctx.lineTo(32, 104 + breathe);
+      ctx.lineTo(68, 112 + breathe);
+      ctx.stroke();
+
+      [
+        { x: 20, y: 58 },
+        { x: 58, y: 72 },
+        { x: 26, y: 98 },
+        { x: 60, y: 104 }
+      ].forEach(p => {
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(p.x, p.y + breathe, 12, 14);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(p.x + 2, p.y + 2 + breathe, 8, 8);
+      });
+
+      // Left Hand: High-Voltage Tesla Staff
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(8, 50 + breathe);
+      ctx.lineTo(8, 148);
+      ctx.stroke();
+      ctx.fillStyle = '#a855f7';
+      ctx.beginPath();
+      ctx.arc(8, 46 + breathe, 8 + Math.sin(now / 80) * 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Head & Multi-Lens Goggles
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(48, 32 + breathe * 0.5, 18, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Asymmetric Triple Cyber-Goggles
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(30, 24 + breathe * 0.5, 36, 10);
+      ctx.fillStyle = isShocked ? '#fbbf24' : '#22c55e';
+      ctx.beginPath();
+      ctx.arc(37, 29 + breathe * 0.5, 5, 0, Math.PI * 2);
+      ctx.arc(49, 28 + breathe * 0.5, 3.5, 0, Math.PI * 2);
+      ctx.arc(59, 29 + breathe * 0.5, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Giant Rotating Parabolic Tin-Foil Satellite Dish Crown
+      ctx.save();
+      ctx.translate(48, 14 + breathe * 0.5);
+      ctx.rotate(Math.sin(now / (isPhase2 ? 120 : 260)) * 0.22);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 34, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Dish Feed-Horn Spire & Blinking Telemetry LED
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-16, -8);
+      ctx.lineTo(0, -32);
+      ctx.lineTo(16, -8);
+      ctx.stroke();
+
+      ctx.fillStyle = Math.floor(now / 150) % 2 === 0 ? '#ef4444' : '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(0, -34, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // BOSS 3: CHROMA-MOGUL 9000 (Widescreen CRT Broadcast Mech-Executive)
+    function renderBossTvMogul(ctx, b, now, breathe, isShocked, isGrooving, isPhase2) {
+      // Hover Thruster Base & Coax Cables
+      const hover = Math.sin(now / 150) * 5;
+      ctx.translate(0, hover);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.ellipse(48, 148, 26, 6 + Math.sin(now / 50) * 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Satellite-Wing Golden Shoulder Pauldrons
+      ctx.fillStyle = '#eab308';
+      ctx.beginPath();
+      ctx.moveTo(-6, 56);
+      ctx.lineTo(22, 48);
+      ctx.lineTo(22, 74);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(102, 56);
+      ctx.lineTo(74, 48);
+      ctx.lineTo(74, 74);
+      ctx.closePath();
+      ctx.fill();
+
+      // Showbiz Sequined Broadcast Chassis
+      ctx.fillStyle = isPhase2 ? '#4c0519' : '#1e1b4b';
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(14, 52, 68, 88, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      // Real-Time Animated VU Audio Meter Bars on Chest
+      const barColors = ['#22c55e', '#eab308', '#f97316', '#ef4444'];
+      for (let col = 0; col < 5; col++) {
+        const level = Math.floor(Math.abs(Math.sin(now / 90 + col)) * 4) + 1;
+        for (let row = 0; row < level; row++) {
+          ctx.fillStyle = barColors[Math.min(3, row)];
+          ctx.fillRect(24 + col * 10, 118 - row * 8, 7, 6);
+        }
+      }
+
+      // Giant Curved Widescreen CRT Television Monitor Head
+      ctx.fillStyle = '#334155';
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(4, 2, 88, 52, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      // CRT Screen Display (SMPTE Bars + Evil Anchor Face)
+      const smpte = ['#f8fafc', '#facc15', '#38bdf8', '#22c55e', '#ec4899', '#ef4444'];
+      smpte.forEach((c, i) => {
+        ctx.fillStyle = c;
+        ctx.globalAlpha = 0.32;
+        ctx.fillRect(10 + i * 12.6, 8, 12.6, 40);
+      });
+      ctx.globalAlpha = 1;
+
+      // Evil Anchor Eyes & Manic Teleprompter Grin on CRT Screen
+      ctx.fillStyle = isShocked ? '#fbbf24' : isGrooving ? '#34d399' : '#ffffff';
+      ctx.fillRect(22, 16, 16, 10);
+      ctx.fillRect(58, 16, 16, 10);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(27, 19, 6, 5);
+      ctx.fillRect(63, 19, 6, 5);
+
+      // Waveform Grin
+      ctx.strokeStyle = isShocked ? '#fbbf24' : '#38bdf8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let gx = 22; gx <= 74; gx += 6) {
+        ctx.lineTo(gx, 38 + Math.sin(gx + now / 50) * 4);
+      }
+      ctx.stroke();
+
+      // Blinking Red "● ON AIR" Studio Tally Light & Bunny-Ear Antennas
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(36, 2); ctx.lineTo(18, -16);
+      ctx.moveTo(60, 2); ctx.lineTo(78, -16);
+      ctx.stroke();
+
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(32, -8, 32, 11);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 7px monospace';
+      ctx.fillText('● LIVE', 36, 0);
+
+      // Two Orbiting Mini Camera Drones
+      const orbX = Math.cos(now / 260) * 54;
+      const orbY = Math.sin(now / 260) * 14;
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.arc(48 + orbX, 64 + orbY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(48 + orbX - 2, 64 + orbY, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // BOSS 4: SHADOWBAN ALGORITHM (Eldritch Cybernetic AI Hive-Mind Core)
+    function renderBossAlgorithm(ctx, b, now, breathe, isShocked, isGrooving, isPhase2) {
+      const floatY = Math.sin(now / 180) * 6;
+      ctx.translate(0, floatY);
+
+      // Writhing Fiber-Optic Data Tendrils Below Core
+      ctx.strokeStyle = isPhase2 ? '#f43f5e' : '#10b981';
+      ctx.lineWidth = 3;
+      for (let tIdx = 0; tIdx < 5; tIdx++) {
+        ctx.beginPath();
+        const startX = 20 + tIdx * 14;
+        ctx.moveTo(startX, 116);
+        ctx.quadraticCurveTo(
+          startX + Math.sin(now / 140 + tIdx) * 14,
+          134,
+          startX + Math.cos(now / 140 + tIdx) * 10,
+          152
+        );
+        ctx.stroke();
+      }
+
+      // Outer Interlocking Obsidian Server Monolith Plates
+      const split = isShocked ? 7 : 0;
+      ctx.fillStyle = '#022c22';
+      ctx.strokeStyle = isPhase2 ? '#fb7185' : '#34d399';
+      ctx.lineWidth = 2.5;
+
+      // Left Armor Wing
+      ctx.beginPath();
+      ctx.moveTo(42 - split, 10);
+      ctx.lineTo(4 - split, 46);
+      ctx.lineTo(12 - split, 118);
+      ctx.lineTo(42 - split, 132);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Right Armor Wing
+      ctx.beginPath();
+      ctx.moveTo(54 + split, 10);
+      ctx.lineTo(92 + split, 46);
+      ctx.lineTo(84 + split, 118);
+      ctx.lineTo(54 + split, 132);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Rotating Octahedral Neural Eye Core
+      ctx.save();
+      ctx.translate(48, 70);
+      ctx.rotate(now / (isPhase2 ? 400 : 800));
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-22, -22, 44, 44);
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.strokeRect(-22, -22, 44, 44);
+      ctx.restore();
+
+      // Central All-Seeing Algorithmic Iris
+      ctx.fillStyle = isShocked ? '#fbbf24' : isPhase2 ? '#e11d48' : '#10b981';
+      ctx.beginPath();
+      ctx.arc(48, 70, 16 + Math.sin(now / 100) * 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.arc(48, 70, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Orbiting Holographic Ring of Censorship / Ban Glyphs
+      const glyphs = ['🔒', '👎', '404', '🚫'];
+      glyphs.forEach((g, idx) => {
+        const angle = now / 500 + (idx * Math.PI) / 2;
+        const gx = 48 + Math.cos(angle) * 48;
+        const gy = 70 + Math.sin(angle) * 24;
+        ctx.fillStyle = '#a7f3d0';
+        ctx.font = 'bold 10px monospace';
+        ctx.fillText(g, gx - 8, gy);
+      });
+    }
+
+    // BOSS 5: BARON VON GREENWASH (Industrial Robber-Baron Sludge Exo-Suit)
+    function renderBossCeo(ctx, b, now, breathe, isShocked, isGrooving, isPhase2) {
+      // Twin Belching Smokestacks on Back of Exo-Suit
+      ctx.fillStyle = '#334155';
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 2;
+      ctx.fillRect(10, 8 + breathe, 14, 45);
+      ctx.strokeRect(10, 8 + breathe, 14, 45);
+      ctx.fillRect(72, 8 + breathe, 14, 45);
+      ctx.strokeRect(72, 8 + breathe, 14, 45);
+
+      // Rising Toxic Smog Puffs from Smokestacks
+      const smokeShift = (now / 55) % 18;
+      ctx.fillStyle = isPhase2 ? 'rgba(244, 63, 94, 0.55)' : 'rgba(132, 204, 22, 0.45)';
+      ctx.beginPath();
+      ctx.arc(17, 4 - smokeShift, 7 + smokeShift * 0.25, 0, Math.PI * 2);
+      ctx.arc(79, 4 - ((smokeShift + 9) % 18), 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Heavy Hydraulic Exo-Legs
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(18, 126, 22, 34);
+      ctx.fillRect(56, 126, 22, 34);
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(14, 148, 30, 12);
+      ctx.fillRect(52, 148, 30, 12);
+
+      // Gilded Industrial Exo-Torso
+      ctx.fillStyle = isPhase2 ? '#3f1d0b' : '#1e293b';
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(6, 44 + breathe, 84, 88, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      // Pressurized Glass Belly-Tank Filled with Bubbling Neon Greenwash Sludge
+      ctx.fillStyle = '#052e16';
+      ctx.beginPath();
+      ctx.roundRect(20, 66 + breathe, 56, 50, 10);
+      ctx.fill();
+
+      ctx.fillStyle = isPhase2 ? '#ec4899' : '#22c55e';
+      ctx.beginPath();
+      ctx.roundRect(22, 80 + breathe + Math.sin(now / 140) * 3, 52, 34, 8);
+      ctx.fill();
+
+      // Rising Sludge Bubbles Inside Tank
+      ctx.fillStyle = '#bef264';
+      ctx.beginPath();
+      ctx.arc(34, 102 + breathe - ((now / 70) % 18), 3, 0, Math.PI * 2);
+      ctx.arc(58, 106 + breathe - (((now / 70) + 9) % 18), 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#a7f3d0';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, 66 + breathe, 56, 50);
+
+      // Fake "100% ECO*" Sticker Slapped Over Tank
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(30, 52 + breathe, 36, 11);
+      ctx.fillStyle = '#14532d';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('100% ECO*', 32, 60 + breathe);
+
+      // Left Arm: Hydraulic Toxic Sludge Cannon
+      ctx.fillStyle = '#475569';
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(-22, 68 + breathe, 30, 22, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#84cc16';
+      ctx.beginPath();
+      ctx.arc(-22, 79 + breathe, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Baron Head, Aristocratic Jowls & Smoldering Cigar
+      ctx.fillStyle = '#fecdd3';
+      ctx.beginPath();
+      ctx.arc(48, 28 + breathe * 0.5, 17, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Glowing Dollar-Sign ($) Golden Monocle
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(39, 26 + breathe * 0.5, 7, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 9px monospace';
+      ctx.fillText('$', 36, 29 + breathe * 0.5);
+
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(53, 23 + breathe * 0.5, 7, 5);
+
+      // Cigar
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(24, 35 + breathe * 0.5, 16, 4);
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(22, 35 + breathe * 0.5, 3, 4);
+
+      // Towering Gilded Robber-Baron Top Hat
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(22, 12 + breathe * 0.5, 52, 5);
+      ctx.fillRect(30, -16 + breathe * 0.5, 36, 28);
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(30, 6 + breathe * 0.5, 36, 6);
+    }
+
+    function renderStageBanner(spec, timer) {
+      const alpha = Math.min(1, timer * 1.2);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = 'rgba(10, 6, 28, 0.85)';
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(V_WIDTH / 2 - 230, 118, 460, 74, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 16px "Press Start 2P", monospace';
+      ctx.fillText(spec.title, V_WIDTH / 2, 148);
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold 13px "Chakra Petch", sans-serif';
+      ctx.fillText(spec.sub, V_WIDTH / 2, 174);
       ctx.restore();
     }
 
@@ -2411,6 +3733,71 @@
       document.getElementById('boss-hp-fill').style.width = `${pct}%`;
     }
 
+    function advanceFromLevelComplete() {
+      document.getElementById('level-complete-modal').classList.add('hidden');
+      initLevel(currentLevel + 1);
+      gameState = 'PLAYING';
+    }
+
+    function retryCurrentStage() {
+      document.getElementById('death-modal').classList.add('hidden');
+      document.getElementById('pause-modal').classList.add('hidden');
+      initLevel(currentLevel);
+      gameState = 'PLAYING';
+    }
+
+    let hasSubmittedRunScore = false;
+    let submittedRunCallsign = '';
+
+    function openScoreboardModal(allowSubmit = false) {
+      scoreboard.renderTable();
+      const viewOnlyBanner = document.getElementById('scoreboard-viewonly-banner');
+      const submitBox = document.getElementById('scoreboard-submit-box');
+      const formRow = document.getElementById('scoreboard-form-row');
+      const lockedBanner = document.getElementById('scoreboard-locked-banner');
+      const lockedText = document.getElementById('scoreboard-locked-text');
+      const warnEl = document.getElementById('profanity-warning');
+      const nameInput = document.getElementById('input-player-name');
+      const submitBtn = document.getElementById('btn-submit-score');
+
+      if (warnEl) warnEl.classList.add('hidden');
+      document.getElementById('modal-current-score').innerText = `${score} PTS`;
+
+      if (!allowSubmit) {
+        viewOnlyBanner.classList.remove('hidden');
+        submitBox.classList.add('hidden');
+      } else {
+        viewOnlyBanner.classList.add('hidden');
+        submitBox.classList.remove('hidden');
+        if (hasSubmittedRunScore) {
+          formRow.classList.add('hidden');
+          nameInput.disabled = true;
+          submitBtn.disabled = true;
+          lockedText.innerText = `Score locked for ${submittedRunCallsign || 'this run'}! Start a new run to post again.`;
+          lockedBanner.classList.remove('hidden');
+        } else {
+          formRow.classList.remove('hidden');
+          nameInput.disabled = false;
+          submitBtn.disabled = false;
+          lockedBanner.classList.add('hidden');
+        }
+      }
+
+      document.getElementById('scoreboard-modal').classList.remove('hidden');
+    }
+
+    function startFreshCampaign() {
+      document.getElementById('death-modal').classList.add('hidden');
+      document.getElementById('victory-modal').classList.add('hidden');
+      document.getElementById('pause-modal').classList.add('hidden');
+      hasSubmittedRunScore = false;
+      submittedRunCallsign = '';
+      score = 0;
+      addScore(0);
+      initLevel(0);
+      gameState = 'PLAYING';
+    }
+
     // Mappable Keyboard Handler
     window.addEventListener('keydown', (e) => {
       // Handle active key remapping capture
@@ -2426,6 +3813,31 @@
       }
 
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
+      // Modal shortcut actions for Level Complete, Death, and Pause
+      if (gameState === 'LEVEL_COMPLETE' && (e.code === 'Enter' || e.code === 'Space')) {
+        e.preventDefault();
+        advanceFromLevelComplete();
+        return;
+      }
+      if (gameState === 'DEAD' && (e.code === 'Enter' || e.code === 'Space')) {
+        e.preventDefault();
+        retryCurrentStage();
+        return;
+      }
+      if (e.code === 'KeyP' || e.code === 'Escape') {
+        const subModalOpen =
+          !document.getElementById('controls-modal').classList.contains('hidden') ||
+          !document.getElementById('audio-modal').classList.contains('hidden') ||
+          !document.getElementById('scoreboard-modal').classList.contains('hidden');
+        if (!subModalOpen && (gameState === 'PLAYING' || gameState === 'PAUSED')) {
+          e.preventDefault();
+          togglePauseGame();
+          return;
+        }
+      }
+
+      if (gameState !== 'PLAYING') return;
 
       if (keybinds.matches('left', e.code)) keys.left = true;
       if (keybinds.matches('right', e.code)) keys.right = true;
@@ -2487,6 +3899,20 @@
     document.getElementById('btn-genre').addEventListener('click', cycleGenre);
     document.getElementById('genre-badge').addEventListener('click', cycleGenre);
     document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+    document.getElementById('btn-pause-game').addEventListener('click', togglePauseGame);
+    document.getElementById('btn-resume-game').addEventListener('click', togglePauseGame);
+    document.getElementById('btn-pause-retry').addEventListener('click', retryCurrentStage);
+    document.getElementById('btn-next-stage').addEventListener('click', advanceFromLevelComplete);
+    document.getElementById('btn-retry-stage').addEventListener('click', retryCurrentStage);
+    document.getElementById('btn-death-restart').addEventListener('click', startFreshCampaign);
+    document.getElementById('btn-victory-replay').addEventListener('click', startFreshCampaign);
+
+    document.getElementById('btn-death-scoreboard').addEventListener('click', () => {
+      openScoreboardModal(true);
+    });
+    document.getElementById('btn-victory-scoreboard').addEventListener('click', () => {
+      openScoreboardModal(true);
+    });
 
     // Controls Modal Listeners
     function openControlsModal() {
@@ -2500,6 +3926,7 @@
     }
     document.getElementById('btn-open-controls').addEventListener('click', openControlsModal);
     document.getElementById('btn-start-controls').addEventListener('click', openControlsModal);
+    document.getElementById('btn-pause-controls').addEventListener('click', openControlsModal);
     document.getElementById('btn-close-controls').addEventListener('click', closeControlsModal);
     document.getElementById('btn-done-controls').addEventListener('click', closeControlsModal);
     document.getElementById('btn-reset-controls').addEventListener('click', () => keybinds.reset());
@@ -2530,27 +3957,32 @@
     document.getElementById('btn-open-audio').addEventListener('click', () => {
       document.getElementById('audio-modal').classList.remove('hidden');
     });
+    document.getElementById('btn-pause-audio').addEventListener('click', () => {
+      document.getElementById('audio-modal').classList.remove('hidden');
+    });
     document.getElementById('btn-close-audio').addEventListener('click', () => {
       document.getElementById('audio-modal').classList.add('hidden');
     });
 
     document.getElementById('btn-open-scoreboard').addEventListener('click', () => {
-      scoreboard.renderTable();
-      document.getElementById('scoreboard-modal').classList.remove('hidden');
+      openScoreboardModal(false);
     });
     document.getElementById('btn-start-leaderboard').addEventListener('click', () => {
-      scoreboard.renderTable();
-      document.getElementById('scoreboard-modal').classList.remove('hidden');
+      openScoreboardModal(false);
     });
     document.getElementById('btn-close-scoreboard').addEventListener('click', () => {
       document.getElementById('scoreboard-modal').classList.add('hidden');
     });
 
     document.getElementById('btn-submit-score').addEventListener('click', async () => {
+      if (hasSubmittedRunScore) return;
+
       const nameInput = document.getElementById('input-player-name');
+      const submitBtn = document.getElementById('btn-submit-score');
       const warnEl = document.getElementById('profanity-warning');
       warnEl.classList.add('hidden');
 
+      const submittedName = (nameInput.value || '').trim().toUpperCase();
       const res = await scoreboard.submitScore(nameInput.value, score, currentLevel + 1);
       if (!res.ok) {
         warnEl.innerText = res.reason === 'profanity'
@@ -2558,7 +3990,15 @@
           : `⚠️ ${res.reason}`;
         warnEl.classList.remove('hidden');
       } else {
+        hasSubmittedRunScore = true;
+        submittedRunCallsign = submittedName.replace(/[^A-Z0-9 _-]/g, '').substring(0, 16) || 'SCIENTIST';
         nameInput.value = '';
+        nameInput.disabled = true;
+        submitBtn.disabled = true;
+        document.getElementById('scoreboard-form-row').classList.add('hidden');
+        document.getElementById('scoreboard-locked-text').innerText =
+          `Score locked for ${submittedRunCallsign}! Start a new run to post again.`;
+        document.getElementById('scoreboard-locked-banner').classList.remove('hidden');
       }
     });
 
@@ -2577,6 +4017,8 @@
       enterFullscreen();
       sound.init();
       document.getElementById('start-modal').classList.add('hidden');
+      hasSubmittedRunScore = false;
+      submittedRunCallsign = '';
       gameState = 'PLAYING';
       score = 0;
       addScore(0);
