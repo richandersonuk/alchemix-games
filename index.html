@@ -235,6 +235,13 @@
       text-shadow: 0 0 5px var(--neon-amber);
     }
 
+    .badge-corner.coming-soon {
+      background: rgba(244, 63, 94, 0.25);
+      border: 1px solid #fb7185;
+      color: #fecdd3;
+      text-shadow: 0 0 6px #f43f5e;
+    }
+
     .card-details {
       padding: 1.25rem;
       display: flex;
@@ -278,6 +285,20 @@
       background: linear-gradient(180deg, #39ff14 0%, #209907 100%);
       border-color: #39ff14;
       box-shadow: 0 0 20px rgba(57, 255, 20, 0.6);
+    }
+
+    .arcade-trigger-btn.coming-soon-btn {
+      background: linear-gradient(180deg, #881337 0%, #4c0519 100%);
+      color: #fecdd3;
+      border-color: #fb7185;
+      box-shadow: 0 0 14px rgba(244, 63, 94, 0.35);
+    }
+
+    .arcade-card:hover .arcade-trigger-btn.coming-soon-btn {
+      background: linear-gradient(180deg, #e11d48 0%, #881337 100%);
+      color: #ffffff;
+      border-color: #fda4af;
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.65);
     }
 
     /* Warning Dialog (Retro Terminal Style) */
@@ -396,6 +417,20 @@
           <h2 class="game-name">ORBITAL BLITZ</h2>
           <p class="game-lore">Year 12 electron configuration trainer. Master occupied orbitals, Hund's Rule, Cr/Cu exceptions &amp; 60s Blitz scoreboards.</p>
           <a href="/econfigs/" class="arcade-trigger-btn">LAUNCH ARCHITECT</a>
+        </div>
+      </article>
+
+      <!-- Qualitative Analysis Detective (QAD) -->
+      <article class="arcade-card" data-devices="mobile tablet desktop">
+        <div class="screen-bezel">
+          <img src="/QAD/cartridge.svg" alt="Qualitative Analysis Detective Cartridge">
+          <span class="badge-corner all-devices" style="right:auto;left:8px;">PHONE / PC</span>
+          <span class="badge-corner coming-soon">COMING SOON</span>
+        </div>
+        <div class="card-details">
+          <h2 class="game-name">QUALITATIVE DETECTIVE</h2>
+          <p class="game-lore">Forensic wet-lab mystery. Deduce 5 unlabelled aqueous ion tubes on a strict reagent budget using flame tests, NaOH, NH₃, BaCl₂ &amp; AgNO₃ across GCSE &amp; A-Level specs.</p>
+          <a href="/QAD/" class="arcade-trigger-btn coming-soon-btn">ENTER FORENSIC LAB</a>
         </div>
       </article>
     </main>

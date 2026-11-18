@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alchemix-arcade-v3';
+const CACHE_NAME = 'alchemix-arcade-v4';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -6,7 +6,8 @@ const PRECACHE_ASSETS = [
   '/manifest.json',
   '/science-saviour/cartridge.svg',
   '/chem-tycoon/cartridge.svg',
-  '/econfigs/cartridge.svg'
+  '/econfigs/cartridge.svg',
+  '/QAD/cartridge.svg'
 ];
 
 self.addEventListener('install', (event) => {
