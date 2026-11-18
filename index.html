@@ -504,11 +504,22 @@
 
     cancelBtn.addEventListener('click', () => modal.close());
 
-    // 4. Register root PWA Service Worker
+    // 4. Register root PWA Service Worker & purge legacy cache-first caches
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js?v=5', { updateViaCache: 'none' });
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+          .then((reg) => reg.update())
+          .catch(() => {});
       });
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          keys.forEach((k) => {
+            if (k.startsWith('alchemix-arcade-') && k !== 'alchemix-arcade-v6') {
+              caches.delete(k);
+            }
+          });
+        });
+      }
     }
   </script>
 </body>

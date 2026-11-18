@@ -673,9 +673,13 @@
 
         <!-- Latest Observation Banner -->
         <div class="obs-toast" id="liveObsBox">
-          <div style="font-weight:800;color:var(--brass-soft);font-size:0.78rem;" id="liveObsTitle">LATEST LAB OBSERVATION</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div style="font-weight:800;color:var(--brass-soft);font-size:0.78rem;" id="liveObsTitle">Latest Lab Observation</div>
+            <button type="button" id="btnObsDataSheetLink" style="background:none;border:none;padding:0;color:var(--cyan);font-size:0.76rem;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">
+              Compare in Exam Board Data Sheet →
+            </button>
+          </div>
           <div id="liveObsText">Select any test tube (A–E) and click a chemical reagent or flame test above to inspect the reaction.</div>
-          <div id="liveObsEq" class="obs-eq hidden"></div>
         </div>
       </section>
 
@@ -2180,7 +2184,8 @@ document.querySelectorAll('#tierSelector .seg-btn').forEach(btn => {
 
 document.getElementById('btnNewCase').addEventListener('click', generateNewCase);
 document.getElementById('btnOpenManual').addEventListener('click', openExamBoardManual);
-document.getElementById('btnObsDataSheetLink').addEventListener('click', openExamBoardManual);
+const obsDataSheetLink = document.getElementById('btnObsDataSheetLink');
+if (obsDataSheetLink) obsDataSheetLink.addEventListener('click', openExamBoardManual);
 document.getElementById('btnCloseManual').addEventListener('click', () => {
   document.getElementById('manualModal').classList.add('hidden');
 });
@@ -2207,6 +2212,22 @@ document.getElementById('btnSoundToggle').addEventListener('click', (e) => {
 
 generateNewCase();
 requestAnimationFrame(renderLabCanvas);
+
+// Proactively update root Service Worker and purge legacy cache-first Hub caches
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+    .then(reg => reg.update())
+    .catch(() => {});
+  if ('caches' in window) {
+    caches.keys().then(keys => {
+      keys.forEach(k => {
+        if (k.startsWith('alchemix-arcade-') && k !== 'alchemix-arcade-v6') {
+          caches.delete(k);
+        }
+      });
+    });
+  }
+}
 </script>
 </body>
 </html>
