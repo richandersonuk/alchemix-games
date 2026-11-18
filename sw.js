@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alchemix-arcade-v4';
+const CACHE_NAME = 'alchemix-arcade-v5';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -40,9 +40,35 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Network-first for HTML / navigation requests so Hub updates & back-to-hub links are always fresh
+  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Stale-while-revalidate for static assets (SVGs, icons, manifest)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
+      const networkFetch = fetch(event.request)
+        .then((response) => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => cachedResponse);
+      return cachedResponse || networkFetch;
     })
   );
 });

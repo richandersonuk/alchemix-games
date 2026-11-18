@@ -869,16 +869,16 @@ const CATIONS_DB = {
     id: 'Li', symbol: 'Li⁺', name: 'Lithium (Li⁺)',
     solutionColor: 'rgba(224, 242, 254, 0.18)',
     solutionDesc: 'Colourless solution',
-    flame: { color: '#e11d48', core: '#fda4af', label: 'Crimson-red flame (Li⁺)' },
+    flame: { color: '#e11d48', core: '#fda4af', label: 'Crimson-red flame observed' },
     naoh: { ppt: null, obs: 'No precipitate formed (colourless solution remains).' },
     naoh_excess: { ppt: null, obs: 'No visible change in excess NaOH(aq).' },
-    nh3_excess: { ppt: null, obs: 'No precipitate formed with aqueous ammonia.' }
+    nh3_excess: { ppt: null, obs: 'No precipitate formed with aqueous NH₃(aq).' }
   },
   Na: {
     id: 'Na', symbol: 'Na⁺', name: 'Sodium (Na⁺)',
     solutionColor: 'rgba(224, 242, 254, 0.18)',
     solutionDesc: 'Colourless solution',
-    flame: { color: '#facc15', core: '#fef9c3', label: 'Persistent golden-yellow flame (Na⁺)' },
+    flame: { color: '#facc15', core: '#fef9c3', label: 'Persistent golden-yellow flame observed' },
     naoh: { ppt: null, obs: 'No precipitate formed.' },
     naoh_excess: { ppt: null, obs: 'No visible change in excess NaOH(aq).' },
     nh3_excess: { ppt: null, obs: 'No precipitate formed with NH₃(aq).' }
@@ -887,7 +887,7 @@ const CATIONS_DB = {
     id: 'K', symbol: 'K⁺', name: 'Potassium (K⁺)',
     solutionColor: 'rgba(224, 242, 254, 0.18)',
     solutionDesc: 'Colourless solution',
-    flame: { color: '#c084fc', core: '#f3e8ff', label: 'Lilac flame (K⁺)' },
+    flame: { color: '#c084fc', core: '#f3e8ff', label: 'Lilac flame observed' },
     naoh: { ppt: null, obs: 'No precipitate formed.' },
     naoh_excess: { ppt: null, obs: 'No visible change in excess NaOH(aq).' },
     nh3_excess: { ppt: null, obs: 'No precipitate formed with NH₃(aq).' }
@@ -899,20 +899,20 @@ const CATIONS_DB = {
     flame: {
       color: '#ea580c', core: '#fed7aa',
       labelByBoard: {
-        AQA: 'Orange-red flame (Ca²⁺)',
-        OCR: 'Brick-red / orange-red flame (Ca²⁺)',
-        WJEC: 'Brick-red flame (Ca²⁺)',
-        EDEXCEL: 'Orange-red / brick-red flame (Ca²⁺)'
+        AQA: 'Orange-red flame observed',
+        OCR: 'Brick-red / orange-red flame observed',
+        WJEC: 'Brick-red flame observed',
+        EDEXCEL: 'Orange-red / brick-red flame observed'
       }
     },
     naoh: {
       ppt: '#f8fafc',
-      obs: 'White precipitate of Ca(OH)₂ formed.',
+      obs: 'White precipitate formed.',
       eq: 'Ca²⁺(aq) + 2OH⁻(aq) → Ca(OH)₂(s)'
     },
     naoh_excess: {
       ppt: '#f8fafc',
-      obs: 'White precipitate is insoluble in excess NaOH(aq) (distinguishes Ca²⁺/Mg²⁺ from Al³⁺).'
+      obs: 'White precipitate remains insoluble in excess NaOH(aq).'
     },
     nh3_excess: {
       ppt: null,
@@ -920,7 +920,7 @@ const CATIONS_DB = {
     },
     h2so4: {
       ppt: '#f8fafc',
-      obs: 'Slight white precipitate of CaSO₄ formed (sparingly soluble Group 2 sulfate).',
+      obs: 'Slight white precipitate formed with dilute H₂SO₄(aq).',
       eq: 'Ca²⁺(aq) + SO₄²⁻(aq) → CaSO₄(s)'
     }
   },
@@ -928,13 +928,13 @@ const CATIONS_DB = {
     id: 'Ba', symbol: 'Ba²⁺', name: 'Barium (Ba²⁺)',
     solutionColor: 'rgba(224, 242, 254, 0.18)',
     solutionDesc: 'Colourless solution',
-    flame: { color: '#65a30d', core: '#ecfccb', label: 'Apple-green / pale green flame (Ba²⁺)' },
-    naoh: { ppt: null, obs: 'No precipitate formed (Ba(OH)₂ is soluble in water).' },
+    flame: { color: '#65a30d', core: '#ecfccb', label: 'Apple-green / pale green flame observed' },
+    naoh: { ppt: null, obs: 'No precipitate formed (solution remains clear).' },
     naoh_excess: { ppt: null, obs: 'Remains a colourless solution in excess NaOH(aq).' },
-    nh3_excess: { ppt: null, obs: 'No precipitate with aqueous ammonia.' },
+    nh3_excess: { ppt: null, obs: 'No precipitate with aqueous NH₃(aq).' },
     h2so4: {
       ppt: '#ffffff',
-      obs: 'Thick white precipitate of insoluble BaSO₄ formed immediately!',
+      obs: 'Thick white precipitate formed immediately with dilute H₂SO₄(aq)!',
       eq: 'Ba²⁺(aq) + SO₄²⁻(aq) → BaSO₄(s)'
     }
   },
@@ -942,63 +942,63 @@ const CATIONS_DB = {
     id: 'Mg', symbol: 'Mg²⁺', name: 'Magnesium (Mg²⁺)',
     solutionColor: 'rgba(224, 242, 254, 0.18)',
     solutionDesc: 'Colourless solution',
-    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour (bright white only for Mg metal)' },
+    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour observed' },
     naoh: {
       ppt: '#f8fafc',
-      obs: 'White precipitate of Mg(OH)₂ formed.',
+      obs: 'White precipitate formed.',
       eq: 'Mg²⁺(aq) + 2OH⁻(aq) → Mg(OH)₂(s)'
     },
     naoh_excess: {
       ppt: '#f8fafc',
-      obs: 'White precipitate is insoluble in excess NaOH(aq).'
+      obs: 'White precipitate remains insoluble in excess NaOH(aq).'
     },
     nh3_excess: {
       ppt: '#f8fafc',
-      obs: 'White gelatinous precipitate of Mg(OH)₂, insoluble in excess NH₃(aq).'
+      obs: 'White gelatinous precipitate formed; insoluble in excess NH₃(aq).'
     },
     h2so4: {
       ppt: null,
-      obs: 'No precipitate formed (MgSO₄ is soluble down Group 2).'
+      obs: 'No precipitate formed with dilute H₂SO₄(aq).'
     }
   },
   Al: {
     id: 'Al', symbol: 'Al³⁺', name: 'Aluminium (Al³⁺)',
     solutionColor: 'rgba(224, 242, 254, 0.18)',
     solutionDesc: 'Colourless solution',
-    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour' },
+    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour observed' },
     naoh: {
       ppt: '#f8fafc',
-      obs: 'White precipitate of amphoteric Al(OH)₃ formed.',
+      obs: 'White precipitate formed.',
       eq: 'Al³⁺(aq) + 3OH⁻(aq) → Al(OH)₃(s)'
     },
     naoh_excess: {
       ppt: null,
-      obs: 'White precipitate DISSOLVES in excess NaOH(aq) to form a colourless solution of [Al(OH)₄]⁻!',
+      obs: 'White precipitate DISSOLVES in excess NaOH(aq) to form a colourless solution.',
       eq: 'Al(OH)₃(s) + OH⁻(aq) → [Al(OH)₄]⁻(aq)'
     },
     nh3_excess: {
       ppt: '#f8fafc',
-      obs: 'White precipitate of Al(OH)₃ formed; insoluble in excess NH₃(aq).'
+      obs: 'White precipitate formed; remains insoluble in excess NH₃(aq).'
     }
   },
   Cu: {
     id: 'Cu', symbol: 'Cu²⁺', name: 'Copper(II) (Cu²⁺)',
     solutionColor: 'rgba(56, 189, 248, 0.42)',
     solutionDesc: 'Pale sky-blue solution',
-    flame: { color: '#10b981', core: '#a7f3d0', label: 'Blue-green flame (Cu²⁺)' },
+    flame: { color: '#10b981', core: '#a7f3d0', label: 'Blue-green flame observed' },
     naoh: {
       ppt: '#0284c7',
-      obs: 'Pale blue precipitate of Cu(OH)₂ formed.',
+      obs: 'Pale blue precipitate formed.',
       eq: 'Cu²⁺(aq) + 2OH⁻(aq) → Cu(OH)₂(s)'
     },
     naoh_excess: {
       ppt: '#0284c7',
-      obs: 'Blue precipitate is insoluble in excess NaOH(aq).'
+      obs: 'Blue precipitate remains insoluble in excess NaOH(aq).'
     },
     nh3_excess: {
       ppt: null,
       solutionOverride: 'rgba(29, 78, 216, 0.88)',
-      obs: 'Pale blue precipitate dissolves in excess NH₃(aq) to form a deep royal-blue solution of [Cu(NH₃)₄(H₂O)₂]²⁺!',
+      obs: 'Pale blue precipitate dissolves in excess NH₃(aq) to form a deep royal-blue solution!',
       eq: 'Cu(OH)₂(H₂O)₄(s) + 4NH₃(aq) → [Cu(NH₃)₄(H₂O)₂]²⁺(aq) + 2OH⁻(aq) + 2H₂O(l)'
     }
   },
@@ -1006,55 +1006,55 @@ const CATIONS_DB = {
     id: 'Fe2', symbol: 'Fe²⁺', name: 'Iron(II) (Fe²⁺)',
     solutionColor: 'rgba(74, 222, 128, 0.25)',
     solutionDesc: 'Very pale green solution',
-    flame: { color: '#f59e0b', core: '#fef08a', label: 'No characteristic flame colour (faint gold sparks)' },
+    flame: { color: '#f59e0b', core: '#fef08a', label: 'No characteristic flame colour observed' },
     naoh: {
       ppt: '#15803d',
-      obs: 'Dirty green / moss-green precipitate of Fe(OH)₂ formed (turns brown at surface on standing in air).',
+      obs: 'Dirty green / moss-green precipitate formed (slowly darkens to brown at the surface on standing in air).',
       eq: 'Fe²⁺(aq) + 2OH⁻(aq) → Fe(OH)₂(s)'
     },
     naoh_excess: {
       ppt: '#15803d',
-      obs: 'Green precipitate is insoluble in excess NaOH(aq).'
+      obs: 'Green precipitate remains insoluble in excess NaOH(aq).'
     },
     nh3_excess: {
       ppt: '#15803d',
-      obs: 'Green precipitate of Fe(OH)₂ formed, insoluble in excess NH₃(aq).'
+      obs: 'Green precipitate formed; insoluble in excess NH₃(aq).'
     }
   },
   Fe3: {
     id: 'Fe3', symbol: 'Fe³⁺', name: 'Iron(III) (Fe³⁺)',
     solutionColor: 'rgba(245, 158, 11, 0.36)',
     solutionDesc: 'Pale yellow-brown solution',
-    flame: { color: '#f59e0b', core: '#fef08a', label: 'No characteristic flame colour' },
+    flame: { color: '#f59e0b', core: '#fef08a', label: 'No characteristic flame colour observed' },
     naoh: {
       ppt: '#b45309',
-      obs: 'Orange-brown / foxy-red precipitate of Fe(OH)₃ formed.',
+      obs: 'Orange-brown / foxy-red precipitate formed.',
       eq: 'Fe³⁺(aq) + 3OH⁻(aq) → Fe(OH)₃(s)'
     },
     naoh_excess: {
       ppt: '#b45309',
-      obs: 'Orange-brown precipitate is insoluble in excess NaOH(aq).'
+      obs: 'Orange-brown precipitate remains insoluble in excess NaOH(aq).'
     },
     nh3_excess: {
       ppt: '#b45309',
-      obs: 'Orange-brown precipitate of Fe(OH)₃ formed, insoluble in excess NH₃(aq).'
+      obs: 'Orange-brown precipitate formed; insoluble in excess NH₃(aq).'
     }
   },
   NH4: {
     id: 'NH4', symbol: 'NH₄⁺', name: 'Ammonium (NH₄⁺)',
     solutionColor: 'rgba(224, 242, 254, 0.18)',
     solutionDesc: 'Colourless solution',
-    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour' },
+    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour observed' },
     naoh: {
       ppt: null,
       gas: 'NH3',
-      obs: 'No precipitate; on warming with NaOH(aq), pungent ammonia gas (NH₃) is released which turns damp red litmus paper BLUE!',
+      obs: 'No precipitate; on warming with NaOH(aq), a pungent alkaline gas is evolved that turns damp red litmus paper BLUE.',
       eq: 'NH₄⁺(aq) + OH⁻(aq) → NH₃(g) + H₂O(l)'
     },
     naoh_excess: {
       ppt: null,
       gas: 'NH3',
-      obs: 'Warming with NaOH(aq) evolves alkaline NH₃(g) — damp red litmus paper at the mouth of the tube turns blue.'
+      obs: 'Warming with NaOH(aq) evolves a pungent gas — damp red litmus paper at the mouth of the tube turns BLUE.'
     },
     nh3_excess: { ppt: null, obs: 'No visible change.' }
   },
@@ -1062,22 +1062,22 @@ const CATIONS_DB = {
     id: 'Cr3', symbol: 'Cr³⁺', name: 'Chromium(III) (Cr³⁺)',
     solutionColor: 'rgba(16, 185, 129, 0.38)',
     solutionDesc: 'Pale violet-green solution',
-    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour' },
+    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour observed' },
     naoh: {
       ppt: '#4d7c0f',
-      obs: 'Grey-green precipitate of amphoteric Cr(OH)₃(H₂O)₃ formed.',
+      obs: 'Grey-green precipitate formed.',
       eq: '[Cr(H₂O)₆]³⁺(aq) + 3OH⁻(aq) → Cr(OH)₃(H₂O)₃(s) + 3H₂O(l)'
     },
     naoh_excess: {
       ppt: null,
       solutionOverride: 'rgba(21, 128, 61, 0.78)',
-      obs: 'Grey-green precipitate DISSOLVES in excess NaOH(aq) to form a dark green solution of [Cr(OH)₆]³⁻!',
+      obs: 'Grey-green precipitate DISSOLVES in excess NaOH(aq) to form a dark green solution!',
       eq: 'Cr(OH)₃(H₂O)₃(s) + 3OH⁻(aq) → [Cr(OH)₆]³⁻(aq) + 3H₂O(l)'
     },
     nh3_excess: {
       ppt: null,
       solutionOverride: 'rgba(147, 51, 234, 0.68)',
-      obs: 'Grey-green precipitate dissolves slowly in excess NH₃(aq) to form a purple solution of [Cr(NH₃)₆]³⁺!',
+      obs: 'Grey-green precipitate dissolves slowly in excess NH₃(aq) to form a purple solution!',
       eq: 'Cr(OH)₃(H₂O)₃(s) + 6NH₃(aq) → [Cr(NH₃)₆]³⁺(aq) + 3OH⁻(aq) + 3H₂O(l)'
     }
   },
@@ -1085,39 +1085,40 @@ const CATIONS_DB = {
     id: 'Mn2', symbol: 'Mn²⁺', name: 'Manganese(II) (Mn²⁺)',
     solutionColor: 'rgba(244, 114, 182, 0.22)',
     solutionDesc: 'Very pale pink solution',
-    flame: { color: '#a3e635', core: '#ecfccb', label: 'Faint yellow-green flame' },
+    flame: { color: '#a3e635', core: '#ecfccb', label: 'Faint yellow-green flame observed' },
     naoh: {
       ppt: '#fde68a',
-      obs: 'Off-white / buff precipitate of Mn(OH)₂ formed, rapidly darkening to brown in air.',
+      obs: 'Off-white / buff precipitate formed, rapidly darkening to brown in air.',
       eq: 'Mn²⁺(aq) + 2OH⁻(aq) → Mn(OH)₂(s)'
     },
     naoh_excess: {
       ppt: '#d97706',
-      obs: 'Buff precipitate is insoluble in excess NaOH(aq) and oxidises to brown Mn₂O₃/MnO₂ in air.'
+      obs: 'Buff precipitate remains insoluble in excess NaOH(aq) and darkens to brown in air.'
     },
     nh3_excess: {
       ppt: '#fde68a',
-      obs: 'Buff precipitate of Mn(OH)₂, insoluble in excess NH₃(aq); darkens on standing.'
+      obs: 'Buff precipitate formed; insoluble in excess NH₃(aq) and darkens on standing.'
     }
   },
   Zn: {
     id: 'Zn', symbol: 'Zn²⁺', name: 'Zinc (Zn²⁺)',
     solutionColor: 'rgba(224, 242, 254, 0.18)',
     solutionDesc: 'Colourless solution',
-    flame: { color: '#2dd4bf', core: '#ccfbf1', label: 'Faint bluish-green flame' },
+    flame: { color: '#2dd4bf', core: '#ccfbf1', label: 'Faint bluish-green flame observed' },
     naoh: {
       ppt: '#f8fafc',
-      obs: 'White precipitate of Zn(OH)₂ formed.',
+      obs: 'White precipitate formed.',
       eq: 'Zn²⁺(aq) + 2OH⁻(aq) → Zn(OH)₂(s)'
     },
     naoh_excess: {
       ppt: null,
-      obs: 'White precipitate DISSOLVES in excess NaOH(aq) to give a colourless solution of [Zn(OH)₄]²⁻!',
+      obs: 'White precipitate DISSOLVES in excess NaOH(aq) to give a colourless solution.',
       eq: 'Zn(OH)₂(s) + 2OH⁻(aq) → [Zn(OH)₄]²⁻(aq)'
     },
     nh3_excess: {
       ppt: null,
-      obs: 'White precipitate DISSOLVES in excess NH₃(aq) to give a colourless solution of [Zn(NH₃)₄]²⁺ (distinguishes Zn²⁺ from Al³⁺)!'
+      obs: 'White precipitate DISSOLVES in excess NH₃(aq) to give a colourless solution!',
+      eq: 'Zn(OH)₂(s) + 4NH₃(aq) → [Zn(NH₃)₄]²⁺(aq) + 2OH⁻(aq)'
     }
   }
 };
@@ -1129,12 +1130,12 @@ const ANIONS_DB = {
     bacl2: { ppt: null, obs: 'No precipitate formed with acidified BaCl₂(aq).' },
     agno3: {
       ppt: '#f8fafc',
-      obs: 'White precipitate of silver chloride (AgCl) formed.',
+      obs: 'White precipitate formed.',
       eq: 'Ag⁺(aq) + Cl⁻(aq) → AgCl(s)'
     },
     agno3_nh3: {
       ppt: null,
-      obs: 'White AgCl precipitate DISSOLVES readily in dilute NH₃(aq) to give a colourless solution of [Ag(NH₃)₂]⁺!',
+      obs: 'White precipitate DISSOLVES readily in dilute NH₃(aq) to give a colourless solution.',
       eq: 'AgCl(s) + 2NH₃(aq) → [Ag(NH₃)₂]⁺(aq) + Cl⁻(aq)'
     }
   },
@@ -1144,12 +1145,13 @@ const ANIONS_DB = {
     bacl2: { ppt: null, obs: 'No precipitate formed with acidified BaCl₂(aq).' },
     agno3: {
       ppt: '#fef3c7',
-      obs: 'Cream precipitate of silver bromide (AgBr) formed.',
+      obs: 'Cream precipitate formed.',
       eq: 'Ag⁺(aq) + Br⁻(aq) → AgBr(s)'
     },
     agno3_nh3: {
       ppt: null,
-      obs: 'Cream AgBr precipitate is insoluble in dilute NH₃(aq), but DISSOLVES in concentrated NH₃(aq)!'
+      obs: 'Cream precipitate is insoluble in dilute NH₃(aq), but DISSOLVES in concentrated NH₃(aq).',
+      eq: 'AgBr(s) + 2NH₃(aq) → [Ag(NH₃)₂]⁺(aq) + Br⁻(aq)'
     }
   },
   I: {
@@ -1158,12 +1160,12 @@ const ANIONS_DB = {
     bacl2: { ppt: null, obs: 'No precipitate formed with acidified BaCl₂(aq).' },
     agno3: {
       ppt: '#fde047',
-      obs: 'Pale yellow precipitate of silver iodide (AgI) formed.',
+      obs: 'Pale yellow precipitate formed.',
       eq: 'Ag⁺(aq) + I⁻(aq) → AgI(s)'
     },
     agno3_nh3: {
       ppt: '#fde047',
-      obs: 'Yellow AgI precipitate is completely INSOLUBLE in both dilute and concentrated NH₃(aq)!'
+      obs: 'Yellow precipitate is completely INSOLUBLE in both dilute and concentrated NH₃(aq).'
     }
   },
   SO4: {
@@ -1171,37 +1173,37 @@ const ANIONS_DB = {
     acid: { fizz: false, obs: 'No effervescence with dilute acid.' },
     bacl2: {
       ppt: '#ffffff',
-      obs: 'Thick white precipitate of barium sulfate (BaSO₄) formed!',
+      obs: 'Thick white precipitate formed immediately!',
       eq: 'Ba²⁺(aq) + SO₄²⁻(aq) → BaSO₄(s)'
     },
     agno3: { ppt: null, obs: 'No precipitate formed with acidified AgNO₃(aq).' },
-    agno3_nh3: { ppt: null, obs: 'No silver halide precipitate present.' }
+    agno3_nh3: { ppt: null, obs: 'No precipitate present to test.' }
   },
   CO3: {
     id: 'CO3', symbol: 'CO₃²⁻', name: 'Carbonate (CO₃²⁻)',
     acid: {
       fizz: true,
-      obs: 'Vigorous effervescence (fizzing)! Gas evolved turns limewater cloudy white (CO₂ confirmed).',
+      obs: 'Vigorous effervescence (fizzing)! Gas evolved turns limewater cloudy white.',
       eq: 'CO₃²⁻(aq) + 2H⁺(aq) → CO₂(g) + H₂O(l)'
     },
     bacl2: {
       ppt: null,
       fizz: true,
-      obs: 'Effervescence from the acidifying HCl/HNO₃; no BaSO₄ precipitate remains once acid is in excess.'
+      obs: 'Effervescence observed upon addition of acid; no permanent precipitate remains once acid is in excess.'
     },
     agno3: {
       ppt: null,
       fizz: true,
-      obs: 'Effervescence as dilute HNO₃ decomposes CO₃²⁻ to CO₂(g); no halide precipitate.'
+      obs: 'Effervescence observed in dilute HNO₃(aq); no halide precipitate formed.'
     },
-    agno3_nh3: { ppt: null, obs: 'No silver halide precipitate present.' }
+    agno3_nh3: { ppt: null, obs: 'No precipitate present to test.' }
   },
   NO3: {
     id: 'NO3', symbol: 'NO₃⁻', name: 'Nitrate (NO₃⁻)',
     acid: { fizz: false, obs: 'No effervescence with dilute acid.' },
     bacl2: { ppt: null, obs: 'No precipitate formed with acidified BaCl₂(aq).' },
-    agno3: { ppt: null, obs: 'No precipitate formed with acidified AgNO₃(aq) (all nitrates are soluble).' },
-    agno3_nh3: { ppt: null, obs: 'No silver halide precipitate present.' }
+    agno3: { ppt: null, obs: 'No precipitate formed with acidified AgNO₃(aq).' },
+    agno3_nh3: { ppt: null, obs: 'No precipitate present to test.' }
   }
 };
 
@@ -1370,9 +1372,8 @@ function generateNewCase() {
     };
   });
 
-  document.getElementById('liveObsTitle').textContent = `CASE #${state.caseId} INITIALISED (${state.board} ${state.tier})`;
+  document.getElementById('liveObsTitle').textContent = `Case #${state.caseId} Initialised (${state.board} ${state.tier === 'ALEVEL' ? 'A-Level' : 'GCSE'})`;
   document.getElementById('liveObsText').textContent = 'Select a test tube (A–E) and perform chemical tests to deduce all 5 unknown aqueous salts within your reagent budget.';
-  document.getElementById('liveObsEq').classList.add('hidden');
 
   renderAllUI();
 }
@@ -1487,7 +1488,7 @@ function runChemicalTest(reagentId) {
       eqText = cat.h2so4.eq || '';
       newPpt = cat.h2so4.ppt;
     } else if (an.id === 'CO3') {
-      obsText = 'Effervescence (CO₂ gas released) as dilute H₂SO₄ reacts with carbonate ions.';
+      obsText = 'Effervescence (gas bubbles evolved) with dilute H₂SO₄(aq).';
       state.anim.fizzTubeIdx = state.selectedTubeIdx;
       state.anim.fizzTimer = 85;
     } else {
@@ -1512,15 +1513,8 @@ function runChemicalTest(reagentId) {
     });
   }
 
-  document.getElementById('liveObsTitle').textContent = `TUBE ${tube.label} • ${meta.name.toUpperCase()}${alreadyTested ? ' (RECALLED FROM LOG)' : ''}`;
+  document.getElementById('liveObsTitle').textContent = `Tube ${tube.label} • ${meta.name}${alreadyTested ? ' (Recalled from Log)' : ''}`;
   document.getElementById('liveObsText').textContent = obsText;
-  const eqEl = document.getElementById('liveObsEq');
-  if (eqText) {
-    eqEl.textContent = `Ionic Equation: ${eqText}`;
-    eqEl.classList.remove('hidden');
-  } else {
-    eqEl.classList.add('hidden');
-  }
 
   renderAllUI();
 }
@@ -1600,7 +1594,6 @@ function renderAllUI() {
           <span>Tube ${activeTube.label}</span>
         </div>
         <div class="log-item-obs">${item.obs}</div>
-        ${item.eq ? `<div style="font-family:monospace;font-size:0.73rem;color:var(--emerald-soft);margin-top:2px;">${item.eq}</div>` : ''}
       </div>
     `).join('');
   }
@@ -1802,7 +1795,7 @@ function renderLabCanvas() {
       ctx.fillStyle = '#fef08a';
       ctx.font = 'bold 10px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Litmus → BLUE (NH₃)', cx, topY - 28);
+      ctx.fillText('Damp Litmus → BLUE', cx, topY - 28);
       ctx.restore();
     }
 
@@ -2187,6 +2180,7 @@ document.querySelectorAll('#tierSelector .seg-btn').forEach(btn => {
 
 document.getElementById('btnNewCase').addEventListener('click', generateNewCase);
 document.getElementById('btnOpenManual').addEventListener('click', openExamBoardManual);
+document.getElementById('btnObsDataSheetLink').addEventListener('click', openExamBoardManual);
 document.getElementById('btnCloseManual').addEventListener('click', () => {
   document.getElementById('manualModal').classList.add('hidden');
 });
