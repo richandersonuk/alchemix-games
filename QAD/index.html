@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Qualitative Analysis Detective — Forensic Wet-Lab Mystery | Alchemix Arcade</title>
+<meta name="description" content="Deduce five unlabelled aqueous ion test tubes on a strict reagent budget across GCSE and A-Level Chemistry specifications (WJEC, AQA, OCR, Edexcel).">
+<link rel="icon" type="image/svg+xml" href="./cartridge.svg">
+<style>
+  :root {
+    --bg-deep: #070b14;
+    --bg-panel: #0e1628;
+    --bg-card: #131e36;
+    --bg-elevated: #1a2947;
+    --border-subtle: #243860;
+    --border-bright: #38bdf8;
+    --brass: #f59e0b;
+    --brass-soft: #fde047;
+    --crimson: #e11d48;
+    --crimson-soft: #fb7185;
+    --emerald: #10b981;
+    --emerald-soft: #34d399;
+    --cyan: #38bdf8;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-width: thin;
+    scrollbar-color: #26648e #070b14;
+  }
+
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-track { background: #070b14; border-radius: 6px; }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #1d6b94 0%, #38bdf8 50%, #0e7490 100%);
+    border: 2px solid #070b14;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #34d399 0%, #38bdf8 100%);
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at 20% 0%, #172544 0%, #070b14 68%);
+    color: var(--text-main);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    touch-action: manipulation;
+    overflow-x: hidden;
+  }
+
+  button, input, select { font-family: inherit; }
+
+  /* Sticky Forensic Topbar */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 16px;
+    background: rgba(9, 14, 26, 0.94);
+    border-bottom: 1.5px solid var(--border-subtle);
+    backdrop-filter: blur(10px);
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .brand-title {
+    font-weight: 900;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+    color: var(--brass-soft);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .badge-pill {
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 5px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .badge-budget {
+    background: rgba(245, 158, 11, 0.16);
+    border: 1px solid rgba(245, 158, 11, 0.55);
+    color: var(--brass-soft);
+    font-size: 0.88rem;
+  }
+
+  .badge-budget.low {
+    background: rgba(225, 29, 72, 0.22);
+    border-color: var(--crimson-soft);
+    color: #fecdd3;
+    animation: pulseWarn 1.2s infinite;
+  }
+
+  @keyframes pulseWarn {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+
+  .badge-spec {
+    background: rgba(56, 189, 248, 0.14);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    color: #bae6fd;
+  }
+
+  .btn {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 8px 13px;
+    min-height: 38px;
+    cursor: pointer;
+    transition: transform 0.1s ease, filter 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    background: var(--bg-elevated);
+  }
+  .btn:hover:not(:disabled) { filter: brightness(1.14); }
+  .btn:active:not(:disabled) { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-sm { min-height: 34px; padding: 5px 10px; font-size: 0.8rem; }
+  .btn-hub { background: #16223b; border-color: var(--cyan); color: #bae6fd; }
+  .btn-brass { background: linear-gradient(180deg, #d97706 0%, #92400e 100%); border-color: var(--brass-soft); color: #fff; }
+  .btn-crimson { background: linear-gradient(180deg, #e11d48 0%, #9f1239 100%); border-color: var(--crimson-soft); color: #fff; }
+  .btn-emerald { background: linear-gradient(180deg, #10b981 0%, #047857 100%); border-color: #6ee7b7; color: #042f2e; font-weight: 800; }
+  .btn-cyan { background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%); border-color: var(--cyan); color: #fff; }
+
+  /* Main Container */
+  .app-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 14px 16px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Configuration / Case Briefing Banner */
+  .case-bar {
+    background: linear-gradient(135deg, rgba(19, 30, 54, 0.96), rgba(14, 22, 40, 0.96));
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  .selector-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .selector-label {
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+  }
+
+  .seg-pills {
+    display: inline-flex;
+    background: #080d19;
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    gap: 3px;
+  }
+
+  .seg-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 800;
+    font-size: 0.78rem;
+    padding: 6px 11px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .seg-btn.active {
+    background: #1d4ed8;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.45);
+  }
+
+  .seg-btn.tier-btn.active {
+    background: #b45309;
+    color: #fef08a;
+  }
+
+  /* Primary 2-Column Lab Layout */
+  .lab-grid {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+
+  @media (max-width: 920px) {
+    .lab-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .panel-card {
+    background: rgba(14, 22, 40, 0.95);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid rgba(36, 56, 96, 0.7);
+    padding-bottom: 8px;
+  }
+
+  .panel-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+  }
+
+  /* Interactive Canvas Stage */
+  .bench-canvas-wrap {
+    position: relative;
+    width: 100%;
+    background: radial-gradient(circle at 50% 35%, #162442 0%, #070c18 80%);
+    border: 1.5px solid #263c66;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  #labCanvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  /* Quick Tube Selector Strip below Canvas */
+  .tube-tabs {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  .tube-tab {
+    background: #0d1629;
+    border: 1.5px solid #253b64;
+    border-radius: 10px;
+    padding: 8px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.15s, background 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .tube-tab:hover {
+    background: #14223e;
+  }
+
+  .tube-tab.selected {
+    background: #172a4f;
+    border-color: var(--brass-soft);
+    box-shadow: 0 0 0 1px var(--brass-soft);
+  }
+
+  .tube-tab.solved-tag {
+    border-color: var(--emerald-soft);
+  }
+
+  .tube-tab-lbl {
+    font-weight: 900;
+    font-size: 0.84rem;
+    color: var(--text-main);
+  }
+
+  .tube-tab-sub {
+    font-size: 0.7rem;
+    color: var(--cyan);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* Reagent Arsenal Grid */
+  .reagent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+  }
+
+  .reagent-btn {
+    background: #111c33;
+    border: 1px solid #29426e;
+    border-radius: 10px;
+    padding: 9px 10px;
+    text-align: left;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 5px;
+    transition: transform 0.08s, background 0.15s, border-color 0.15s;
+  }
+
+  .reagent-btn:hover:not(:disabled) {
+    background: #182747;
+    border-color: var(--cyan);
+  }
+
+  .reagent-btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .reagent-btn.already-run {
+    background: #0d2329;
+    border-color: #0d9488;
+  }
+
+  .reagent-btn:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+
+  .reagent-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .reagent-name {
+    font-weight: 800;
+    font-size: 0.82rem;
+    color: #f8fafc;
+  }
+
+  .reagent-cost {
+    font-size: 0.72rem;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--brass-soft);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    white-space: nowrap;
+  }
+
+  .reagent-sub {
+    font-size: 0.71rem;
+    color: var(--text-muted);
+    line-height: 1.25;
+  }
+
+  /* Live Observation Feed Banner */
+  .obs-toast {
+    background: #091326;
+    border-left: 4px solid var(--cyan);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .obs-eq {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.78rem;
+    color: var(--emerald-soft);
+    background: rgba(16, 185, 129, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+  }
+
+  /* Evidence Log Table for Active Tube */
+  .log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 195px;
+    overflow-y: auto;
+    padding-right: 3px;
+  }
+
+  .log-item {
+    background: #0a1222;
+    border: 1px solid #1e3256;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .log-item-hdr {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 800;
+    color: var(--cyan);
+    font-size: 0.76rem;
+  }
+
+  .log-item-obs {
+    color: #dbeafe;
+    line-height: 1.3;
+  }
+
+  /* Deduction Board (5 Unknown Tubes) */
+  .deduction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .deduction-row {
+    background: #0b1324;
+    border: 1px solid #223760;
+    border-radius: 10px;
+    padding: 9px 11px;
+    display: grid;
+    grid-template-columns: 78px 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .deduction-row.active-row {
+    border-color: var(--brass-soft);
+    background: #121e38;
+  }
+
+  @media (max-width: 560px) {
+    .deduction-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ded-tube-badge {
+    font-weight: 900;
+    font-size: 0.84rem;
+    color: var(--brass-soft);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+
+  .ion-select {
+    width: 100%;
+    background: #13203b;
+    color: var(--text-main);
+    border: 1px solid #2f4b80;
+    border-radius: 8px;
+    padding: 7px 9px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    min-height: 36px;
+  }
+
+  .ion-select:focus {
+    outline: none;
+    border-color: var(--cyan);
+  }
+
+  /* Modals */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(4, 7, 15, 0.86);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .modal-box {
+    width: 100%;
+    max-width: 780px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #0e172b;
+    border: 1.5px solid var(--border-bright);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .ref-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+
+  .ref-table th, .ref-table td {
+    border: 1px solid #233860;
+    padding: 7px 9px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .ref-table th {
+    background: #162647;
+    color: var(--brass-soft);
+    font-weight: 800;
+  }
+
+  .ref-table tr:nth-child(even) td {
+    background: rgba(15, 25, 48, 0.6);
+  }
+
+  .result-row {
+    background: #091224;
+    border: 1px solid #233963;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.84rem;
+  }
+
+  .result-row.perfect { border-color: var(--emerald-soft); background: rgba(6, 78, 59, 0.25); }
+  .result-row.partial { border-color: var(--brass-soft); background: rgba(120, 53, 15, 0.25); }
+  .result-row.wrong   { border-color: var(--crimson-soft); background: rgba(136, 19, 55, 0.25); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+  <!-- Top Forensic Navigation & Telemetry -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="../" class="btn btn-sm btn-hub" title="Return to Alchemix Arcade Hub">◀ Arcade Hub</a>
+      <div class="brand-title">🕵️‍♂️🧪 QUALITATIVE ANALYSIS DETECTIVE</div>
+      <span id="activeSpecBadge" class="badge-pill badge-spec">WJEC • GCSE</span>
+    </div>
+    <div class="topbar-right">
+      <div id="budgetPill" class="badge-pill badge-budget" title="Remaining Virtual Reagent Budget">
+        💰 Budget: <span id="lblBudget">£140</span> / <span id="lblMaxBudget">£140</span>
+      </div>
+      <button id="btnOpenManual" class="btn btn-sm btn-cyan">📖 Exam Board Data Sheet</button>
+      <button id="btnOpenScoreboard" class="btn btn-sm">🏆 Hall of Detectives</button>
+      <button id="btnSoundToggle" class="btn btn-sm">🔊 Audio</button>
+      <button id="btnNewCase" class="btn btn-sm btn-brass">🔄 New Case</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <!-- Exam Board & Tier Selector Bar -->
+    <section class="case-bar" aria-label="Curriculum Specification & Case Controls">
+      <div class="selector-group">
+        <span class="selector-label">Exam Board:</span>
+        <div class="seg-pills" id="boardSelector">
+          <button class="seg-btn active" data-board="WJEC">WJEC</button>
+          <button class="seg-btn" data-board="AQA">AQA</button>
+          <button class="seg-btn" data-board="OCR">OCR</button>
+          <button class="seg-btn" data-board="EDEXCEL">Edexcel</button>
+        </div>
+      </div>
+
+      <div class="selector-group">
+        <span class="selector-label">Qualification Mode:</span>
+        <div class="seg-pills" id="tierSelector">
+          <button class="seg-btn tier-btn active" data-tier="GCSE">GCSE Chemistry</button>
+          <button class="seg-btn tier-btn" data-tier="ALEVEL">A-Level Chemistry</button>
+        </div>
+      </div>
+
+      <div style="font-size:0.8rem;color:var(--text-muted);">
+        Case #<span id="lblCaseId" style="color:var(--brass-soft);font-weight:800;">401</span> • Identify all 5 unlabelled solutions before your reagent budget runs out!
+      </div>
+    </section>
+
+    <!-- Main Interactive Wet-Lab Grid -->
+    <div class="lab-grid">
+      <!-- LEFT COLUMN: Interactive Test Tube Rack Canvas + Reagent Bench -->
+      <section class="panel-card" aria-label="Virtual Wet-Lab Bench">
+        <div class="panel-header">
+          <h1 class="panel-title">🔬 Forensic Wet-Lab Bench — Selected: <span id="lblSelectedTube" style="color:var(--brass-soft);">Tube A</span></h1>
+          <span id="lblTubeAppearance" style="font-size:0.78rem;color:var(--cyan);font-weight:700;">Initial: Clear Solution</span>
+        </div>
+
+        <!-- HTML5 Canvas Rack & Flame/Dropper Visualizer -->
+        <div class="bench-canvas-wrap">
+          <canvas id="labCanvas" width="760" height="460"></canvas>
+        </div>
+
+        <!-- 5 Test Tube Quick-Select Tabs -->
+        <div class="tube-tabs" id="tubeTabsContainer"></div>
+
+        <!-- Reagent Arsenal -->
+        <div class="panel-header" style="margin-top:4px;">
+          <h2 class="panel-title">🧪 Perform Chemical Test on <span id="lblTargetTubeBtn" style="color:var(--brass-soft);">Tube A</span></h2>
+          <span style="font-size:0.74rem;color:var(--text-muted);">Tests run on fresh aliquots of the selected sample</span>
+        </div>
+        <div class="reagent-grid" id="reagentGrid"></div>
+
+        <!-- Latest Observation Banner -->
+        <div class="obs-toast" id="liveObsBox">
+          <div style="font-weight:800;color:var(--brass-soft);font-size:0.78rem;" id="liveObsTitle">LATEST LAB OBSERVATION</div>
+          <div id="liveObsText">Select any test tube (A–E) and click a chemical reagent or flame test above to inspect the reaction.</div>
+          <div id="liveObsEq" class="obs-eq hidden"></div>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: Forensic Notebook Log + Case Deduction Board -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <!-- Lab Evidence Log for Selected Tube -->
+        <section class="panel-card" aria-label="Tube Evidence Notebook">
+          <div class="panel-header">
+            <h2 class="panel-title">📋 Evidence Log — <span id="lblLogTubeName" style="color:var(--cyan);">Tube A</span></h2>
+            <span id="lblTestsCount" style="font-size:0.75rem;color:var(--text-muted);">0 tests recorded</span>
+          </div>
+          <div class="log-list" id="tubeLogList">
+            <div style="font-size:0.8rem;color:var(--text-muted);padding:8px;">No tests performed on Tube A yet.</div>
+          </div>
+        </section>
+
+        <!-- Forensic Deduction Accusation Form -->
+        <section class="panel-card" aria-label="Forensic Ion Identification Report">
+          <div class="panel-header">
+            <h2 class="panel-title">🕵️‍♂️ Official Forensic Identification Report</h2>
+            <span id="lblDeductionProgress" style="font-size:0.76rem;color:var(--emerald-soft);font-weight:800;">0 / 5 Assigned</span>
+          </div>
+          <p style="margin:0;font-size:0.79rem;color:var(--text-muted);line-height:1.35;">
+            Pair the <strong>Cation (+)</strong> and <strong>Anion (–)</strong> for each unlabelled test tube. Each of the 5 tubes contains a distinct aqueous salt.
+          </p>
+
+          <div class="deduction-list" id="deductionList"></div>
+
+          <button id="btnSubmitCase" class="btn btn-emerald" style="width:100%;padding:12px;font-size:0.95rem;margin-top:4px;">
+            ✅ SUBMIT FORENSIC LAB REPORT
+          </button>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- EXAM BOARD DATA SHEET / FIELD MANUAL MODAL -->
+  <div id="manualModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="panel-header">
+        <h2 class="panel-title" id="manualTitle">📖 Qualitative Analysis Reference Sheet</h2>
+        <button id="btnCloseManual" class="btn btn-sm">✕ Close</button>
+      </div>
+      <div id="manualContent" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+  </div>
+
+  <!-- CASE VERDICT / DEBRIEF MODAL -->
+  <div id="verdictModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="panel-header">
+        <h2 class="panel-title" id="verdictHeader">🏆 FORENSIC CASE DEBRIEF</h2>
+        <button id="btnCloseVerdict" class="btn btn-sm">✕ Close</button>
+      </div>
+      <div id="verdictSummaryBanner" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;background:#081020;padding:12px;border-radius:12px;border:1px solid #243b64;"></div>
+      <div id="verdictRows" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <!-- Single-Submission Scoreboard Entry Box -->
+      <div id="verdictScoreSubmitBox" style="background:#101c36;border:1px solid var(--brass);border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;">
+        <div style="font-size:0.82rem;font-weight:700;color:var(--brass-soft);">Record your Forensic Rating in the Hall of Detectives:</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="inpDetectiveName" type="text" maxlength="16" placeholder="Detective Callsign" style="background:#070d1a;color:#fff;border:1px solid #38bdf8;border-radius:8px;padding:7px 10px;font-weight:700;font-size:0.84rem;">
+          <button id="btnSaveScore" class="btn btn-sm btn-brass">Save Score</button>
+        </div>
+      </div>
+      <div id="verdictScoreLockedMsg" class="hidden" style="font-size:0.8rem;color:var(--emerald-soft);text-align:center;font-weight:700;padding:6px;">
+        ✓ Score recorded in the Hall of Detectives for this case!
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+        <a href="../" class="btn btn-hub">◀ Quit to Arcade Hub</a>
+        <button id="btnNextCaseModal" class="btn btn-emerald">🔄 Start New Mystery Case</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HALL OF DETECTIVES SCOREBOARD MODAL -->
+  <div id="scoreboardModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width:560px;">
+      <div class="panel-header">
+        <h2 class="panel-title">🏆 Hall of Forensic Detectives</h2>
+        <button id="btnCloseScoreboard" class="btn btn-sm">✕ Close</button>
+      </div>
+      <div id="scoreboardList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
+
+<script>
+/* ============================================================================
+   1. WEB AUDIO SYNTHESIS ENGINE (Bunsen Roar, Dropper Plink, Fizz, Chimes)
+   ============================================================================ */
+class LabAudio {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+  }
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  }
+  playDrop() {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(1180, now + 0.09);
+    gain.gain.setValueAtTime(0.16, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+    osc.connect(gain).connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.12);
+  }
+  playFlame() {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const bufferSize = this.ctx.sampleRate * 0.45;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.22));
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 340;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.28, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.44);
+    noise.connect(filter).connect(gain).connect(this.ctx.destination);
+    noise.start(now);
+  }
+  playFizz() {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const bufferSize = this.ctx.sampleRate * 0.5;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.5;
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 2400;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.14, now);
+    gain.gain.exponentialRampToValueAtTime(0.005, now + 0.48);
+    noise.connect(filter).connect(gain).connect(this.ctx.destination);
+    noise.start(now);
+  }
+  playFanfare(success = true) {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    const notes = success ? [523.25, 659.25, 783.99, 1046.5] : [349.23, 311.13, 261.63];
+    notes.forEach((freq, idx) => {
+      const now = this.ctx.currentTime + idx * 0.09;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(gain).connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.26);
+    });
+  }
+}
+
+const audio = new LabAudio();
+
+/* ============================================================================
+   2. COMPREHENSIVE ION & REAGENT DATABASE (WJEC, AQA, OCR, EDEXCEL | GCSE & A-LEVEL)
+   ============================================================================ */
+const CATIONS_DB = {
+  Li: {
+    id: 'Li', symbol: 'Li⁺', name: 'Lithium (Li⁺)',
+    solutionColor: 'rgba(224, 242, 254, 0.18)',
+    solutionDesc: 'Colourless solution',
+    flame: { color: '#e11d48', core: '#fda4af', label: 'Crimson-red flame (Li⁺)' },
+    naoh: { ppt: null, obs: 'No precipitate formed (colourless solution remains).' },
+    naoh_excess: { ppt: null, obs: 'No visible change in excess NaOH(aq).' },
+    nh3_excess: { ppt: null, obs: 'No precipitate formed with aqueous ammonia.' }
+  },
+  Na: {
+    id: 'Na', symbol: 'Na⁺', name: 'Sodium (Na⁺)',
+    solutionColor: 'rgba(224, 242, 254, 0.18)',
+    solutionDesc: 'Colourless solution',
+    flame: { color: '#facc15', core: '#fef9c3', label: 'Persistent golden-yellow flame (Na⁺)' },
+    naoh: { ppt: null, obs: 'No precipitate formed.' },
+    naoh_excess: { ppt: null, obs: 'No visible change in excess NaOH(aq).' },
+    nh3_excess: { ppt: null, obs: 'No precipitate formed with NH₃(aq).' }
+  },
+  K: {
+    id: 'K', symbol: 'K⁺', name: 'Potassium (K⁺)',
+    solutionColor: 'rgba(224, 242, 254, 0.18)',
+    solutionDesc: 'Colourless solution',
+    flame: { color: '#c084fc', core: '#f3e8ff', label: 'Lilac flame (K⁺)' },
+    naoh: { ppt: null, obs: 'No precipitate formed.' },
+    naoh_excess: { ppt: null, obs: 'No visible change in excess NaOH(aq).' },
+    nh3_excess: { ppt: null, obs: 'No precipitate formed with NH₃(aq).' }
+  },
+  Ca: {
+    id: 'Ca', symbol: 'Ca²⁺', name: 'Calcium (Ca²⁺)',
+    solutionColor: 'rgba(224, 242, 254, 0.18)',
+    solutionDesc: 'Colourless solution',
+    flame: {
+      color: '#ea580c', core: '#fed7aa',
+      labelByBoard: {
+        AQA: 'Orange-red flame (Ca²⁺)',
+        OCR: 'Brick-red / orange-red flame (Ca²⁺)',
+        WJEC: 'Brick-red flame (Ca²⁺)',
+        EDEXCEL: 'Orange-red / brick-red flame (Ca²⁺)'
+      }
+    },
+    naoh: {
+      ppt: '#f8fafc',
+      obs: 'White precipitate of Ca(OH)₂ formed.',
+      eq: 'Ca²⁺(aq) + 2OH⁻(aq) → Ca(OH)₂(s)'
+    },
+    naoh_excess: {
+      ppt: '#f8fafc',
+      obs: 'White precipitate is insoluble in excess NaOH(aq) (distinguishes Ca²⁺/Mg²⁺ from Al³⁺).'
+    },
+    nh3_excess: {
+      ppt: null,
+      obs: 'No precipitate (or very faint cloudiness) with NH₃(aq).'
+    },
+    h2so4: {
+      ppt: '#f8fafc',
+      obs: 'Slight white precipitate of CaSO₄ formed (sparingly soluble Group 2 sulfate).',
+      eq: 'Ca²⁺(aq) + SO₄²⁻(aq) → CaSO₄(s)'
+    }
+  },
+  Ba: {
+    id: 'Ba', symbol: 'Ba²⁺', name: 'Barium (Ba²⁺)',
+    solutionColor: 'rgba(224, 242, 254, 0.18)',
+    solutionDesc: 'Colourless solution',
+    flame: { color: '#65a30d', core: '#ecfccb', label: 'Apple-green / pale green flame (Ba²⁺)' },
+    naoh: { ppt: null, obs: 'No precipitate formed (Ba(OH)₂ is soluble in water).' },
+    naoh_excess: { ppt: null, obs: 'Remains a colourless solution in excess NaOH(aq).' },
+    nh3_excess: { ppt: null, obs: 'No precipitate with aqueous ammonia.' },
+    h2so4: {
+      ppt: '#ffffff',
+      obs: 'Thick white precipitate of insoluble BaSO₄ formed immediately!',
+      eq: 'Ba²⁺(aq) + SO₄²⁻(aq) → BaSO₄(s)'
+    }
+  },
+  Mg: {
+    id: 'Mg', symbol: 'Mg²⁺', name: 'Magnesium (Mg²⁺)',
+    solutionColor: 'rgba(224, 242, 254, 0.18)',
+    solutionDesc: 'Colourless solution',
+    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour (bright white only for Mg metal)' },
+    naoh: {
+      ppt: '#f8fafc',
+      obs: 'White precipitate of Mg(OH)₂ formed.',
+      eq: 'Mg²⁺(aq) + 2OH⁻(aq) → Mg(OH)₂(s)'
+    },
+    naoh_excess: {
+      ppt: '#f8fafc',
+      obs: 'White precipitate is insoluble in excess NaOH(aq).'
+    },
+    nh3_excess: {
+      ppt: '#f8fafc',
+      obs: 'White gelatinous precipitate of Mg(OH)₂, insoluble in excess NH₃(aq).'
+    },
+    h2so4: {
+      ppt: null,
+      obs: 'No precipitate formed (MgSO₄ is soluble down Group 2).'
+    }
+  },
+  Al: {
+    id: 'Al', symbol: 'Al³⁺', name: 'Aluminium (Al³⁺)',
+    solutionColor: 'rgba(224, 242, 254, 0.18)',
+    solutionDesc: 'Colourless solution',
+    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour' },
+    naoh: {
+      ppt: '#f8fafc',
+      obs: 'White precipitate of amphoteric Al(OH)₃ formed.',
+      eq: 'Al³⁺(aq) + 3OH⁻(aq) → Al(OH)₃(s)'
+    },
+    naoh_excess: {
+      ppt: null,
+      obs: 'White precipitate DISSOLVES in excess NaOH(aq) to form a colourless solution of [Al(OH)₄]⁻!',
+      eq: 'Al(OH)₃(s) + OH⁻(aq) → [Al(OH)₄]⁻(aq)'
+    },
+    nh3_excess: {
+      ppt: '#f8fafc',
+      obs: 'White precipitate of Al(OH)₃ formed; insoluble in excess NH₃(aq).'
+    }
+  },
+  Cu: {
+    id: 'Cu', symbol: 'Cu²⁺', name: 'Copper(II) (Cu²⁺)',
+    solutionColor: 'rgba(56, 189, 248, 0.42)',
+    solutionDesc: 'Pale sky-blue solution',
+    flame: { color: '#10b981', core: '#a7f3d0', label: 'Blue-green flame (Cu²⁺)' },
+    naoh: {
+      ppt: '#0284c7',
+      obs: 'Pale blue precipitate of Cu(OH)₂ formed.',
+      eq: 'Cu²⁺(aq) + 2OH⁻(aq) → Cu(OH)₂(s)'
+    },
+    naoh_excess: {
+      ppt: '#0284c7',
+      obs: 'Blue precipitate is insoluble in excess NaOH(aq).'
+    },
+    nh3_excess: {
+      ppt: null,
+      solutionOverride: 'rgba(29, 78, 216, 0.88)',
+      obs: 'Pale blue precipitate dissolves in excess NH₃(aq) to form a deep royal-blue solution of [Cu(NH₃)₄(H₂O)₂]²⁺!',
+      eq: 'Cu(OH)₂(H₂O)₄(s) + 4NH₃(aq) → [Cu(NH₃)₄(H₂O)₂]²⁺(aq) + 2OH⁻(aq) + 2H₂O(l)'
+    }
+  },
+  Fe2: {
+    id: 'Fe2', symbol: 'Fe²⁺', name: 'Iron(II) (Fe²⁺)',
+    solutionColor: 'rgba(74, 222, 128, 0.25)',
+    solutionDesc: 'Very pale green solution',
+    flame: { color: '#f59e0b', core: '#fef08a', label: 'No characteristic flame colour (faint gold sparks)' },
+    naoh: {
+      ppt: '#15803d',
+      obs: 'Dirty green / moss-green precipitate of Fe(OH)₂ formed (turns brown at surface on standing in air).',
+      eq: 'Fe²⁺(aq) + 2OH⁻(aq) → Fe(OH)₂(s)'
+    },
+    naoh_excess: {
+      ppt: '#15803d',
+      obs: 'Green precipitate is insoluble in excess NaOH(aq).'
+    },
+    nh3_excess: {
+      ppt: '#15803d',
+      obs: 'Green precipitate of Fe(OH)₂ formed, insoluble in excess NH₃(aq).'
+    }
+  },
+  Fe3: {
+    id: 'Fe3', symbol: 'Fe³⁺', name: 'Iron(III) (Fe³⁺)',
+    solutionColor: 'rgba(245, 158, 11, 0.36)',
+    solutionDesc: 'Pale yellow-brown solution',
+    flame: { color: '#f59e0b', core: '#fef08a', label: 'No characteristic flame colour' },
+    naoh: {
+      ppt: '#b45309',
+      obs: 'Orange-brown / foxy-red precipitate of Fe(OH)₃ formed.',
+      eq: 'Fe³⁺(aq) + 3OH⁻(aq) → Fe(OH)₃(s)'
+    },
+    naoh_excess: {
+      ppt: '#b45309',
+      obs: 'Orange-brown precipitate is insoluble in excess NaOH(aq).'
+    },
+    nh3_excess: {
+      ppt: '#b45309',
+      obs: 'Orange-brown precipitate of Fe(OH)₃ formed, insoluble in excess NH₃(aq).'
+    }
+  },
+  NH4: {
+    id: 'NH4', symbol: 'NH₄⁺', name: 'Ammonium (NH₄⁺)',
+    solutionColor: 'rgba(224, 242, 254, 0.18)',
+    solutionDesc: 'Colourless solution',
+    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour' },
+    naoh: {
+      ppt: null,
+      gas: 'NH3',
+      obs: 'No precipitate; on warming with NaOH(aq), pungent ammonia gas (NH₃) is released which turns damp red litmus paper BLUE!',
+      eq: 'NH₄⁺(aq) + OH⁻(aq) → NH₃(g) + H₂O(l)'
+    },
+    naoh_excess: {
+      ppt: null,
+      gas: 'NH3',
+      obs: 'Warming with NaOH(aq) evolves alkaline NH₃(g) — damp red litmus paper at the mouth of the tube turns blue.'
+    },
+    nh3_excess: { ppt: null, obs: 'No visible change.' }
+  },
+  Cr3: {
+    id: 'Cr3', symbol: 'Cr³⁺', name: 'Chromium(III) (Cr³⁺)',
+    solutionColor: 'rgba(16, 185, 129, 0.38)',
+    solutionDesc: 'Pale violet-green solution',
+    flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour' },
+    naoh: {
+      ppt: '#4d7c0f',
+      obs: 'Grey-green precipitate of amphoteric Cr(OH)₃(H₂O)₃ formed.',
+      eq: '[Cr(H₂O)₆]³⁺(aq) + 3OH⁻(aq) → Cr(OH)₃(H₂O)₃(s) + 3H₂O(l)'
+    },
+    naoh_excess: {
+      ppt: null,
+      solutionOverride: 'rgba(21, 128, 61, 0.78)',
+      obs: 'Grey-green precipitate DISSOLVES in excess NaOH(aq) to form a dark green solution of [Cr(OH)₆]³⁻!',
+      eq: 'Cr(OH)₃(H₂O)₃(s) + 3OH⁻(aq) → [Cr(OH)₆]³⁻(aq) + 3H₂O(l)'
+    },
+    nh3_excess: {
+      ppt: null,
+      solutionOverride: 'rgba(147, 51, 234, 0.68)',
+      obs: 'Grey-green precipitate dissolves slowly in excess NH₃(aq) to form a purple solution of [Cr(NH₃)₆]³⁺!',
+      eq: 'Cr(OH)₃(H₂O)₃(s) + 6NH₃(aq) → [Cr(NH₃)₆]³⁺(aq) + 3OH⁻(aq) + 3H₂O(l)'
+    }
+  },
+  Mn2: {
+    id: 'Mn2', symbol: 'Mn²⁺', name: 'Manganese(II) (Mn²⁺)',
+    solutionColor: 'rgba(244, 114, 182, 0.22)',
+    solutionDesc: 'Very pale pink solution',
+    flame: { color: '#a3e635', core: '#ecfccb', label: 'Faint yellow-green flame' },
+    naoh: {
+      ppt: '#fde68a',
+      obs: 'Off-white / buff precipitate of Mn(OH)₂ formed, rapidly darkening to brown in air.',
+      eq: 'Mn²⁺(aq) + 2OH⁻(aq) → Mn(OH)₂(s)'
+    },
+    naoh_excess: {
+      ppt: '#d97706',
+      obs: 'Buff precipitate is insoluble in excess NaOH(aq) and oxidises to brown Mn₂O₃/MnO₂ in air.'
+    },
+    nh3_excess: {
+      ppt: '#fde68a',
+      obs: 'Buff precipitate of Mn(OH)₂, insoluble in excess NH₃(aq); darkens on standing.'
+    }
+  },
+  Zn: {
+    id: 'Zn', symbol: 'Zn²⁺', name: 'Zinc (Zn²⁺)',
+    solutionColor: 'rgba(224, 242, 254, 0.18)',
+    solutionDesc: 'Colourless solution',
+    flame: { color: '#2dd4bf', core: '#ccfbf1', label: 'Faint bluish-green flame' },
+    naoh: {
+      ppt: '#f8fafc',
+      obs: 'White precipitate of Zn(OH)₂ formed.',
+      eq: 'Zn²⁺(aq) + 2OH⁻(aq) → Zn(OH)₂(s)'
+    },
+    naoh_excess: {
+      ppt: null,
+      obs: 'White precipitate DISSOLVES in excess NaOH(aq) to give a colourless solution of [Zn(OH)₄]²⁻!',
+      eq: 'Zn(OH)₂(s) + 2OH⁻(aq) → [Zn(OH)₄]²⁻(aq)'
+    },
+    nh3_excess: {
+      ppt: null,
+      obs: 'White precipitate DISSOLVES in excess NH₃(aq) to give a colourless solution of [Zn(NH₃)₄]²⁺ (distinguishes Zn²⁺ from Al³⁺)!'
+    }
+  }
+};
+
+const ANIONS_DB = {
+  Cl: {
+    id: 'Cl', symbol: 'Cl⁻', name: 'Chloride (Cl⁻)',
+    acid: { fizz: false, obs: 'No effervescence with dilute acid.' },
+    bacl2: { ppt: null, obs: 'No precipitate formed with acidified BaCl₂(aq).' },
+    agno3: {
+      ppt: '#f8fafc',
+      obs: 'White precipitate of silver chloride (AgCl) formed.',
+      eq: 'Ag⁺(aq) + Cl⁻(aq) → AgCl(s)'
+    },
+    agno3_nh3: {
+      ppt: null,
+      obs: 'White AgCl precipitate DISSOLVES readily in dilute NH₃(aq) to give a colourless solution of [Ag(NH₃)₂]⁺!',
+      eq: 'AgCl(s) + 2NH₃(aq) → [Ag(NH₃)₂]⁺(aq) + Cl⁻(aq)'
+    }
+  },
+  Br: {
+    id: 'Br', symbol: 'Br⁻', name: 'Bromide (Br⁻)',
+    acid: { fizz: false, obs: 'No effervescence with dilute acid.' },
+    bacl2: { ppt: null, obs: 'No precipitate formed with acidified BaCl₂(aq).' },
+    agno3: {
+      ppt: '#fef3c7',
+      obs: 'Cream precipitate of silver bromide (AgBr) formed.',
+      eq: 'Ag⁺(aq) + Br⁻(aq) → AgBr(s)'
+    },
+    agno3_nh3: {
+      ppt: null,
+      obs: 'Cream AgBr precipitate is insoluble in dilute NH₃(aq), but DISSOLVES in concentrated NH₃(aq)!'
+    }
+  },
+  I: {
+    id: 'I', symbol: 'I⁻', name: 'Iodide (I⁻)',
+    acid: { fizz: false, obs: 'No effervescence with dilute acid.' },
+    bacl2: { ppt: null, obs: 'No precipitate formed with acidified BaCl₂(aq).' },
+    agno3: {
+      ppt: '#fde047',
+      obs: 'Pale yellow precipitate of silver iodide (AgI) formed.',
+      eq: 'Ag⁺(aq) + I⁻(aq) → AgI(s)'
+    },
+    agno3_nh3: {
+      ppt: '#fde047',
+      obs: 'Yellow AgI precipitate is completely INSOLUBLE in both dilute and concentrated NH₃(aq)!'
+    }
+  },
+  SO4: {
+    id: 'SO4', symbol: 'SO₄²⁻', name: 'Sulfate (SO₄²⁻)',
+    acid: { fizz: false, obs: 'No effervescence with dilute acid.' },
+    bacl2: {
+      ppt: '#ffffff',
+      obs: 'Thick white precipitate of barium sulfate (BaSO₄) formed!',
+      eq: 'Ba²⁺(aq) + SO₄²⁻(aq) → BaSO₄(s)'
+    },
+    agno3: { ppt: null, obs: 'No precipitate formed with acidified AgNO₃(aq).' },
+    agno3_nh3: { ppt: null, obs: 'No silver halide precipitate present.' }
+  },
+  CO3: {
+    id: 'CO3', symbol: 'CO₃²⁻', name: 'Carbonate (CO₃²⁻)',
+    acid: {
+      fizz: true,
+      obs: 'Vigorous effervescence (fizzing)! Gas evolved turns limewater cloudy white (CO₂ confirmed).',
+      eq: 'CO₃²⁻(aq) + 2H⁺(aq) → CO₂(g) + H₂O(l)'
+    },
+    bacl2: {
+      ppt: null,
+      fizz: true,
+      obs: 'Effervescence from the acidifying HCl/HNO₃; no BaSO₄ precipitate remains once acid is in excess.'
+    },
+    agno3: {
+      ppt: null,
+      fizz: true,
+      obs: 'Effervescence as dilute HNO₃ decomposes CO₃²⁻ to CO₂(g); no halide precipitate.'
+    },
+    agno3_nh3: { ppt: null, obs: 'No silver halide precipitate present.' }
+  },
+  NO3: {
+    id: 'NO3', symbol: 'NO₃⁻', name: 'Nitrate (NO₃⁻)',
+    acid: { fizz: false, obs: 'No effervescence with dilute acid.' },
+    bacl2: { ppt: null, obs: 'No precipitate formed with acidified BaCl₂(aq).' },
+    agno3: { ppt: null, obs: 'No precipitate formed with acidified AgNO₃(aq) (all nitrates are soluble).' },
+    agno3_nh3: { ppt: null, obs: 'No silver halide precipitate present.' }
+  }
+};
+
+/* Specification Pools per Board & Tier (ensuring authentic soluble salts) */
+const SPEC_CONFIG = {
+  WJEC: {
+    GCSE: {
+      budget: 140,
+      cations: ['Li', 'Na', 'K', 'Ca', 'Ba', 'Cu', 'Fe2', 'Fe3', 'Mg', 'Al', 'NH4'],
+      anions: ['Cl', 'Br', 'I', 'SO4', 'CO3'],
+      reagents: ['flame', 'naoh', 'naoh_excess', 'acid', 'bacl2', 'agno3']
+    },
+    ALEVEL: {
+      budget: 155,
+      cations: ['Li', 'Na', 'K', 'Ca', 'Ba', 'Mg', 'Al', 'Cu', 'Fe2', 'Fe3', 'Cr3', 'Mn2', 'Zn', 'NH4'],
+      anions: ['Cl', 'Br', 'I', 'SO4', 'CO3', 'NO3'],
+      reagents: ['flame', 'naoh', 'naoh_excess', 'nh3_excess', 'acid', 'bacl2', 'agno3', 'agno3_nh3', 'h2so4']
+    }
+  },
+  AQA: {
+    GCSE: {
+      budget: 140,
+      cations: ['Li', 'Na', 'K', 'Ca', 'Cu', 'Fe2', 'Fe3', 'Mg', 'Al'],
+      anions: ['Cl', 'Br', 'I', 'SO4', 'CO3'],
+      reagents: ['flame', 'naoh', 'naoh_excess', 'acid', 'bacl2', 'agno3']
+    },
+    ALEVEL: {
+      budget: 155,
+      cations: ['Ca', 'Ba', 'Mg', 'Al', 'Cu', 'Fe2', 'Fe3', 'Cr3', 'NH4'],
+      anions: ['Cl', 'Br', 'I', 'SO4', 'CO3', 'NO3'],
+      reagents: ['flame', 'naoh', 'naoh_excess', 'nh3_excess', 'acid', 'bacl2', 'agno3', 'agno3_nh3', 'h2so4']
+    }
+  },
+  OCR: {
+    GCSE: {
+      budget: 140,
+      cations: ['Li', 'Na', 'K', 'Ca', 'Cu', 'Fe2', 'Fe3', 'Zn', 'NH4'],
+      anions: ['Cl', 'Br', 'I', 'SO4', 'CO3'],
+      reagents: ['flame', 'naoh', 'naoh_excess', 'acid', 'bacl2', 'agno3']
+    },
+    ALEVEL: {
+      budget: 155,
+      cations: ['Ca', 'Ba', 'Cu', 'Fe2', 'Fe3', 'Cr3', 'Mn2', 'Zn', 'NH4'],
+      anions: ['Cl', 'Br', 'I', 'SO4', 'CO3', 'NO3'],
+      reagents: ['flame', 'naoh', 'naoh_excess', 'nh3_excess', 'acid', 'bacl2', 'agno3', 'agno3_nh3']
+    }
+  },
+  EDEXCEL: {
+    GCSE: {
+      budget: 140,
+      cations: ['Li', 'Na', 'K', 'Ca', 'Cu', 'Fe2', 'Fe3', 'Al', 'NH4'],
+      anions: ['Cl', 'Br', 'I', 'SO4', 'CO3'],
+      reagents: ['flame', 'naoh', 'naoh_excess', 'acid', 'bacl2', 'agno3']
+    },
+    ALEVEL: {
+      budget: 155,
+      cations: ['Li', 'Na', 'K', 'Ca', 'Ba', 'Mg', 'Al', 'Cu', 'Fe2', 'Fe3', 'Cr3', 'Zn', 'NH4'],
+      anions: ['Cl', 'Br', 'I', 'SO4', 'CO3', 'NO3'],
+      reagents: ['flame', 'naoh', 'naoh_excess', 'nh3_excess', 'acid', 'bacl2', 'agno3', 'agno3_nh3', 'h2so4']
+    }
+  }
+};
+
+const REAGENT_META = {
+  flame:       { id: 'flame',       name: '🔥 Flame Test',          cost: 10, desc: 'Nichrome wire loop in roaring Bunsen flame' },
+  naoh:        { id: 'naoh',        name: '💧 Add NaOH(aq) + Warm', cost: 10, desc: 'Few drops of dilute NaOH & damp red litmus check' },
+  naoh_excess: { id: 'naoh_excess', name: '🧪 Excess NaOH(aq)',     cost: 10, desc: 'Test if hydroxide precipitate is amphoteric' },
+  nh3_excess:  { id: 'nh3_excess',  name: '⚗️ Excess NH₃(aq)',      cost: 10, desc: 'Test for ligand substitution / complex ions' },
+  acid:        { id: 'acid',        name: '🫧 Dilute HNO₃ + Limewater', cost: 10, desc: 'Test for carbonate CO₃²⁻ effervescence' },
+  bacl2:       { id: 'bacl2',       name: '⚪ Acidified BaCl₂(aq)',  cost: 12, desc: 'Test for sulfate SO₄²⁻ white precipitate' },
+  agno3:       { id: 'agno3',       name: '🥈 Acidified AgNO₃(aq)',  cost: 12, desc: 'Test for halide ions (Cl⁻, Br⁻, I⁻)' },
+  agno3_nh3:   { id: 'agno3_nh3',   name: '🔍 AgX + NH₃ Solubility', cost: 10, desc: 'Confirm AgCl / AgBr / AgI with dilute & conc. NH₃' },
+  h2so4:       { id: 'h2so4',       name: '🧪 Dilute H₂SO₄(aq)',     cost: 10, desc: 'Group 2 sulfate solubility test (Ba²⁺ vs Mg²⁺)' }
+};
+
+/* ============================================================================
+   3. GAME STATE & MYSTERY CASE GENERATOR
+   ============================================================================ */
+const TUBE_LABELS = ['A', 'B', 'C', 'D', 'E'];
+
+const state = {
+  board: 'WJEC',
+  tier: 'GCSE',
+  caseId: 401,
+  budget: 140,
+  maxBudget: 140,
+  selectedTubeIdx: 0,
+  tubes: [], // { label, cationId, anionId, visualState, logs: [], guessedCation: '', guessedAnion: '' }
+  anim: {
+    flameActive: false,
+    flameColor: '#38bdf8',
+    flameCore: '#e0f2fe',
+    flameTimer: 0,
+    dropperActive: false,
+    dropperTubeIdx: 0,
+    dropperTimer: 0,
+    fizzTubeIdx: -1,
+    fizzTimer: 0,
+    litmusTubeIdx: -1,
+    litmusTimer: 0
+  },
+  scoreSubmittedThisCase: false,
+  lastFinalScore: 0
+};
+
+function isSolubleSalt(catId, anId) {
+  // Carbonates are only soluble in water with Group 1 or NH4+
+  if (anId === 'CO3' && !['Li', 'Na', 'K', 'NH4'].includes(catId)) return false;
+  // Barium and Calcium sulfates are insoluble / sparingly soluble so cannot be starting clear aqueous solutions
+  if (anId === 'SO4' && ['Ba', 'Ca'].includes(catId)) return false;
+  // Fe3+ and Al3+ carbonates hydrolyse in water
+  if (anId === 'CO3' && ['Fe3', 'Al', 'Cr3'].includes(catId)) return false;
+  // Fe3+ oxidises I- to I2
+  if (catId === 'Fe3' && anId === 'I') return false;
+  // Cu2+ oxidises I- to CuI + I2
+  if (catId === 'Cu' && anId === 'I') return false;
+  return true;
+}
+
+function generateNewCase() {
+  const cfg = SPEC_CONFIG[state.board][state.tier];
+  state.maxBudget = cfg.budget;
+  state.budget = cfg.budget;
+  state.caseId = Math.floor(100 + Math.random() * 899);
+  state.selectedTubeIdx = 0;
+  state.scoreSubmittedThisCase = false;
+
+  // Pick 5 distinct cations and 5 anions (with at least one halide, one sulfate, one carbonate where possible)
+  const shuffledCats = [...cfg.cations].sort(() => Math.random() - 0.5);
+  const chosenCats = shuffledCats.slice(0, 5);
+
+  // Ensure a rich variety of anions across the 5 tubes
+  const baseAnions = [...cfg.anions].sort(() => Math.random() - 0.5);
+  while (baseAnions.length < 5) {
+    baseAnions.push(cfg.anions[Math.floor(Math.random() * cfg.anions.length)]);
+  }
+
+  // Match cations and anions so all 5 starting solutions are soluble in water
+  const pairs = [];
+  const usedCats = [...chosenCats];
+  for (let i = 0; i < 5; i++) {
+    const catId = usedCats[i];
+    let anId = baseAnions[i % baseAnions.length];
+    if (!isSolubleSalt(catId, anId)) {
+      const validAnions = cfg.anions.filter(a => isSolubleSalt(catId, a));
+      anId = validAnions[Math.floor(Math.random() * validAnions.length)] || 'Cl';
+    }
+    pairs.push({ catId, anId });
+  }
+
+  state.tubes = pairs.map((pair, idx) => {
+    const cat = CATIONS_DB[pair.catId];
+    return {
+      label: TUBE_LABELS[idx],
+      cationId: pair.catId,
+      anionId: pair.anId,
+      visual: {
+        liquidColor: cat.solutionColor,
+        pptColor: null,
+        lastTestLabel: 'Untested Sample'
+      },
+      testsRun: {},
+      logs: [],
+      guessedCation: '',
+      guessedAnion: ''
+    };
+  });
+
+  document.getElementById('liveObsTitle').textContent = `CASE #${state.caseId} INITIALISED (${state.board} ${state.tier})`;
+  document.getElementById('liveObsText').textContent = 'Select a test tube (A–E) and perform chemical tests to deduce all 5 unknown aqueous salts within your reagent budget.';
+  document.getElementById('liveObsEq').classList.add('hidden');
+
+  renderAllUI();
+}
+
+/* ============================================================================
+   4. PERFORM CHEMICAL TEST ON SELECTED TUBE
+   ============================================================================ */
+function runChemicalTest(reagentId) {
+  const tube = state.tubes[state.selectedTubeIdx];
+  const meta = REAGENT_META[reagentId];
+  if (!tube || !meta) return;
+
+  // If already tested on this tube, re-show the observation free of charge!
+  const alreadyTested = Boolean(tube.testsRun[reagentId]);
+  if (!alreadyTested) {
+    if (state.budget < meta.cost) {
+      audio.playFanfare(false);
+      document.getElementById('liveObsTitle').textContent = '⚠️ INSUFFICIENT REAGENT BUDGET';
+      document.getElementById('liveObsText').textContent = `You need £${meta.cost} for ${meta.name}, but only have £${state.budget} remaining. Review your Evidence Log and submit your best forensic deductions!`;
+      return;
+    }
+    state.budget -= meta.cost;
+    tube.testsRun[reagentId] = true;
+  }
+
+  const cat = CATIONS_DB[tube.cationId];
+  const an = ANIONS_DB[tube.anionId];
+
+  let obsText = '';
+  let eqText = '';
+  let newPpt = null;
+  let newLiq = cat.solutionColor;
+
+  if (reagentId === 'flame') {
+    audio.playFlame();
+    const flameLbl = (cat.flame.labelByBoard && cat.flame.labelByBoard[state.board]) || cat.flame.label;
+    obsText = `Flame Test: ${flameLbl}.`;
+    state.anim.flameActive = true;
+    state.anim.flameColor = cat.flame.color;
+    state.anim.flameCore = cat.flame.core;
+    state.anim.flameTimer = 95;
+  } else if (reagentId === 'naoh') {
+    audio.playDrop();
+    obsText = cat.naoh.obs;
+    eqText = cat.naoh.eq || '';
+    newPpt = cat.naoh.ppt;
+    state.anim.dropperActive = true;
+    state.anim.dropperTubeIdx = state.selectedTubeIdx;
+    state.anim.dropperTimer = 45;
+    if (cat.naoh.gas === 'NH3') {
+      state.anim.litmusTubeIdx = state.selectedTubeIdx;
+      state.anim.litmusTimer = 110;
+    }
+  } else if (reagentId === 'naoh_excess') {
+    audio.playDrop();
+    obsText = cat.naoh_excess.obs;
+    eqText = cat.naoh_excess.eq || '';
+    newPpt = cat.naoh_excess.ppt;
+    if (cat.naoh_excess.solutionOverride) newLiq = cat.naoh_excess.solutionOverride;
+    state.anim.dropperActive = true;
+    state.anim.dropperTubeIdx = state.selectedTubeIdx;
+    state.anim.dropperTimer = 45;
+  } else if (reagentId === 'nh3_excess') {
+    audio.playDrop();
+    obsText = cat.nh3_excess.obs;
+    eqText = cat.nh3_excess.eq || '';
+    newPpt = cat.nh3_excess.ppt;
+    if (cat.nh3_excess.solutionOverride) newLiq = cat.nh3_excess.solutionOverride;
+    state.anim.dropperActive = true;
+    state.anim.dropperTubeIdx = state.selectedTubeIdx;
+    state.anim.dropperTimer = 45;
+  } else if (reagentId === 'acid') {
+    if (an.acid.fizz) audio.playFizz(); else audio.playDrop();
+    obsText = an.acid.obs;
+    eqText = an.acid.eq || '';
+    state.anim.dropperActive = true;
+    state.anim.dropperTubeIdx = state.selectedTubeIdx;
+    state.anim.dropperTimer = 45;
+    if (an.acid.fizz) {
+      state.anim.fizzTubeIdx = state.selectedTubeIdx;
+      state.anim.fizzTimer = 95;
+    }
+  } else if (reagentId === 'bacl2') {
+    if (an.bacl2.fizz) audio.playFizz(); else audio.playDrop();
+    // Note: if cation is Ba2+, adding BaCl2 doesn't precipitate with Cl-, only if anion is SO4
+    obsText = an.bacl2.obs;
+    eqText = an.bacl2.eq || '';
+    newPpt = an.bacl2.ppt;
+    state.anim.dropperActive = true;
+    state.anim.dropperTubeIdx = state.selectedTubeIdx;
+    state.anim.dropperTimer = 45;
+  } else if (reagentId === 'agno3') {
+    if (an.agno3.fizz) audio.playFizz(); else audio.playDrop();
+    obsText = an.agno3.obs;
+    eqText = an.agno3.eq || '';
+    newPpt = an.agno3.ppt;
+    state.anim.dropperActive = true;
+    state.anim.dropperTubeIdx = state.selectedTubeIdx;
+    state.anim.dropperTimer = 45;
+  } else if (reagentId === 'agno3_nh3') {
+    audio.playDrop();
+    obsText = an.agno3_nh3.obs;
+    eqText = an.agno3_nh3.eq || '';
+    newPpt = an.agno3_nh3.ppt;
+    state.anim.dropperActive = true;
+    state.anim.dropperTubeIdx = state.selectedTubeIdx;
+    state.anim.dropperTimer = 45;
+  } else if (reagentId === 'h2so4') {
+    audio.playDrop();
+    if (cat.h2so4) {
+      obsText = cat.h2so4.obs;
+      eqText = cat.h2so4.eq || '';
+      newPpt = cat.h2so4.ppt;
+    } else if (an.id === 'CO3') {
+      obsText = 'Effervescence (CO₂ gas released) as dilute H₂SO₄ reacts with carbonate ions.';
+      state.anim.fizzTubeIdx = state.selectedTubeIdx;
+      state.anim.fizzTimer = 85;
+    } else {
+      obsText = 'No precipitate formed with dilute H₂SO₄(aq).';
+    }
+    state.anim.dropperActive = true;
+    state.anim.dropperTubeIdx = state.selectedTubeIdx;
+    state.anim.dropperTimer = 45;
+  }
+
+  if (reagentId !== 'flame') {
+    tube.visual.pptColor = newPpt;
+    tube.visual.liquidColor = newLiq;
+    tube.visual.lastTestLabel = meta.name.replace(/^[^\s]+\s/, '');
+  }
+
+  if (!alreadyTested) {
+    tube.logs.unshift({
+      reagentName: meta.name,
+      obs: obsText,
+      eq: eqText
+    });
+  }
+
+  document.getElementById('liveObsTitle').textContent = `TUBE ${tube.label} • ${meta.name.toUpperCase()}${alreadyTested ? ' (RECALLED FROM LOG)' : ''}`;
+  document.getElementById('liveObsText').textContent = obsText;
+  const eqEl = document.getElementById('liveObsEq');
+  if (eqText) {
+    eqEl.textContent = `Ionic Equation: ${eqText}`;
+    eqEl.classList.remove('hidden');
+  } else {
+    eqEl.classList.add('hidden');
+  }
+
+  renderAllUI();
+}
+
+/* ============================================================================
+   5. UI RENDERING (TABS, REAGENTS, LOGS, DEDUCTION SELECTORS)
+   ============================================================================ */
+function renderAllUI() {
+  const cfg = SPEC_CONFIG[state.board][state.tier];
+  const activeTube = state.tubes[state.selectedTubeIdx];
+
+  // Topbar badges
+  document.getElementById('activeSpecBadge').textContent = `${state.board} • ${state.tier === 'ALEVEL' ? 'A-Level' : 'GCSE'}`;
+  document.getElementById('lblCaseId').textContent = state.caseId;
+  document.getElementById('lblBudget').textContent = `£${state.budget}`;
+  document.getElementById('lblMaxBudget').textContent = `£${state.maxBudget}`;
+  const budgetPill = document.getElementById('budgetPill');
+  budgetPill.classList.toggle('low', state.budget <= 30);
+
+  // Selected Tube headers
+  document.getElementById('lblSelectedTube').textContent = `Tube ${activeTube.label}`;
+  document.getElementById('lblTargetTubeBtn').textContent = `Tube ${activeTube.label}`;
+  document.getElementById('lblLogTubeName').textContent = `Tube ${activeTube.label}`;
+  document.getElementById('lblTubeAppearance').textContent = `Initial: ${CATIONS_DB[activeTube.cationId].solutionDesc}`;
+
+  // 1. Tube Tabs
+  const tabsContainer = document.getElementById('tubeTabsContainer');
+  tabsContainer.innerHTML = '';
+  state.tubes.forEach((t, idx) => {
+    const isSel = idx === state.selectedTubeIdx;
+    const isAssigned = Boolean(t.guessedCation && t.guessedAnion);
+    const btn = document.createElement('button');
+    btn.className = `tube-tab${isSel ? ' selected' : ''}${isAssigned ? ' solved-tag' : ''}`;
+    const catSym = t.guessedCation ? CATIONS_DB[t.guessedCation].symbol : '?⁺';
+    const anSym = t.guessedAnion ? ANIONS_DB[t.guessedAnion].symbol : '?⁻';
+    btn.innerHTML = `
+      <span class="tube-tab-lbl">Tube ${t.label}</span>
+      <span class="tube-tab-sub">${catSym} ${anSym}</span>
+    `;
+    btn.addEventListener('click', () => {
+      state.selectedTubeIdx = idx;
+      renderAllUI();
+    });
+    tabsContainer.appendChild(btn);
+  });
+
+  // 2. Reagent Buttons
+  const rGrid = document.getElementById('reagentGrid');
+  rGrid.innerHTML = '';
+  cfg.reagents.forEach(rId => {
+    const meta = REAGENT_META[rId];
+    const done = Boolean(activeTube.testsRun[rId]);
+    const btn = document.createElement('button');
+    btn.className = `reagent-btn${done ? ' already-run' : ''}`;
+    btn.disabled = !done && state.budget < meta.cost;
+    btn.innerHTML = `
+      <div class="reagent-top">
+        <span class="reagent-name">${meta.name}</span>
+        <span class="reagent-cost">${done ? '✓ LOGGED' : `£${meta.cost}`}</span>
+      </div>
+      <div class="reagent-sub">${meta.desc}</div>
+    `;
+    btn.addEventListener('click', () => runChemicalTest(rId));
+    rGrid.appendChild(btn);
+  });
+
+  // 3. Evidence Log for Active Tube
+  const logList = document.getElementById('tubeLogList');
+  document.getElementById('lblTestsCount').textContent = `${activeTube.logs.length} test${activeTube.logs.length === 1 ? '' : 's'} recorded`;
+  if (activeTube.logs.length === 0) {
+    logList.innerHTML = `<div style="font-size:0.8rem;color:var(--text-muted);padding:8px;">No chemical tests performed on Tube ${activeTube.label} yet. Initial appearance: <strong>${CATIONS_DB[activeTube.cationId].solutionDesc}</strong>.</div>`;
+  } else {
+    logList.innerHTML = activeTube.logs.map(item => `
+      <div class="log-item">
+        <div class="log-item-hdr">
+          <span>${item.reagentName}</span>
+          <span>Tube ${activeTube.label}</span>
+        </div>
+        <div class="log-item-obs">${item.obs}</div>
+        ${item.eq ? `<div style="font-family:monospace;font-size:0.73rem;color:var(--emerald-soft);margin-top:2px;">${item.eq}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // 4. Deduction Board
+  const dedList = document.getElementById('deductionList');
+  dedList.innerHTML = '';
+  let assignedCount = 0;
+
+  state.tubes.forEach((t, idx) => {
+    if (t.guessedCation && t.guessedAnion) assignedCount++;
+    const row = document.createElement('div');
+    row.className = `deduction-row${idx === state.selectedTubeIdx ? ' active-row' : ''}`;
+
+    const badge = document.createElement('div');
+    badge.className = 'ded-tube-badge';
+    badge.innerHTML = `🧪 Tube ${t.label}`;
+    badge.addEventListener('click', () => {
+      state.selectedTubeIdx = idx;
+      renderAllUI();
+    });
+
+    const catSelect = document.createElement('select');
+    catSelect.className = 'ion-select';
+    catSelect.setAttribute('aria-label', `Tube ${t.label} Cation`);
+    catSelect.innerHTML = `<option value="">-- Cation (+) --</option>` +
+      cfg.cations.map(cId => `<option value="${cId}" ${t.guessedCation === cId ? 'selected' : ''}>${CATIONS_DB[cId].name}</option>`).join('');
+    catSelect.addEventListener('change', (e) => {
+      t.guessedCation = e.target.value;
+      state.selectedTubeIdx = idx;
+      renderAllUI();
+    });
+
+    const anSelect = document.createElement('select');
+    anSelect.className = 'ion-select';
+    anSelect.setAttribute('aria-label', `Tube ${t.label} Anion`);
+    anSelect.innerHTML = `<option value="">-- Anion (–) --</option>` +
+      cfg.anions.map(aId => `<option value="${aId}" ${t.guessedAnion === aId ? 'selected' : ''}>${ANIONS_DB[aId].name}</option>`).join('');
+    anSelect.addEventListener('change', (e) => {
+      t.guessedAnion = e.target.value;
+      state.selectedTubeIdx = idx;
+      renderAllUI();
+    });
+
+    row.appendChild(badge);
+    row.appendChild(catSelect);
+    row.appendChild(anSelect);
+    dedList.appendChild(row);
+  });
+
+  document.getElementById('lblDeductionProgress').textContent = `${assignedCount} / 5 Fully Assigned`;
+}
+
+/* ============================================================================
+   6. INTERACTIVE HTML5 CANVAS LAB BENCH RENDERER
+   ============================================================================ */
+const canvas = document.getElementById('labCanvas');
+const ctx = canvas.getContext('2d');
+
+function getTubeX(idx) {
+  return 88 + idx * 104;
+}
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+
+  for (let i = 0; i < 5; i++) {
+    const tx = getTubeX(i);
+    if (mx >= tx - 32 && mx <= tx + 32 && my >= 110 && my <= 390) {
+      state.selectedTubeIdx = i;
+      renderAllUI();
+      break;
+    }
+  }
+});
+
+function renderLabCanvas() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const t = Date.now() / 1000;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Subtle Forensic Lab Bench Surface & Back Splash
+  const benchGrad = ctx.createLinearGradient(0, 355, 0, h);
+  benchGrad.addColorStop(0, '#0f172a');
+  benchGrad.addColorStop(1, '#060a14');
+  ctx.fillStyle = benchGrad;
+  ctx.fillRect(0, 355, w, h - 355);
+  ctx.strokeStyle = '#29426e';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, 355);
+  ctx.lineTo(w, 355);
+  ctx.stroke();
+
+  // Wooden / Brass Test Tube Rack Back Pillars
+  ctx.fillStyle = '#78350f';
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(42, 200, 14, 172);
+  ctx.strokeRect(42, 200, 14, 172);
+  ctx.fillRect(542, 200, 14, 172);
+  ctx.strokeRect(542, 200, 14, 172);
+
+  // Draw the 5 Mystery Test Tubes
+  state.tubes.forEach((tube, idx) => {
+    const cx = getTubeX(idx);
+    const topY = 140;
+    const botY = 342;
+    const rad = 22;
+    const isSel = idx === state.selectedTubeIdx;
+
+    // Selection Spotlight Halo under Selected Tube
+    if (isSel) {
+      const halo = ctx.createRadialGradient(cx, 250, 8, cx, 250, 62);
+      halo.addColorStop(0, 'rgba(250, 204, 21, 0.25)');
+      halo.addColorStop(1, 'rgba(250, 204, 21, 0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(cx, 250, 62, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Golden Pointer Arrow above Selected Tube
+      const bounce = Math.sin(t * 5) * 4;
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.moveTo(cx - 9, 102 + bounce);
+      ctx.lineTo(cx + 9, 102 + bounce);
+      ctx.lineTo(cx, 115 + bounce);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Clip Region Inside Test Tube for Liquid & Precipitates
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx - rad + 2, topY + 6);
+    ctx.lineTo(cx - rad + 2, botY - rad);
+    ctx.arc(cx, botY - rad, rad - 2, Math.PI, 0, true);
+    ctx.lineTo(cx + rad - 2, topY + 6);
+    ctx.closePath();
+    ctx.clip();
+
+    // Aqueous Solution Column
+    const liqTop = 215;
+    ctx.fillStyle = tube.visual.liquidColor;
+    ctx.fillRect(cx - rad, liqTop, rad * 2, botY - liqTop + 10);
+
+    // Meniscus Curve
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, liqTop - 4, rad, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+
+    // Gelatinous / Granular Precipitate Layer at Bottom & Cloud Suspension
+    if (tube.visual.pptColor) {
+      ctx.fillStyle = tube.visual.pptColor;
+      ctx.globalAlpha = 0.92;
+      ctx.fillRect(cx - rad, 288, rad * 2, botY - 288 + 6);
+
+      // Suspended flocculent particles
+      for (let p = 0; p < 14; p++) {
+        const px = cx - 14 + ((p * 19) % 29);
+        const py = 235 + ((p * 23) % 62) + Math.sin(t * 2 + p) * 2;
+        ctx.beginPath();
+        ctx.arc(px, py, (p % 3) + 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Effervescence Bubbles (CO2 Fizzing)
+    if (state.anim.fizzTubeIdx === idx && state.anim.fizzTimer > 0) {
+      ctx.fillStyle = '#ffffff';
+      for (let b = 0; b < 16; b++) {
+        const bx = cx - 13 + ((b * 17) % 26);
+        const by = botY - 12 - (((t * 95) + b * 14) % 115);
+        ctx.beginPath();
+        ctx.arc(bx, by, 2.2 + (b % 2), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.restore();
+
+    // Damp Red Litmus Paper Turning Blue at Tube Mouth (for NH4+ + NaOH)
+    if (state.anim.litmusTubeIdx === idx && state.anim.litmusTimer > 0) {
+      ctx.save();
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(cx + 4, topY - 22, 8, 16);
+      ctx.fillStyle = '#2563eb';
+      ctx.fillRect(cx + 4, topY - 6, 8, 18);
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Litmus → BLUE (NH₃)', cx, topY - 28);
+      ctx.restore();
+    }
+
+    // Glass Test Tube Outline & Specular Highlight
+    ctx.strokeStyle = isSel ? '#fde047' : 'rgba(203, 213, 225, 0.78)';
+    ctx.lineWidth = isSel ? 2.6 : 1.8;
+    ctx.beginPath();
+    ctx.moveTo(cx - rad, topY);
+    ctx.lineTo(cx - rad, botY - rad);
+    ctx.arc(cx, botY - rad, rad, Math.PI, 0, true);
+    ctx.lineTo(cx + rad, topY);
+    ctx.stroke();
+
+    // Flared Glass Rim
+    ctx.beginPath();
+    ctx.ellipse(cx, topY, rad + 3, 4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Glass Specular Reflection Strip
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - rad + 6, topY + 14);
+    ctx.lineTo(cx - rad + 6, botY - rad - 6);
+    ctx.stroke();
+
+    // Frosted Label Patch on Tube
+    ctx.fillStyle = isSel ? 'rgba(250, 204, 21, 0.92)' : 'rgba(241, 245, 249, 0.85)';
+    ctx.fillRect(cx - 14, 165, 28, 22);
+    ctx.fillStyle = '#0f172a';
+    ctx.font = '900 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(tube.label, cx, 181);
+
+    // Status Tag under Tube Base
+    ctx.fillStyle = isSel ? '#fde047' : '#94a3b8';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText(`TUBE ${tube.label}`, cx, 392);
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = '600 10px sans-serif';
+    const shortStatus = tube.visual.lastTestLabel.length > 15
+      ? tube.visual.lastTestLabel.slice(0, 14) + '…'
+      : tube.visual.lastTestLabel;
+    ctx.fillText(shortStatus, cx, 407);
+  });
+
+  // Front Rack Crossbars
+  ctx.fillStyle = 'rgba(180, 83, 9, 0.85)';
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 1.2;
+  ctx.fillRect(36, 202, 526, 10);
+  ctx.strokeRect(36, 202, 526, 10);
+
+  ctx.fillStyle = '#78350f';
+  ctx.fillRect(34, 362, 530, 14);
+  ctx.strokeRect(34, 362, 530, 14);
+
+  // Dropper Pipette Animation above Active Tube
+  if (state.anim.dropperActive && state.anim.dropperTimer > 0) {
+    const dcx = getTubeX(state.anim.dropperTubeIdx);
+    ctx.save();
+    // Rubber Bulb
+    ctx.fillStyle = '#e11d48';
+    ctx.beginPath();
+    ctx.ellipse(dcx, 42, 9, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Glass Stem
+    ctx.fillStyle = 'rgba(226, 232, 240, 0.85)';
+    ctx.fillRect(dcx - 4, 54, 8, 42);
+    // Falling Droplet
+    const dropY = 100 + ((45 - state.anim.dropperTimer) * 2.4);
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(dcx, dropY, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    state.anim.dropperTimer--;
+  }
+
+  // Right Side of Bench: Bunsen Burner & Flame Test Station (x = 665)
+  const bx = 665;
+  ctx.save();
+  // Burner Base & Chimney
+  ctx.fillStyle = '#475569';
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(bx - 36, 372);
+  ctx.lineTo(bx - 18, 352);
+  ctx.lineTo(bx + 18, 352);
+  ctx.lineTo(bx + 36, 372);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Air Hole Collar
+  ctx.fillStyle = '#eab308';
+  ctx.fillRect(bx - 11, 332, 22, 20);
+  // Burner Barrel
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(bx - 8, 255, 16, 78);
+  ctx.strokeRect(bx - 8, 255, 16, 78);
+
+  // Flame Plume
+  const isFlameTest = state.anim.flameActive && state.anim.flameTimer > 0;
+  const outerColor = isFlameTest ? state.anim.flameColor : 'rgba(56, 189, 248, 0.45)';
+  const innerColor = isFlameTest ? state.anim.flameCore : 'rgba(186, 230, 253, 0.7)';
+  const flameH = isFlameTest ? 115 + Math.sin(t * 22) * 8 : 68 + Math.sin(t * 14) * 4;
+  const flameW = isFlameTest ? 32 + Math.cos(t * 19) * 3 : 16;
+
+  // Outer Roaring Flame
+  const fGrad = ctx.createRadialGradient(bx, 255 - flameH * 0.4, 4, bx, 255 - flameH * 0.4, flameH * 0.75);
+  fGrad.addColorStop(0, innerColor);
+  fGrad.addColorStop(0.55, outerColor);
+  fGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = fGrad;
+  ctx.beginPath();
+  ctx.moveTo(bx, 255);
+  ctx.quadraticCurveTo(bx - flameW, 255 - flameH * 0.45, bx, 255 - flameH);
+  ctx.quadraticCurveTo(bx + flameW, 255 - flameH * 0.45, bx, 255);
+  ctx.fill();
+
+  // Inner Blue Cone
+  ctx.fillStyle = 'rgba(125, 211, 252, 0.85)';
+  ctx.beginPath();
+  ctx.moveTo(bx - 6, 255);
+  ctx.lineTo(bx, 222);
+  ctx.lineTo(bx + 6, 255);
+  ctx.closePath();
+  ctx.fill();
+
+  // Nichrome Wire Loop Inserted During Flame Test
+  if (isFlameTest) {
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(bx + 68, 175);
+    ctx.lineTo(bx + 4, 210);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(bx, 212, 5, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = state.anim.flameCore;
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`🔥 FLAME TEST: TUBE ${state.tubes[state.selectedTubeIdx].label}`, bx, 112);
+    state.anim.flameTimer--;
+  } else {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('BUNSEN STATION', bx, 392);
+  }
+  ctx.restore();
+
+  if (state.anim.fizzTimer > 0) state.anim.fizzTimer--;
+  if (state.anim.litmusTimer > 0) state.anim.litmusTimer--;
+
+  requestAnimationFrame(renderLabCanvas);
+}
+
+/* ============================================================================
+   7. CASE SUBMISSION, SCORING & EXAM BOARD REFERENCE MANUAL
+   ============================================================================ */
+function evaluateCaseSubmission() {
+  let correctIons = 0; // out of 10 (5 cations + 5 anions)
+  let perfectTubes = 0;
+
+  const rowsHtml = state.tubes.map(t => {
+    const actualCat = CATIONS_DB[t.cationId];
+    const actualAn = ANIONS_DB[t.anionId];
+    const catOk = t.guessedCation === t.cationId;
+    const anOk = t.guessedAnion === t.anionId;
+    if (catOk) correctIons++;
+    if (anOk) correctIons++;
+    if (catOk && anOk) perfectTubes++;
+
+    const statusClass = (catOk && anOk) ? 'perfect' : (catOk || anOk) ? 'partial' : 'wrong';
+    const userCatName = t.guessedCation ? CATIONS_DB[t.guessedCation].symbol : 'Unassigned';
+    const userAnName = t.guessedAnion ? ANIONS_DB[t.guessedAnion].symbol : 'Unassigned';
+
+    return `
+      <div class="result-row ${statusClass}">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-weight:800;">
+          <span>Tube ${t.label}: Actual = <strong style="color:var(--brass-soft);">${actualCat.name} ${actualAn.name}</strong></span>
+          <span>${catOk && anOk ? '✅ 2/2 Correct' : (catOk || anOk) ? '⚠️ 1/2 Partial' : '❌ 0/2 Missed'}</span>
+        </div>
+        <div style="font-size:0.78rem;color:var(--text-muted);">
+          Your Report: Cation = <strong>${userCatName}</strong> ${catOk ? '✓' : `(was ${actualCat.symbol})`} • Anion = <strong>${userAnName}</strong> ${anOk ? '✓' : `(was ${actualAn.symbol})`}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const accuracyScore = correctIons * 200; // max 2000
+  const efficiencyBonus = state.budget * 10;
+  const tierMultiplier = state.tier === 'ALEVEL' ? 1.25 : 1.0;
+  const totalScore = Math.round((accuracyScore + (correctIons >= 6 ? efficiencyBonus : 0)) * tierMultiplier);
+  state.lastFinalScore = totalScore;
+
+  let rank = 'Junior Lab Technician';
+  if (correctIons === 10 && state.budget >= 40) rank = 'S+ Chief Forensic Chemist';
+  else if (correctIons >= 9) rank = 'A+ Senior Analytical Detective';
+  else if (correctIons >= 7) rank = 'B Forensic Lab Investigator';
+  else if (correctIons >= 5) rank = 'C Trainee Analyst';
+
+  audio.playFanfare(correctIons >= 7);
+
+  document.getElementById('verdictHeader').textContent =
+    correctIons === 10 ? '🏆 CASE SOLVED: PERFECT FORENSIC DEDUCTION!' : `🕵️‍♂️ CASE #${state.caseId} DEBRIEF REPORT`;
+
+  document.getElementById('verdictSummaryBanner').innerHTML = `
+    <div>
+      <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;font-weight:800;">Ions Identified</div>
+      <div style="font-size:1.25rem;font-weight:900;color:var(--emerald-soft);">${correctIons} / 10 (${perfectTubes}/5 Tubes)</div>
+    </div>
+    <div>
+      <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;font-weight:800;">Budget Saved</div>
+      <div style="font-size:1.25rem;font-weight:900;color:var(--brass-soft);">£${state.budget}</div>
+    </div>
+    <div>
+      <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;font-weight:800;">Forensic Score</div>
+      <div style="font-size:1.25rem;font-weight:900;color:var(--cyan);">${totalScore.toLocaleString()} pts</div>
+    </div>
+    <div>
+      <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;font-weight:800;">Detective Rank</div>
+      <div style="font-size:0.92rem;font-weight:900;color:#fff;">${rank}</div>
+    </div>
+  `;
+
+  document.getElementById('verdictRows').innerHTML = rowsHtml;
+  document.getElementById('verdictScoreSubmitBox').classList.toggle('hidden', state.scoreSubmittedThisCase);
+  document.getElementById('verdictScoreLockedMsg').classList.toggle('hidden', !state.scoreSubmittedThisCase);
+  document.getElementById('verdictModal').classList.remove('hidden');
+}
+
+function openExamBoardManual() {
+  const cfg = SPEC_CONFIG[state.board][state.tier];
+  document.getElementById('manualTitle').textContent =
+    `📖 ${state.board} ${state.tier === 'ALEVEL' ? 'A-Level' : 'GCSE'} Qualitative Analysis Reference Sheet`;
+
+  const catRows = cfg.cations.map(cId => {
+    const c = CATIONS_DB[cId];
+    const flameTxt = (c.flame.labelByBoard && c.flame.labelByBoard[state.board]) || c.flame.label;
+    return `
+      <tr>
+        <td><strong>${c.name}</strong><br><span style="color:var(--text-muted);font-size:0.72rem;">${c.solutionDesc}</span></td>
+        <td>${flameTxt}</td>
+        <td>${c.naoh.obs}</td>
+        <td>${c.naoh_excess.obs}</td>
+        ${state.tier === 'ALEVEL' ? `<td>${c.nh3_excess.obs}</td>` : ''}
+      </tr>
+    `;
+  }).join('');
+
+  const anRows = cfg.anions.map(aId => {
+    const a = ANIONS_DB[aId];
+    return `
+      <tr>
+        <td><strong>${a.name}</strong></td>
+        <td>${a.acid.obs}</td>
+        <td>${a.bacl2.obs}</td>
+        <td>${a.agno3.obs}</td>
+        ${state.tier === 'ALEVEL' ? `<td>${a.agno3_nh3.obs}</td>` : ''}
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('manualContent').innerHTML = `
+    <div style="font-size:0.82rem;color:var(--text-muted);">
+      Tailored directly to the <strong>${state.board} ${state.tier === 'ALEVEL' ? 'A-Level' : 'GCSE'} Chemistry</strong> qualitative analysis specification.
+    </div>
+    <h3 style="margin:4px 0 0;font-size:0.9rem;color:var(--cyan);">1. Cation (+) Flame &amp; Hydroxide Precipitate Tests</h3>
+    <div style="overflow-x:auto;">
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th>Cation</th>
+            <th>Flame Test</th>
+            <th>Dilute NaOH(aq) + Warm</th>
+            <th>Excess NaOH(aq)</th>
+            ${state.tier === 'ALEVEL' ? '<th>Excess NH₃(aq)</th>' : ''}
+          </tr>
+        </thead>
+        <tbody>${catRows}</tbody>
+      </table>
+    </div>
+
+    <h3 style="margin:6px 0 0;font-size:0.9rem;color:var(--emerald-soft);">2. Anion (–) Carbonate, Sulfate &amp; Halide Tests</h3>
+    <div style="overflow-x:auto;">
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th>Anion</th>
+            <th>Dilute Acid (HNO₃/HCl)</th>
+            <th>Acidified BaCl₂(aq)</th>
+            <th>Acidified AgNO₃(aq)</th>
+            ${state.tier === 'ALEVEL' ? '<th>AgX + NH₃(aq) Solubility</th>' : ''}
+          </tr>
+        </thead>
+        <tbody>${anRows}</tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById('manualModal').classList.remove('hidden');
+}
+
+/* ============================================================================
+   8. HALL OF DETECTIVES SCOREBOARD (LOCALSTORAGE)
+   ============================================================================ */
+const LB_KEY = 'alchemix_qad_leaderboard_v1';
+
+function getScores() {
+  try {
+    const raw = localStorage.getItem(LB_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return [
+    { name: 'DR. FRESENIUS', spec: 'WJEC A-Level', score: 2950 },
+    { name: 'B. BUNSEN',     spec: 'AQA A-Level',  score: 2680 },
+    { name: 'M. CURIE',      spec: 'OCR GCSE',     score: 2420 }
+  ];
+}
+
+function saveDetectiveScore() {
+  if (state.scoreSubmittedThisCase) return;
+  const inp = document.getElementById('inpDetectiveName');
+  const name = (inp.value || 'DETECTIVE').trim().toUpperCase().slice(0, 16);
+  const scores = getScores();
+  scores.push({
+    name,
+    spec: `${state.board} ${state.tier === 'ALEVEL' ? 'A-Level' : 'GCSE'}`,
+    score: state.lastFinalScore
+  });
+  scores.sort((a, b) => b.score - a.score);
+  try {
+    localStorage.setItem(LB_KEY, JSON.stringify(scores.slice(0, 12)));
+  } catch (_) {}
+  state.scoreSubmittedThisCase = true;
+  document.getElementById('verdictScoreSubmitBox').classList.add('hidden');
+  document.getElementById('verdictScoreLockedMsg').classList.remove('hidden');
+}
+
+function openScoreboardModal() {
+  const scores = getScores();
+  const list = document.getElementById('scoreboardList');
+  list.innerHTML = scores.map((s, idx) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#091224;border:1px solid #223860;border-radius:10px;padding:9px 12px;font-size:0.85rem;">
+      <div>
+        <strong style="color:var(--brass-soft);margin-right:8px;">#${idx + 1}</strong>
+        <strong style="color:#fff;">${s.name}</strong>
+        <span style="font-size:0.74rem;color:var(--text-muted);margin-left:8px;">(${s.spec})</span>
+      </div>
+      <div style="font-weight:900;color:var(--emerald-soft);">${s.score.toLocaleString()} pts</div>
+    </div>
+  `).join('');
+  document.getElementById('scoreboardModal').classList.remove('hidden');
+}
+
+/* ============================================================================
+   9. EVENT LISTENERS & INITIALISATION
+   ============================================================================ */
+document.querySelectorAll('#boardSelector .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#boardSelector .seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.board = btn.dataset.board;
+    generateNewCase();
+  });
+});
+
+document.querySelectorAll('#tierSelector .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#tierSelector .seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.tier = btn.dataset.tier;
+    generateNewCase();
+  });
+});
+
+document.getElementById('btnNewCase').addEventListener('click', generateNewCase);
+document.getElementById('btnOpenManual').addEventListener('click', openExamBoardManual);
+document.getElementById('btnCloseManual').addEventListener('click', () => {
+  document.getElementById('manualModal').classList.add('hidden');
+});
+
+document.getElementById('btnSubmitCase').addEventListener('click', evaluateCaseSubmission);
+document.getElementById('btnCloseVerdict').addEventListener('click', () => {
+  document.getElementById('verdictModal').classList.add('hidden');
+});
+document.getElementById('btnNextCaseModal').addEventListener('click', () => {
+  document.getElementById('verdictModal').classList.add('hidden');
+  generateNewCase();
+});
+
+document.getElementById('btnSaveScore').addEventListener('click', saveDetectiveScore);
+document.getElementById('btnOpenScoreboard').addEventListener('click', openScoreboardModal);
+document.getElementById('btnCloseScoreboard').addEventListener('click', () => {
+  document.getElementById('scoreboardModal').classList.add('hidden');
+});
+
+document.getElementById('btnSoundToggle').addEventListener('click', (e) => {
+  audio.muted = !audio.muted;
+  e.currentTarget.textContent = audio.muted ? '🔇 Muted' : '🔊 Audio';
+});
+
+generateNewCase();
+requestAnimationFrame(renderLabCanvas);
+</script>
+</body>
+</html>
