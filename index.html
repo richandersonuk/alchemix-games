@@ -28,6 +28,30 @@
       padding: 0;
       user-select: none;
       -webkit-user-select: none;
+      scrollbar-width: thin;
+      scrollbar-color: #00f3ff #020408;
+    }
+
+    /* Custom Retro CRT Arcade Scrollbars */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #020408;
+      border-left: 1px solid #0f2442;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #00f3ff 0%, #008b94 60%, #ffb703 100%);
+      border: 2px solid #020408;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #39ff14 0%, #00f3ff 100%);
+    }
+    ::-webkit-scrollbar-corner {
+      background: #020408;
     }
 
     body {
@@ -446,6 +470,19 @@
           <a href="/redox-rogue/" class="arcade-trigger-btn">LAUNCH ROGUELIKE</a>
         </div>
       </article>
+
+      <!-- Subatomic Sorter: ShellShock (/subatomic-sorter) -->
+      <article class="arcade-card" data-devices="mobile tablet desktop">
+        <div class="screen-bezel">
+          <img src="/subatomic-sorter/cartridge.svg" alt="Subatomic Sorter Cartridge">
+          <span class="badge-corner all-devices">PHONE / PC</span>
+        </div>
+        <div class="card-details">
+          <h2 class="game-name">SUBATOMIC SORTER</h2>
+          <p class="game-lore">ShellShock particle accelerator. Sort protons, neutrons &amp; electrons into Bohr shells and atomic nuclei at hyper-speed.</p>
+          <a href="/subatomic-sorter/" class="arcade-trigger-btn">LAUNCH ACCELERATOR</a>
+        </div>
+      </article>
     </main>
   </div>
 
@@ -562,7 +599,7 @@
       if ('caches' in window) {
         caches.keys().then((keys) => {
           keys.forEach((k) => {
-            if (k.startsWith('alchemix-arcade-') && k !== 'alchemix-arcade-v7') {
+            if (k.startsWith('alchemix-arcade-') && k !== 'alchemix-arcade-v8') {
               caches.delete(k);
             }
           });

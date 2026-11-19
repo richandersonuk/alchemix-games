@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
+  <defs>
+    <!-- Deep Quantum Accelerator & Crimson-Cyan Cartridge Shell -->
+    <linearGradient id="ss2-shell" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#19243d" />
+      <stop offset="55%" stop-color="#0d1322" />
+      <stop offset="100%" stop-color="#070a12" />
+    </linearGradient>
+    <linearGradient id="ss2-shell-edge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00e5ff" />
+      <stop offset="50%" stop-color="#ff3b5c" />
+      <stop offset="100%" stop-color="#0e7490" />
+    </linearGradient>
+    <!-- Sticker Label Gradient -->
+    <linearGradient id="ss2-label" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070a12" />
+      <stop offset="55%" stop-color="#141c30" />
+      <stop offset="100%" stop-color="#2b0f1f" />
+    </linearGradient>
+    <!-- Gold PCB Pins Gradient -->
+    <linearGradient id="ss2-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <filter id="ss2-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.2" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Ambient Drop Shadow -->
+  <rect x="28" y="14" width="164" height="174" rx="10" fill="#020408" opacity="0.8" />
+
+  <!-- Bottom PCB Connector Housing -->
+  <rect x="44" y="176" width="132" height="28" rx="4" fill="#090e1a" stroke="#00e5ff" stroke-width="2" />
+  <rect x="50" y="180" width="120" height="22" rx="2" fill="#062e1e" stroke="#ff3b5c" stroke-width="1" />
+
+  <!-- Gold Edge Connector Pins -->
+  <g fill="url(#ss2-gold)">
+    <rect x="55" y="182" width="6" height="19" rx="1" />
+    <rect x="65" y="182" width="6" height="19" rx="1" />
+    <rect x="75" y="182" width="6" height="19" rx="1" />
+    <rect x="85" y="182" width="6" height="19" rx="1" />
+    <rect x="95" y="182" width="6" height="19" rx="1" />
+    <rect x="105" y="182" width="6" height="19" rx="1" />
+    <rect x="115" y="182" width="6" height="19" rx="1" />
+    <rect x="125" y="182" width="6" height="19" rx="1" />
+    <rect x="135" y="182" width="6" height="19" rx="1" />
+    <rect x="145" y="182" width="6" height="19" rx="1" />
+    <rect x="155" y="182" width="6" height="19" rx="1" />
+    <rect x="163" y="182" width="4" height="19" rx="1" />
+  </g>
+
+  <!-- Main Cartridge Body with Left Notch -->
+  <path d="M 38 14
+           H 180
+           A 8 8 0 0 1 188 22
+           V 174
+           A 6 6 0 0 1 182 180
+           H 38
+           A 6 6 0 0 1 32 174
+           V 32
+           L 44 20
+           V 14 Z"
+        fill="url(#ss2-shell)"
+        stroke="url(#ss2-shell-edge)"
+        stroke-width="2.5" />
+
+  <!-- Top Grip Spine Ribs -->
+  <rect x="52" y="18" width="124" height="18" rx="3" fill="#080c17" stroke="#0891b2" stroke-width="1" />
+  <g stroke="#00e5ff" stroke-width="1.8" stroke-linecap="round">
+    <line x1="60" y1="22" x2="168" y2="22" />
+    <line x1="60" y1="27" x2="168" y2="27" />
+    <line x1="60" y1="32" x2="168" y2="32" />
+  </g>
+
+  <!-- Side Grip Grooves -->
+  <g fill="#060911" stroke="#0891b2" stroke-width="0.8">
+    <rect x="33" y="52" width="7" height="5" rx="1" />
+    <rect x="33" y="62" width="7" height="5" rx="1" />
+    <rect x="33" y="72" width="7" height="5" rx="1" />
+    <rect x="33" y="82" width="7" height="5" rx="1" />
+    <rect x="180" y="52" width="7" height="5" rx="1" />
+    <rect x="180" y="62" width="7" height="5" rx="1" />
+    <rect x="180" y="72" width="7" height="5" rx="1" />
+    <rect x="180" y="82" width="7" height="5" rx="1" />
+  </g>
+
+  <!-- Security Screws -->
+  <g fill="#475569" stroke="#cbd5e1" stroke-width="1">
+    <circle cx="43" cy="166" r="4.5" />
+    <line x1="40.5" y1="166" x2="45.5" y2="166" stroke="#0f172a" stroke-width="1.4" />
+    <circle cx="177" cy="166" r="4.5" />
+    <line x1="174.5" y1="166" x2="179.5" y2="166" stroke="#0f172a" stroke-width="1.4" />
+  </g>
+
+  <!-- Recessed Center Label Well -->
+  <rect x="46" y="42" width="128" height="114" rx="6" fill="#04060c" stroke="#00e5ff" stroke-width="1.5" />
+
+  <!-- Glossy Cartridge Label Sticker -->
+  <rect x="49" y="45" width="122" height="108" rx="4" fill="url(#ss2-label)" stroke="#ff3b5c" stroke-width="1.2" />
+
+  <!-- Top Sticker Header Band -->
+  <path d="M 50 49 A 3 3 0 0 1 53 46 H 167 A 3 3 0 0 1 170 49 V 61 H 50 Z" fill="#ff3b5c" />
+  <text x="110" y="56.5" text-anchor="middle" fill="#ffffff" font-family="monospace" font-weight="900" font-size="8.2" letter-spacing="1.1">SUBATOMIC SORTER</text>
+
+  <!-- Concentric Bohr Electron Shells -->
+  <g transform="translate(110, 97)">
+    <circle r="31" fill="none" stroke="#00e5ff" stroke-width="1.4" stroke-dasharray="4 3" opacity="0.7" />
+    <circle r="21" fill="none" stroke="#a855f7" stroke-width="1.4" opacity="0.85" />
+
+    <!-- Central Clustered Nucleus (Protons + Neutrons) -->
+    <circle cx="-4" cy="-3" r="5" fill="#ff3b5c" stroke="#fecdd3" stroke-width="0.8" filter="url(#ss2-glow)" />
+    <circle cx="4" cy="-2" r="5" fill="#f59e0b" stroke="#fef08a" stroke-width="0.8" />
+    <circle cx="-2" cy="4" r="5" fill="#f59e0b" stroke="#fef08a" stroke-width="0.8" />
+    <circle cx="4" cy="4" r="5" fill="#ff3b5c" stroke="#fecdd3" stroke-width="0.8" filter="url(#ss2-glow)" />
+    <text x="-4" y="-0.5" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="bold" font-size="6">+</text>
+    <text x="4" y="6.5" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="bold" font-size="6">+</text>
+
+    <!-- Orbiting Electrons (e-) -->
+    <circle cx="0" cy="-21" r="4" fill="#00e5ff" stroke="#ffffff" stroke-width="0.8" filter="url(#ss2-glow)" />
+    <circle cx="-18" cy="11" r="4" fill="#00e5ff" stroke="#ffffff" stroke-width="0.8" filter="url(#ss2-glow)" />
+    <circle cx="27" cy="-15" r="4" fill="#00e5ff" stroke="#ffffff" stroke-width="0.8" filter="url(#ss2-glow)" />
+    <circle cx="-27" cy="-15" r="4" fill="#00e5ff" stroke="#ffffff" stroke-width="0.8" filter="url(#ss2-glow)" />
+  </g>
+
+  <!-- Particle Sorter Bin Badges (Left & Right) -->
+  <g transform="translate(54, 67)">
+    <rect x="0" y="0" width="22" height="14" rx="3" fill="#2a0a16" stroke="#ff3b5c" stroke-width="1" />
+    <text x="11" y="9.5" text-anchor="middle" fill="#fda4af" font-family="monospace" font-weight="900" font-size="7.5">p⁺</text>
+  </g>
+  <g transform="translate(144, 67)">
+    <rect x="0" y="0" width="22" height="14" rx="3" fill="#062230" stroke="#00e5ff" stroke-width="1" />
+    <text x="11" y="9.5" text-anchor="middle" fill="#67e8f9" font-family="monospace" font-weight="900" font-size="7.5">e⁻</text>
+  </g>
+  <g transform="translate(144, 114)">
+    <rect x="0" y="0" width="22" height="14" rx="3" fill="#291804" stroke="#f59e0b" stroke-width="1" />
+    <text x="11" y="9.5" text-anchor="middle" fill="#fde047" font-family="monospace" font-weight="900" font-size="7.5">n⁰</text>
+  </g>
+
+  <!-- Bottom ROM Serial Badge on Sticker -->
+  <rect x="55" y="136" width="110" height="12" rx="2" fill="#070a12" stroke="#00e5ff" stroke-width="1" />
+  <text x="110" y="144.5" text-anchor="middle" fill="#fde047" font-family="monospace" font-weight="bold" font-size="7" letter-spacing="0.8">ALX-06 • SHELLSHOCK</text>
+
+  <!-- Molded Downward Insertion Triangle on Cartridge Shell -->
+  <polygon points="103,163 117,163 110,172" fill="#0891b2" stroke="#00e5ff" stroke-width="1" />
+</svg>
