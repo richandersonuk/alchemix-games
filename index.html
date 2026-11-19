@@ -128,6 +128,7 @@
       color: #94a3b8;
       border-radius: 4px;
       cursor: pointer;
+      touch-action: manipulation;
       box-shadow: 0 4px 0 #0f172a;
       transition: all 0.15s ease;
       text-transform: uppercase;
@@ -375,9 +376,9 @@
 
     <!-- Device Filter Chips -->
     <nav class="filter-deck" aria-label="Game Device Filter">
-      <button class="coin-btn active" data-filter="all">[ INSERT COIN: ALL ]</button>
-      <button class="coin-btn" data-filter="mobile">📱 PHONE READY</button>
-      <button class="coin-btn" data-filter="desktop">🖥️ TABLET / DESKTOP</button>
+      <button type="button" class="coin-btn active" data-filter="all">[ INSERT COIN: ALL ]</button>
+      <button type="button" class="coin-btn" data-filter="mobile">📱 PHONE READY</button>
+      <button type="button" class="coin-btn" data-filter="tablet-only">🖥️ TABLET / PC ONLY</button>
     </nav>
 
     <!-- Game List -->
@@ -465,22 +466,32 @@
     const filterBtns = document.querySelectorAll('.coin-btn');
     const cards = document.querySelectorAll('.arcade-card');
 
+    function applyDeviceFilter(filter) {
+      filterBtns.forEach(b => {
+        b.classList.toggle('active', b.dataset.filter === filter);
+      });
+
+      cards.forEach(card => {
+        const supported = (card.dataset.devices || '').split(/\s+/);
+        let visible = true;
+        if (filter === 'mobile') {
+          visible = supported.includes('mobile');
+        } else if (filter === 'tablet-only') {
+          visible = !supported.includes('mobile');
+        }
+        card.classList.toggle('hidden', !visible);
+      });
+    }
+
     filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        filterBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        const filter = btn.dataset.filter;
-        cards.forEach(card => {
-          const supported = card.dataset.devices.split(' ');
-          if (filter === 'all' || supported.includes(filter)) {
-            card.classList.remove('hidden');
-          } else {
-            card.classList.add('hidden');
-          }
-        });
+        applyDeviceFilter(btn.dataset.filter);
       });
     });
+
+    // Default to "Phone Ready" on phone viewports (<768px)
+    const isPhoneViewport = window.innerWidth < 768;
+    applyDeviceFilter(isPhoneViewport ? 'mobile' : 'all');
 
     // 2. Fullscreen Launch Helper
     function launchChemTycoon() {
