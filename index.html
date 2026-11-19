@@ -453,7 +453,7 @@
   <dialog id="device-modal" class="retro-modal">
     <div class="modal-box">
       <h3>⚠️ SCREEN RESOLUTION ADVISORY</h3>
-      <p>ChemTycoon requires a minimum 768px screen width to accommodate equipment schematics, yield dials, and gas recycle controls. The interface will be cramped on phone screens.</p>
+      <p id="modal-advisory-text"><strong id="modal-game-name">This game</strong> requires a minimum 768px screen width (tablet or desktop) to comfortably display its full interface and controls. The layout may be cramped on phone screens.</p>
       <div class="modal-controls">
         <button id="cancel-launch" class="modal-btn-cancel">&lt; RETURN</button>
         <button id="confirm-launch" class="modal-btn-confirm">OVERRIDE &amp; LAUNCH</button>
@@ -493,36 +493,61 @@
     const isPhoneViewport = window.innerWidth < 768;
     applyDeviceFilter(isPhoneViewport ? 'mobile' : 'all');
 
-    // 2. Fullscreen Launch Helper
-    function launchChemTycoon() {
-      // Request fullscreen on user click gesture if supported
-      const elem = document.documentElement;
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch(() => {});
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
+    // 2. Fullscreen & Target Game Launch Helper
+    function launchTargetGame(url, useFullscreen) {
+      if (useFullscreen) {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(() => {});
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        }
       }
-      window.location.href = '/chem-tycoon/';
+      window.location.href = url;
     }
 
-    // 3. Intercept Phone Users (<768px)
+    // 3. Intercept Phone Users (<768px) for any Tablet/PC-only game
     const modal = document.getElementById('device-modal');
+    const modalAdvisoryText = document.getElementById('modal-advisory-text');
     const confirmBtn = document.getElementById('confirm-launch');
     const cancelBtn = document.getElementById('cancel-launch');
-    const chemTycoonTrigger = document.querySelector('.launch-chemtycoon');
+    let pendingLaunchUrl = '/chem-tycoon/';
+    let pendingFullscreen = false;
 
-    chemTycoonTrigger.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (window.innerWidth < 768) {
-        modal.showModal();
-      } else {
-        launchChemTycoon();
-      }
+    cards.forEach(card => {
+      const supported = (card.dataset.devices || '').split(/\s+/);
+      if (supported.includes('mobile')) return;
+
+      const trigger = card.querySelector('.arcade-trigger-btn');
+      const gameTitleEl = card.querySelector('.game-name');
+      if (!trigger) return;
+
+      trigger.addEventListener('click', (e) => {
+        const targetUrl = trigger.getAttribute('href');
+        const wantsFullscreen = trigger.classList.contains('launch-chemtycoon');
+        const gameName = gameTitleEl ? gameTitleEl.textContent.trim() : 'This game';
+
+        if (window.innerWidth < 768) {
+          e.preventDefault();
+          pendingLaunchUrl = targetUrl;
+          pendingFullscreen = wantsFullscreen;
+
+          const detailNote = wantsFullscreen
+            ? 'accommodate equipment schematics, yield dials, and gas recycle controls'
+            : 'comfortably display its full tactical layout, cards, and interactive controls';
+
+          modalAdvisoryText.innerHTML = `<strong>${gameName}</strong> requires a minimum 768px screen width (tablet or desktop) to ${detailNote}. The interface will be cramped on phone screens.`;
+          modal.showModal();
+        } else if (wantsFullscreen) {
+          e.preventDefault();
+          launchTargetGame(targetUrl, true);
+        }
+      });
     });
 
     confirmBtn.addEventListener('click', () => {
       modal.close();
-      launchChemTycoon();
+      launchTargetGame(pendingLaunchUrl, pendingFullscreen);
     });
 
     cancelBtn.addEventListener('click', () => modal.close());
