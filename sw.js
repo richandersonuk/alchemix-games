@@ -43,6 +43,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Bypass for streamed media: <audio> uses HTTP Range requests, which the
+  // cache can't answer correctly (Safari/iOS then refuses to play the track)
+  if (event.request.headers.has('range') || /\.(mp3|m4a|ogg|opus|wav|mp4|webm)$/i.test(url.pathname)) {
+    return;
+  }
+
   // Network-first for HTML / navigation requests so Hub updates & back-to-hub links are always fresh
   if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
     event.respondWith(

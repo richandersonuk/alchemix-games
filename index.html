@@ -246,6 +246,31 @@
       letter-spacing: 0.05em;
     }
 
+    /* "NEW" tag: added by script for 7 days after a card's data-added date */
+    .badge-new {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 2;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.55rem;
+      padding: 4px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.08em;
+      color: #1a0010;
+      background: #ff2fd0;
+      border: 1px solid #ffb8f1;
+      box-shadow: 0 0 10px rgba(255, 47, 208, 0.75);
+      animation: badge-new-pulse 1.6s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes badge-new-pulse {
+      0%, 100% { box-shadow: 0 0 6px rgba(255, 47, 208, 0.6); transform: rotate(-4deg) scale(1); }
+      50% { box-shadow: 0 0 16px rgba(255, 47, 208, 1); transform: rotate(-4deg) scale(1.08); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .badge-new { animation: none; transform: rotate(-4deg); }
+    }
     .badge-corner.all-devices {
       background: rgba(57, 255, 20, 0.2);
       border: 1px solid var(--neon-green);
@@ -485,7 +510,7 @@
       </article>
 
       <!-- Lattice Lock: Crystal Defender (/lattice-lock) -->
-      <article class="arcade-card" data-devices="mobile tablet desktop">
+      <article class="arcade-card" data-devices="mobile tablet desktop" data-added="2026-11-20">
         <div class="screen-bezel">
           <img src="/lattice-lock/cartridge.svg" alt="Lattice Lock Cartridge">
           <span class="badge-corner all-devices">PHONE / PC</span>
@@ -515,6 +540,22 @@
     // 1. Device Category Filters
     const filterBtns = document.querySelectorAll('.coin-btn');
     const cards = document.querySelectorAll('.arcade-card');
+
+    // 0. "NEW" tags — any card with data-added="YYYY-MM-DD" shows a NEW tag for
+    //    7 days from that date, then it disappears automatically.
+    const NEW_FOR_MS = 7 * 24 * 60 * 60 * 1000;
+    cards.forEach(card => {
+      const added = Date.parse(card.dataset.added || '');
+      if (Number.isNaN(added)) return;
+      const age = Date.now() - added;
+      if (age < 0 || age >= NEW_FOR_MS) return;
+      const bezel = card.querySelector('.screen-bezel');
+      if (!bezel || bezel.querySelector('.badge-new')) return;
+      const tag = document.createElement('span');
+      tag.className = 'badge-new';
+      tag.textContent = 'NEW';
+      bezel.appendChild(tag);
+    });
 
     function applyDeviceFilter(filter) {
       filterBtns.forEach(b => {

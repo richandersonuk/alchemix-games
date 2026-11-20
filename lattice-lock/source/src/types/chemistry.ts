@@ -213,6 +213,7 @@ export type Outcome =
 export type Verdict = 'counter' | 'neutral' | 'weak';
 
 export type SfxName =
+  | 'clear'
   | 'crack'
   | 'clang'
   | 'hum'

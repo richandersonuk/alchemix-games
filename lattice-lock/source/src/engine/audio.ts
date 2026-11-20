@@ -104,6 +104,12 @@ class SoundBoard {
         this.tone(t, 'sine', 660, 990, 0.12, 0.15);
         this.tone(t + 0.06, 'triangle', 1320, 1320, 0.15, 0.06);
         break;
+      case 'clear':
+        // Rising major fanfare + glassy shimmer
+        [587, 740, 880, 1175].forEach((f, i) => this.tone(t + i * 0.09, 'triangle', f, f, 0.5, 0.13));
+        [1760, 2349, 2960].forEach((f, i) => this.tone(t + 0.38 + i * 0.05, 'sine', f, f * 1.01, 0.9, 0.05));
+        this.noiseBurst(t + 0.36, 0.6, 'highpass', 7000, 0.05, 0.05);
+        break;
       case 'upgrade':
         [523, 659, 784, 1047].forEach((f, i) => this.tone(t + i * 0.07, 'triangle', f, f, 0.22, 0.12));
         break;
