@@ -1,5 +1,5 @@
 import type { SfxName } from '../types/chemistry';
-import { getAudioContext } from './audioContext';
+import { getAudioContext, getMasterBus } from './audioContext';
 import { settings } from './settings';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ class SoundBoard {
       this.ctx = c;
       this.master = c.createGain();
       const comp = c.createDynamicsCompressor();
-      this.master.connect(comp).connect(c.destination);
+      this.master.connect(comp).connect(getMasterBus(c));
       const len = c.sampleRate;
       this.noise = c.createBuffer(1, len, c.sampleRate);
       const d = this.noise.getChannelData(0);

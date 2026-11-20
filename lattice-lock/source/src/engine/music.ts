@@ -1,4 +1,4 @@
-import { getAudioContext, onAudioUnlock } from './audioContext';
+import { getAudioContext, getMasterBus, onAudioUnlock } from './audioContext';
 import { settings } from './settings';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,6 +19,13 @@ export type Mood = 'off' | 'menu' | 'build' | 'combat' | 'victory' | 'defeat';
 const BPM = 92;
 const STEP = 60 / BPM / 4; // 16th note
 const STEPS_PER_CHORD = 32; // 2 bars
+/**
+ * How far ahead notes are queued on the audio clock. Generous on purpose:
+ * the 3D scene can stall the main thread for hundreds of ms on school laptops,
+ * and audio already queued keeps playing through any stall shorter than this.
+ */
+const SCHEDULE_AHEAD = 1.5;
+const TICK_MS = 100;
 
 interface Chord {
   pad: number[];
@@ -67,6 +74,8 @@ class MusicEngine {
   private nextTime = 0;
   private step = 0;
   private chordIdx = 0;
+  /** Audio-clock time the current pad chord rings until. */
+  private padUntil = 0;
   private mood: Mood = 'off';
   private wanted: Mood = 'off';
 
@@ -98,11 +107,14 @@ class MusicEngine {
     if (prev !== m && (m === 'victory' || m === 'defeat' || prev === 'victory' || prev === 'defeat')) {
       this.step = 0;
       this.chordIdx = 0;
+      this.padUntil = 0; // new chord set starts immediately
     }
     this.applyVolume();
     if (this.timer === null) {
       this.nextTime = c.currentTime + 0.1;
-      this.timer = window.setInterval(() => this.tick(), 25);
+      this.padUntil = 0;
+      this.tick();
+      this.timer = window.setInterval(() => this.tick(), TICK_MS);
     }
   }
 
@@ -133,11 +145,11 @@ class MusicEngine {
     const comp = c.createDynamicsCompressor();
     comp.threshold.value = -18;
     comp.ratio.value = 3;
-    this.bus.connect(comp).connect(c.destination);
+    this.bus.connect(comp).connect(getMasterBus(c));
 
     // Reverb
     const conv = c.createConvolver();
-    conv.buffer = this.impulse(c, 3.4, 2.4);
+    conv.buffer = this.impulse(c, 2.6, 2.6); // shorter IR = cheaper convolution on weak CPUs
     const wet = c.createGain();
     wet.gain.value = 0.5;
     this.reverbSend = c.createGain();
@@ -218,12 +230,30 @@ class MusicEngine {
 
   // ── Scheduler ────────────────────────────────────────────────────────────
 
+  /** Scheduler health (inspect via window.__music in dev). */
+  stats = { ticks: 0, maxGapMs: 0, resyncs: 0, droppedSteps: 0, lateSteps: 0, steps: 0, lastTick: 0 };
+
   private tick() {
     const c = this.ctx;
     if (!c || this.mood === 'off' || c.state !== 'running') return;
-    if (this.nextTime < c.currentTime - 0.25) this.nextTime = c.currentTime + 0.05; // resumed from background
-    while (this.nextTime < c.currentTime + 0.15) {
-      this.schedule(this.step, this.nextTime);
+    const now = performance.now();
+    if (this.stats.lastTick) this.stats.maxGapMs = Math.max(this.stats.maxGapMs, now - this.stats.lastTick);
+    this.stats.lastTick = now;
+    this.stats.ticks++;
+    if (this.nextTime < c.currentTime - 0.05) {
+      // Stalled longer than the look-ahead (or resumed from background).
+      // Skip the missed steps but keep the musical grid, so the beat and
+      // chord position stay where they would have been.
+      const missed = Math.ceil((c.currentTime + 0.05 - this.nextTime) / STEP);
+      this.stats.resyncs++;
+      this.stats.droppedSteps += missed;
+      this.step += missed;
+      this.nextTime += missed * STEP;
+    }
+    while (this.nextTime < c.currentTime + SCHEDULE_AHEAD) {
+      this.stats.steps++;
+      if (this.nextTime < c.currentTime + 0.01) this.stats.lateSteps++;
+      this.schedule(this.step, Math.max(this.nextTime, c.currentTime + 0.01));
       this.nextTime += STEP;
       this.step++;
     }
@@ -235,11 +265,14 @@ class MusicEngine {
     const spec = MOODS[mood];
     const chords = spec.chords;
     const inChord = step % STEPS_PER_CHORD;
-    if (inChord === 0) {
-      this.chordIdx = Math.floor(step / STEPS_PER_CHORD) % chords.length;
-      this.pad(chords[this.chordIdx], t, STEPS_PER_CHORD * STEP);
+    this.chordIdx = Math.floor(step / STEPS_PER_CHORD) % chords.length;
+    const chord = chords[this.chordIdx];
+    // New chord on the bar line — or mid-chord if a stall/mood change left the pads silent
+    if (inChord === 0 || t >= this.padUntil - 0.02) {
+      const dur = (STEPS_PER_CHORD - inChord) * STEP;
+      this.pad(chord, t, dur);
+      this.padUntil = t + dur;
     }
-    const chord = chords[this.chordIdx] ?? chords[0];
     const s16 = step % 16;
 
     // Arpeggio

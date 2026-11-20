@@ -15,3 +15,9 @@ if (import.meta.env.DEV) {
     (window as unknown as { __engine: unknown }).__engine = engine;
   });
 }
+
+if (import.meta.env.DEV) {
+  import('./engine/music').then(({ music }) => {
+    (window as unknown as { __music: unknown }).__music = music;
+  });
+}
