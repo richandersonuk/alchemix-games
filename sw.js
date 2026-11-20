@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alchemix-arcade-v8';
+const CACHE_NAME = 'alchemix-arcade-v9';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -9,7 +9,8 @@ const PRECACHE_ASSETS = [
   '/econfigs/cartridge.svg',
   '/QAD/cartridge.svg',
   '/redox-rogue/cartridge.svg',
-  '/subatomic-sorter/cartridge.svg'
+  '/subatomic-sorter/cartridge.svg',
+  '/lattice-lock/cartridge.svg'
 ];
 
 self.addEventListener('install', (event) => {
