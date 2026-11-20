@@ -35,8 +35,13 @@ async function request(path: string, init?: RequestInit, timeoutMs = 7000) {
   }
 }
 
+/** Thrown when there is no scoreboard server at the configured address (e.g. static hosting only). */
+export class ScoreboardNotConfigured extends Error {}
+
 export async function fetchGlobalScores(limit = 25): Promise<ScoreEntry[]> {
   const res = await request(`/scores?limit=${limit}`);
+  const json = /json/i.test(res.headers.get('content-type') ?? '');
+  if (res.status === 404 || res.status === 405 || (res.ok && !json)) throw new ScoreboardNotConfigured('no scoreboard server');
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const body = (await res.json()) as { scores?: ScoreEntry[] };
   return Array.isArray(body.scores) ? body.scores.filter((e) => checkName(e.name).ok) : [];

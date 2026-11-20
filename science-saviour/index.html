@@ -369,9 +369,9 @@
           <div class="flex items-center gap-2">
             <i class="ph-fill ph-trophy text-2xl text-amber-400"></i>
             <div>
-              <h2 class="text-lg font-bold text-white leading-tight">LIVE HALL OF SCIENCE SAVIOURS</h2>
-              <div class="text-[10px] text-emerald-400 flex items-center gap-1">
-                <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span> Live Sync Active • Family-Safe Filter On
+              <h2 class="text-lg font-bold text-white leading-tight">GLOBAL HALL OF SCIENCE SAVIOURS</h2>
+              <div id="scoreboard-sync-status" class="text-[10px] text-slate-400 flex items-center gap-1">
+                Loading global Hall…
               </div>
             </div>
           </div>
@@ -582,7 +582,8 @@
     </div>
   </div>
 
-  <script>
+  <script src="/scoreboard/client.js"></script>
+    <script>
     /* ==========================================================================
        1. SOUND CONFIGURATION (MATCHED TO REPOSITORY ./sounds/ ASSETS)
        ========================================================================== */
@@ -774,58 +775,94 @@
       { name: 'AVOGADRO_602', score: 5600,  stage: 2, badge: '🔬' }
     ];
 
+    const SAVIOUR_GAME_ID = 'science-saviour';
+    const escapeHtml = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
     class ScoreboardManager {
       constructor() {
         this.storageKey = 'alchemix_saviour_leaderboard_v2';
         this.scores = this.loadLocal();
+        this.source = 'local'; // 'global' once the online Hall has loaded
       }
 
+      /** On-device copy (fallback when offline). Old built-in demo names are dropped. */
       loadLocal() {
+        const demo = new Set(DEFAULT_LEADERBOARD.map(d => d.name));
         try {
           const raw = localStorage.getItem(this.storageKey);
           if (raw) {
             const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            if (Array.isArray(parsed)) return parsed.filter(e => e && !demo.has(e.name));
           }
         } catch (e) {}
-        return [...DEFAULT_LEADERBOARD];
+        return [];
       }
 
-      saveLocal() {
+      saveLocal(entry) {
+        const local = this.loadLocal();
+        local.push(entry);
+        local.sort((a, b) => b.score - a.score);
         try {
-          localStorage.setItem(this.storageKey, JSON.stringify(this.scores));
+          localStorage.setItem(this.storageKey, JSON.stringify(local.slice(0, 15)));
         } catch (e) {}
+      }
+
+      /** Load the global top 10; falls back to this device's scores. */
+      async refresh() {
+        try {
+          if (!window.ArcadeScores) throw new Error('no client');
+          const rows = await ArcadeScores.top(SAVIOUR_GAME_ID, { limit: 10 });
+          this.scores = rows.map(r => ({ name: r.name, score: r.score, stage: r.meta && r.meta.stage, badge: r.meta && r.meta.badge }));
+          this.source = 'global';
+        } catch (e) {
+          this.scores = this.loadLocal();
+          this.source = 'local';
+        }
+        this.renderTable();
       }
 
       async submitScore(rawName, points, stageNum) {
-        const cleanName = (rawName || '').trim().toUpperCase();
-        if (!cleanName || cleanName.length < 2) {
-          return { ok: false, reason: 'Please enter at least 2 characters.' };
+        const cleanName = (rawName || '').trim().toUpperCase().replace(/[^A-Z0-9 _-]/g, '').substring(0, 16).trim();
+        if (cleanName.length < 3) {
+          return { ok: false, reason: 'Please enter at least 3 characters.' };
         }
         if (containsProfanity(cleanName)) {
           return { ok: false, reason: 'profanity' };
         }
 
-        const entry = {
-          name: cleanName.replace(/[^A-Z0-9 _-]/g, '').substring(0, 16) || 'SCIENTIST',
-          score: Math.floor(points),
-          stage: stageNum,
-          badge: GENRES[currentGenreIndex].icon,
-          ts: Date.now()
-        };
+        const badge = GENRES[currentGenreIndex].icon;
+        const entry = { name: cleanName, score: Math.floor(points), stage: stageNum, badge: badge, ts: Date.now() };
 
-        this.scores.push(entry);
-        this.scores.sort((a, b) => b.score - a.score);
-        this.scores = this.scores.slice(0, 15);
-        this.saveLocal();
-        this.renderTable();
-        return { ok: true };
+        const res = window.ArcadeScores
+          ? await ArcadeScores.submit(SAVIOUR_GAME_ID, { name: cleanName, score: entry.score, meta: { stage: stageNum, badge: badge } })
+          : { ok: false, error: 'offline' };
+
+        if (!res.ok && res.error !== 'offline') {
+          if (res.error === 'name') return { ok: false, reason: 'profanity' };
+          return { ok: false, reason: window.ArcadeScores ? ArcadeScores.message(res.error) : 'This score couldn’t be submitted.' };
+        }
+        this.saveLocal(entry);
+        await this.refresh();
+        return { ok: true, online: res.ok, rank: res.ok ? res.rank : null };
       }
 
       renderTable() {
         const container = document.getElementById('scoreboard-list');
         if (!container) return;
         container.innerHTML = '';
+
+        const status = document.getElementById('scoreboard-sync-status');
+        if (status) {
+          status.innerHTML = this.source === 'global'
+            ? '<span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span> Global Hall • Family-Safe Filter On'
+            : '<span class="h-2 w-2 rounded-full bg-amber-400"></span> Offline • showing scores on this device';
+          status.className = `text-[10px] flex items-center gap-1 ${this.source === 'global' ? 'text-emerald-400' : 'text-amber-300'}`;
+        }
+
+        if (this.scores.length === 0) {
+          container.innerHTML = '<div class="text-center text-xs text-slate-400 py-6">No scores yet — finish a run to claim #1!</div>';
+          return;
+        }
 
         this.scores.slice(0, 10).forEach((entry, idx) => {
           const row = document.createElement('div');
@@ -842,10 +879,10 @@
           row.innerHTML = `
             <div class="flex items-center gap-3">
               <span class="font-pixel text-xs w-7 text-center">${rankMedal}</span>
-              <span>${entry.badge || '🎸'}</span>
+              <span>${escapeHtml(entry.badge || '🎸')}</span>
               <div>
-                <div class="font-bold text-xs tracking-wider">${entry.name}</div>
-                <div class="text-[9px] text-slate-400">Stage ${entry.stage || 1}</div>
+                <div class="font-bold text-xs tracking-wider">${escapeHtml(entry.name)}</div>
+                <div class="text-[9px] text-slate-400">Stage ${Number(entry.stage) || 1}</div>
               </div>
             </div>
             <div class="font-pixel text-xs text-amber-300">${String(entry.score).padStart(6, '0')}</div>
@@ -3774,6 +3811,7 @@
 
     function openScoreboardModal(allowSubmit = false) {
       scoreboard.renderTable();
+      scoreboard.refresh();
       const viewOnlyBanner = document.getElementById('scoreboard-viewonly-banner');
       const submitBox = document.getElementById('scoreboard-submit-box');
       const formRow = document.getElementById('scoreboard-form-row');
@@ -4006,7 +4044,9 @@
       warnEl.classList.add('hidden');
 
       const submittedName = (nameInput.value || '').trim().toUpperCase();
+      submitBtn.disabled = true;
       const res = await scoreboard.submitScore(nameInput.value, score, currentLevel + 1);
+      submitBtn.disabled = false;
       if (!res.ok) {
         warnEl.innerText = res.reason === 'profanity'
           ? '⚠️ Keep it clean! Profanity or inappropriate callsigns are blocked by the Lab Filter.'
@@ -4019,8 +4059,9 @@
         nameInput.disabled = true;
         submitBtn.disabled = true;
         document.getElementById('scoreboard-form-row').classList.add('hidden');
-        document.getElementById('scoreboard-locked-text').innerText =
-          `Score locked for ${submittedRunCallsign}! Start a new run to post again.`;
+        document.getElementById('scoreboard-locked-text').innerText = res.online
+          ? `Posted to the global Hall${res.rank ? ` at #${res.rank}` : ''} as ${submittedRunCallsign}! Start a new run to post again.`
+          : `Saved on this device as ${submittedRunCallsign} (global Hall offline). Start a new run to post again.`;
         document.getElementById('scoreboard-locked-banner').classList.remove('hidden');
       }
     });

@@ -275,9 +275,9 @@
   <section id="screenHome" class="screen">
     <div class="card input-row">
       <label style="font-weight:700;font-size:0.9rem;">Callsign:</label>
-      <input id="inpName" class="field" style="width:145px;" maxlength="18" placeholder="Your Name">
+      <input id="inpName" class="field" style="width:145px;" maxlength="16" placeholder="Your Name (not your real one)" autocomplete="off">
       <label style="font-weight:700;font-size:0.9rem;">Class:</label>
-      <input id="inpClass" class="field" style="width:92px;text-transform:uppercase;" maxlength="10" placeholder="CHEM12">
+      <input id="inpClass" class="field" style="width:92px;text-transform:uppercase;" maxlength="8" placeholder="CHEM12" autocomplete="off">
       <div class="progress-wrap">
         <div style="display:flex;justify-content:space-between;font-size:0.84rem;font-weight:700;">
           <span id="lblRank" style="color:var(--emerald);">Rank: 1s² Cadet</span>
@@ -382,6 +382,7 @@
       <div id="sumTitle" style="font-size:1.4rem;font-weight:900;color:var(--cyan);">SESSION COMPLETE</div>
       <div id="sumScore" style="font-size:2.4rem;font-weight:900;color:var(--emerald);">0 PTS</div>
       <div id="sumMetrics" style="font-size:1rem;color:#d6e7ff;"></div>
+      <div id="sumGlobal" style="font-size:0.9rem;font-weight:700;color:var(--gold);min-height:1.2em;"></div>
       <pre id="sumShare" style="width:100%;text-align:left;white-space:pre-wrap;background:#081020;border:1px solid #264270;border-radius:10px;padding:12px;font-size:0.88rem;color:#dbeafe;margin:0;"></pre>
       <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
         <button class="btn btn-emerald" id="btnCopyShare">📋 Copy Class Result Card</button>
@@ -415,7 +416,7 @@
 <div id="lbModal" class="modal-backdrop hidden">
   <div class="modal-card">
     <div style="display:flex;align-items:center;justify-content:space-between;">
-      <div style="font-size:1.15rem;font-weight:900;color:var(--gold);">🏆 ONLINE &amp; CLASS SCOREBOARD</div>
+      <div style="font-size:1.15rem;font-weight:900;color:var(--gold);">🏆 GLOBAL &amp; CLASS SCOREBOARD</div>
       <button class="btn btn-sm btn-rose" id="btnCloseLb">✕ Close</button>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -425,13 +426,11 @@
       <button class="btn btn-sm btn-slate" id="btnLbScope">Scope: All Classes</button>
     </div>
     <div id="lbRows" style="display:flex;flex-direction:column;gap:7px;"></div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <input id="inpApiUrl" class="field" style="flex:1;" placeholder="Optional teacher API URL for live class sync">
-      <button class="btn btn-sm btn-cyan" id="btnSyncApi">Sync</button>
-    </div>
+    <div id="lbStatus" style="color:var(--muted);font-size:0.8rem;"></div>
   </div>
 </div>
 
+<script src="/scoreboard/client.js"></script>
 <script>
 // =============================================================================
 // 1. CHEMISTRY ENGINE (Exact parity with Godot ChemDB)
@@ -975,28 +974,14 @@ let state = {
   total_answered: 0,
   total_correct: 0,
   nitrogen_mastered: 0,
-  api_url: "",
-  leaderboards: {
-    BLITZ: [
-      { name: "Dr_Orbital", class_code: "CHEM12", score: 2450, accuracy: 96, max_combo: 11, date: todayKey(), rival: true },
-      { name: "HundsHero_12A", class_code: "CHEM12", score: 1980, accuracy: 92, max_combo: 9, date: todayKey(), rival: true },
-      { name: "NitrogenNinja", class_code: "CHEM12", score: 1620, accuracy: 89, max_combo: 7, date: todayKey(), rival: true },
-      { name: "AufbauAce", class_code: "12SCI", score: 1340, accuracy: 85, max_combo: 6, date: todayKey(), rival: true },
-      { name: "PauliPro", class_code: "CHEM12", score: 980, accuracy: 80, max_combo: 5, date: todayKey(), rival: true }
-    ],
-    DAILY: [
-      { name: "HundsHero_12A", class_code: "CHEM12", score: 1820, accuracy: 100, max_combo: 10, date: todayKey(), rival: true },
-      { name: "NitrogenNinja", class_code: "CHEM12", score: 1490, accuracy: 90, max_combo: 6, date: todayKey(), rival: true }
-    ],
-    GAUNTLET: [
-      { name: "Dr_Orbital", class_code: "CHEM12", score: 2800, accuracy: 95, max_combo: 12, date: todayKey(), rival: true },
-      { name: "AufbauAce", class_code: "CHEM12", score: 2100, accuracy: 88, max_combo: 8, date: todayKey(), rival: true }
-    ]
-  }
+  leaderboards: { BLITZ: [], DAILY: [], GAUNTLET: [] }
 };
 try {
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
   if (saved) state = { ...state, ...saved, leaderboards: { ...state.leaderboards, ...(saved.leaderboards || {}) } };
+  // Built-in demo "rivals" are no longer shown; scoreboards are global now
+  for (const k of Object.keys(state.leaderboards)) state.leaderboards[k] = (state.leaderboards[k] || []).filter(r => !r.rival);
+  delete state.api_url;
 } catch (_) {}
 function saveState() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
@@ -1379,9 +1364,7 @@ function finishSession() {
   state.leaderboards[boardMode] = board.slice(0, 30);
   saveState();
 
-  if (state.api_url) {
-    fetch(state.api_url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...entry, mode: boardMode }) }).catch(() => {});
-  }
+  postGlobalScore(boardMode, entry);
 
   $("sumTitle").textContent = `${$("hudMode").textContent} COMPLETE!`;
   $("sumScore").textContent = `${score} PTS`;
@@ -1409,16 +1392,54 @@ function renderLab() {
   }
 }
 
-function renderLeaderboard() {
+const ECONFIGS_GAME_ID = "econfigs";
+const cleanClass = (c) => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+const globalBoardFor = (mode) => (mode === "DAILY" ? `DAILY-${todayKey()}` : mode);
+
+function postGlobalScore(boardMode, entry) {
+  const out = $("sumGlobal");
+  if (!window.ArcadeScores || entry.score < 1) { if (out) out.textContent = ""; return; }
+  const tag = cleanClass(entry.class_code);
+  if (out) out.textContent = "🌍 Posting to the global scoreboard…";
+  ArcadeScores.submit(ECONFIGS_GAME_ID, {
+    name: entry.name, score: entry.score, board: globalBoardFor(boardMode),
+    tag: tag.length >= 2 ? tag : undefined,
+    meta: { accuracy: entry.accuracy, max_combo: entry.max_combo }
+  }).then(res => {
+    if (!out) return;
+    out.textContent = res.ok
+      ? `🌍 Global rank #${res.rank}${tag.length >= 2 ? ` • class ${tag}` : ""}`
+      : `⚠️ ${ArcadeScores.message(res.error)}${res.error === "name" || res.error === "tag" ? " (change it on the home screen)" : ""}`;
+  });
+}
+
+let lbRequest = 0;
+async function renderLeaderboard() {
   document.querySelectorAll(".lb-tab").forEach(b => {
     b.className = `btn btn-sm ${b.dataset.mode === lbTab ? "btn-cyan" : "btn-slate"} lb-tab`;
   });
-  const rows = (state.leaderboards[lbTab] || []).filter(r => {
-    if (lbTab === "DAILY" && r.date !== todayKey() && !r.rival) return false;
-    if (lbClassOnly && String(r.class_code || "").toUpperCase() !== String(state.class_code || "").toUpperCase()) return false;
-    return true;
-  });
   const box = $("lbRows");
+  const status = $("lbStatus");
+  const myClass = cleanClass(state.class_code);
+  const reqId = ++lbRequest;
+  box.innerHTML = `<div style="color:var(--muted);">Loading global scores…</div>`;
+  let rows, online = true;
+  try {
+    if (!window.ArcadeScores) throw new Error("no client");
+    const data = await ArcadeScores.top(ECONFIGS_GAME_ID, { board: globalBoardFor(lbTab), tag: lbClassOnly && myClass.length >= 2 ? myClass : undefined, limit: 30 });
+    rows = data.map(r => ({ name: r.name, class_code: r.tag || "—", score: r.score, accuracy: r.meta?.accuracy ?? "–", max_combo: r.meta?.max_combo ?? "–" }));
+  } catch (_) {
+    online = false;
+    rows = (state.leaderboards[lbTab] || []).filter(r => {
+      if (lbTab === "DAILY" && r.date !== todayKey()) return false;
+      if (lbClassOnly && cleanClass(r.class_code) !== myClass) return false;
+      return true;
+    });
+  }
+  if (reqId !== lbRequest) return; // a newer tab/scope click won
+  if (status) status.textContent = online
+    ? `🌍 Global ${lbTab === "DAILY" ? `daily board for ${todayKey()}` : "board"}${lbClassOnly ? ` • class ${myClass || "—"}` : ""}`
+    : "📴 Global scoreboard offline — showing scores saved on this device.";
   box.innerHTML = rows.length ? "" : `<div style="color:var(--muted);">No entries yet for this filter — play a round to claim #1!</div>`;
   rows.forEach((r, idx) => {
     const div = document.createElement("div");
@@ -1548,7 +1569,7 @@ function renderLeaderboard() {
   $("btnPlayAgain").addEventListener("click", () => startMode(activeMode, selectedSector));
   $("btnSumHome").addEventListener("click", () => showScreen("screenHome"));
 
-  const openLb = () => { $("lbModal").classList.remove("hidden"); $("inpApiUrl").value = state.api_url || ""; renderLeaderboard(); };
+  const openLb = () => { $("lbModal").classList.remove("hidden"); renderLeaderboard(); };
   $("btnTopLb").addEventListener("click", openLb);
   $("btnOpenLb").addEventListener("click", openLb);
   $("btnSumLb").addEventListener("click", openLb);
@@ -1558,18 +1579,6 @@ function renderLeaderboard() {
     lbClassOnly = !lbClassOnly;
     $("btnLbScope").textContent = lbClassOnly ? `Scope: Class ${state.class_code || "CHEM12"}` : "Scope: All Classes";
     renderLeaderboard();
-  });
-  $("btnSyncApi").addEventListener("click", () => {
-    state.api_url = $("inpApiUrl").value.trim(); saveState();
-    if (state.api_url) {
-      fetch(`${state.api_url}?mode=${encodeURIComponent(lbTab)}&class=${encodeURIComponent(state.class_code)}`)
-        .then(r => r.json()).then(arr => {
-          if (Array.isArray(arr)) {
-            state.leaderboards[lbTab] = [...state.leaderboards[lbTab], ...arr].sort((a, b) => b.score - a.score).slice(0, 30);
-            saveState(); renderLeaderboard();
-          }
-        }).catch(() => {});
-    }
   });
 
   // Keyboard shortcuts for PC
