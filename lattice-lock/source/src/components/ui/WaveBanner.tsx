@@ -7,25 +7,28 @@ import { WAVES } from '../../data/waves';
 export default function WaveBanner() {
   useUiTick();
   const info = engine.waveCleared;
-  const [shownId, setShownId] = useState<number | null>(null);
+  const [visibleId, setVisibleId] = useState<number | null>(null);
+  // Each wave's banner is shown exactly once: remember which ids we've already shown
+  const seenId = useRef<number | null>(engine.waveCleared?.id ?? null);
   const timer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    if (!info || info.id === shownId) return;
-    setShownId(info.id);
+    if (!info || info.id === seenId.current) return;
+    seenId.current = info.id;
+    setVisibleId(info.id);
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setShownId(null), 4200);
-  }, [info, shownId]);
+    timer.current = window.setTimeout(() => setVisibleId(null), 4200);
+  }, [info]);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  const visible = info && shownId === info.id && engine.phase === 'build';
+  const visible = info && visibleId === info.id && engine.phase === 'build';
   if (!visible) return null;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 top-[22%] z-30 flex justify-center px-4" role="status" aria-live="assertive">
       <button
         type="button"
-        onClick={() => setShownId(null)}
+        onClick={() => setVisibleId(null)}
         className="pointer-events-auto animate-banner-in relative overflow-hidden rounded-2xl border border-emerald-300/50 bg-slate-950/85 px-6 py-4 text-center shadow-[0_0_60px_-10px_rgba(52,211,153,0.7)] backdrop-blur-md sm:px-10"
       >
         <span className="animate-banner-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/15 to-transparent" />
