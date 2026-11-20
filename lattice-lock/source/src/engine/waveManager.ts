@@ -112,6 +112,9 @@ export class GameEngine {
   runId = newRunId();
   /** Bumped whenever a log entry is added (compact UI shows toasts). */
   logVersion = 0;
+  /** Set when a wave is cleared (not the final one) — drives the on-screen banner. */
+  waveCleared: { id: number; wave: number; name: string; bonus: number; neutralised: number; lost: number; marks: number; next: string } | null = null;
+  private waveStart = { neutralised: 0, lost: 0, marks: 0 };
 
   uiVersion = 0;
   structureVersion = 0;
@@ -383,7 +386,17 @@ export class GameEngine {
       this.log('success', 'Core held — all ten waves defeated', `Final score: ${this.marks} mark-scheme points earned from correct structure → property matches.`, ['structure', 'bonding', 'properties']);
     } else {
       this.phase = 'build';
-      sfx.play('upgrade');
+      this.waveCleared = {
+        id: this.nextId++,
+        wave: this.waveIndex,
+        name: w.name,
+        bonus: w.bonus,
+        neutralised: this.stats.neutralised - this.waveStart.neutralised,
+        lost: this.stats.towersLost - this.waveStart.lost,
+        marks: this.marks - this.waveStart.marks,
+        next: WAVES[this.waveIndex].name,
+      };
+      sfx.play('clear');
     }
   }
 
@@ -396,6 +409,8 @@ export class GameEngine {
     for (const g of w.groups) for (let i = 0; i < g.count; i++) this.queue.push({ at: g.delay + i * g.interval, threat: g.threat });
     this.queue.sort((a, b) => a.at - b.at);
     this.waveTotal = this.queue.length;
+    this.waveStart = { neutralised: this.stats.neutralised, lost: this.stats.towersLost, marks: this.marks };
+    this.waveCleared = null;
     this.waveSpawned = 0;
     this.waveTime = 0;
     this.phase = 'wave';
@@ -569,6 +584,7 @@ export class GameEngine {
     this.stats = { neutralised: 0, towersLost: 0, breaches: 0 };
     this.selection = emptySelection();
     this.runId = newRunId();
+    this.waveCleared = null;
     this.contacts.clear();
     this.logKeys.clear();
     this.markKeys.clear();

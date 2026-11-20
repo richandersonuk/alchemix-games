@@ -1,5 +1,5 @@
 import type { SfxName } from '../types/chemistry';
-import { getAudioContext } from './audioContext';
+import { getAudioContext, getMasterBus } from './audioContext';
 import { settings } from './settings';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ class SoundBoard {
       this.ctx = c;
       this.master = c.createGain();
       const comp = c.createDynamicsCompressor();
-      this.master.connect(comp).connect(c.destination);
+      this.master.connect(comp).connect(getMasterBus(c));
       const len = c.sampleRate;
       this.noise = c.createBuffer(1, len, c.sampleRate);
       const d = this.noise.getChannelData(0);
@@ -103,6 +103,12 @@ class SoundBoard {
       case 'place':
         this.tone(t, 'sine', 660, 990, 0.12, 0.15);
         this.tone(t + 0.06, 'triangle', 1320, 1320, 0.15, 0.06);
+        break;
+      case 'clear':
+        // Rising major fanfare + glassy shimmer
+        [587, 740, 880, 1175].forEach((f, i) => this.tone(t + i * 0.09, 'triangle', f, f, 0.5, 0.13));
+        [1760, 2349, 2960].forEach((f, i) => this.tone(t + 0.38 + i * 0.05, 'sine', f, f * 1.01, 0.9, 0.05));
+        this.noiseBurst(t + 0.36, 0.6, 'highpass', 7000, 0.05, 0.05);
         break;
       case 'upgrade':
         [523, 659, 784, 1047].forEach((f, i) => this.tone(t + i * 0.07, 'triangle', f, f, 0.22, 0.12));

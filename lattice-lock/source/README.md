@@ -31,10 +31,12 @@ Layouts: **desktop** (≥1100×640) side panels · **portrait** bottom tray, boa
 
 ## Settings, audio & music
 Settings (BGM volume, SFX volume, mute, full screen, graphics Low/High) persist per device.
-The soundtrack is **generative and synthesised live** with Web Audio (`src/engine/music.ts`):
-crystalline pads, FM bell arpeggios, sub bass and synth drums in D minor at 92 BPM, through a
-convolution reverb and ping-pong delay. It crossfades between menu, build, combat, victory and defeat
-moods. No audio files are needed, so it works offline.
+Background music is two instrumental tracks in `public/audio/` ("Crystal Build" for menus and
+the build phase, "Lattice Under Siege" for combat), generated with Suno on the Alchemix Pro plan
+and re-encoded to 112 kbps MP3 (~2 MB each). `src/engine/music.ts` streams them through `<audio>`
+elements into Web Audio, so playback runs off the main thread and can't stutter when the 3D scene
+is busy. Each track loops with a 4 s equal-power crossfade, build/combat crossfade with the game
+phase, and menus/defeat use a low-pass filtered version of the build track.
 
 ## Online scoreboard & safety
 `server/index.mjs` is a zero-dependency Node server (JSON file storage in `server/data/`).

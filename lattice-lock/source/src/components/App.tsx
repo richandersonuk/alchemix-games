@@ -20,6 +20,7 @@ import ScoreboardPanel from './ui/ScoreboardPanel';
 import HowToPlay from './ui/HowToPlay';
 import PauseMenu, { type PauseAction } from './ui/PauseMenu';
 import EndOverlay from './ui/EndOverlay';
+import WaveBanner from './ui/WaveBanner';
 import { CompactControls, CompactShop, CompactTopBar, LogDrawer, LogToast, PlacementBar } from './ui/CompactHud';
 
 type Screen = 'title' | 'menu' | 'game';
@@ -162,6 +163,7 @@ export default function App() {
         ) : (
           <CompactHud layout={layout} onMenu={() => open('pause')} onLog={openLog} logSeen={logSeen} />
         ))}
+      {screen === 'game' && <WaveBanner />}
       {screen === 'game' && logOpen && <LogDrawer onClose={closeLog} />}
       {screen === 'game' && <InspectorModal />}
       {screen === 'game' && (
@@ -202,7 +204,7 @@ function MusicDirector({ screen }: { screen: Screen }) {
   useUiTick();
   const phase = engine.phase;
   const mood: Mood =
-    screen !== 'game' ? 'menu' : phase === 'wave' ? (engine.paused ? 'build' : 'combat') : phase === 'victory' ? 'victory' : phase === 'defeat' ? 'defeat' : 'build';
+    screen !== 'game' ? 'menu' : phase === 'wave' ? 'combat' : phase === 'victory' ? 'victory' : phase === 'defeat' ? 'defeat' : 'build';
   useEffect(() => {
     music.setMood(mood);
   }, [mood]);
