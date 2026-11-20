@@ -1,0 +1,17 @@
+# Lattice Lock global scoreboard — Cloudflare Worker + D1
+name = "lattice-lock-scores"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[vars]
+# Browser origins allowed to call the API (comma-separated). Add any new game host here.
+ALLOWED_ORIGINS = "https://games.alchemix.uk,http://localhost:5173,http://localhost:8090"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "lattice-lock-scores"
+database_id = "4abb2c40-65e4-4108-87cd-d383ac0f3a30"
+migrations_dir = "migrations"
+
+# Optional moderation: `npx wrangler secret put ADMIN_TOKEN` enables
+# DELETE /api/scores/<id> with "Authorization: Bearer <token>".

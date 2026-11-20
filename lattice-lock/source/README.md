@@ -39,6 +39,23 @@ is busy. Each track loops with a 4 s equal-power crossfade, build/combat crossfa
 phase, and menus/defeat use a low-pass filtered version of the build track.
 
 ## Online scoreboard & safety
+
+**Live:** the global scoreboard runs on Cloudflare as the Worker `lattice-lock-scores`
+(`worker/`, D1 database `lattice-lock-scores`) at
+https://lattice-lock-scores.lattice-lock.workers.dev. `npm run build:alchemix` points the game at it.
+
+```bash
+npm run worker:dev            # local Worker + simulated D1 on :8787 (dev server proxies /api to it)
+npm run worker:migrate:local  # create local tables (first time)
+npm run worker:deploy         # deploy changes (needs `npx wrangler login`)
+npm run worker:migrate        # apply new migrations to the live database
+npx wrangler secret put ADMIN_TOKEN --config worker/wrangler.toml   # enable DELETE moderation
+npx wrangler d1 execute lattice-lock-scores --remote --config worker/wrangler.toml \
+  --command "SELECT id, name, score, created_at FROM scores ORDER BY score DESC LIMIT 20"
+```
+
+To allow another site to use the API, add its origin to `ALLOWED_ORIGINS` in `worker/wrangler.toml`
+and redeploy. The Node server below is an alternative for self-hosting; both share the same rules.
 `server/index.mjs` is a zero-dependency Node server (JSON file storage in `server/data/`).
 - **Name filter** (`shared/nameFilter.js`, enforced by client *and* server): profanity and slurs with
   leetspeak, accent and stretched-letter normalisation, Scunthorpe-safe whole-word handling,

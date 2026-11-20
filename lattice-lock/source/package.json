@@ -11,7 +11,11 @@
     "preview": "vite preview",
     "start": "node server/index.mjs",
     "test:shared": "node scripts/check-shared.mjs",
-    "build:alchemix": "tsc --noEmit && VITE_ARCADE_HUB_URL=/ vite build"
+    "build:alchemix": "tsc --noEmit && VITE_ARCADE_HUB_URL=/ VITE_SCOREBOARD_URL=https://lattice-lock-scores.lattice-lock.workers.dev vite build",
+    "worker:dev": "wrangler dev --config worker/wrangler.toml --port 8787",
+    "worker:migrate:local": "wrangler d1 migrations apply lattice-lock-scores --local --config worker/wrangler.toml",
+    "worker:migrate": "wrangler d1 migrations apply lattice-lock-scores --remote --config worker/wrangler.toml",
+    "worker:deploy": "wrangler deploy --config worker/wrangler.toml"
   },
   "dependencies": {
     "@react-three/drei": "9.114.0",
@@ -30,7 +34,8 @@
     "postcss": "8.4.49",
     "tailwindcss": "3.4.15",
     "typescript": "5.6.3",
-    "vite": "5.4.11"
+    "vite": "5.4.11",
+    "wrangler": "^4.166.0"
   },
   "engines": {
     "node": ">=18"
