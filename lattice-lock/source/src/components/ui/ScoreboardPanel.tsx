@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CloudOff, Crown, Medal, RefreshCw, Smartphone, Trophy } from 'lucide-react';
-import { fetchGlobalScores, getLocalScores, type ScoreEntry } from '../../services/scoreboard';
+import { ScoreboardNotConfigured, fetchGlobalScores, getLocalScores, type ScoreEntry } from '../../services/scoreboard';
 import Modal from './Modal';
 
 type Tab = 'global' | 'device';
@@ -8,15 +8,15 @@ type Tab = 'global' | 'device';
 export default function ScoreboardPanel({ onClose, highlightId }: { onClose: () => void; highlightId?: string }) {
   const [tab, setTab] = useState<Tab>('global');
   const [global, setGlobal] = useState<ScoreEntry[] | null>(null);
-  const [state, setState] = useState<'loading' | 'ok' | 'offline'>('loading');
+  const [state, setState] = useState<'loading' | 'ok' | 'offline' | 'unconfigured'>('loading');
 
   const load = useCallback(async () => {
     setState('loading');
     try {
       setGlobal(await fetchGlobalScores(25));
       setState('ok');
-    } catch {
-      setState('offline');
+    } catch (err) {
+      setState(err instanceof ScoreboardNotConfigured ? 'unconfigured' : 'offline');
     }
   }, []);
 
@@ -51,16 +51,22 @@ export default function ScoreboardPanel({ onClose, highlightId }: { onClose: () 
         )}
       </div>
 
-      {tab === 'global' && state === 'offline' && (
+      {tab === 'global' && (state === 'offline' || state === 'unconfigured') && (
         <div className="flex flex-col items-center gap-2 py-8 text-center text-sm text-slate-400">
           <CloudOff className="h-8 w-8 text-slate-500" />
-          The online scoreboard can’t be reached right now.
-          <span className="text-xs text-slate-500">Your scores are still saved on this device.</span>
+          {state === 'unconfigured' ? 'The global scoreboard isn’t switched on for this site yet.' : 'The online scoreboard can’t be reached right now.'}
+          <span className="text-xs text-slate-500">
+            Your scores are still saved on this device —{' '}
+            <button type="button" className="underline decoration-dotted underline-offset-2 hover:text-slate-300" onClick={() => setTab('device')}>
+              see This device
+            </button>
+            .
+          </span>
         </div>
       )}
       {tab === 'global' && state === 'loading' && !global && <p className="py-8 text-center text-sm text-slate-500">Loading…</p>}
 
-      {(tab === 'device' || state !== 'offline') && rows.length > 0 && (
+      {(tab === 'device' || state === 'ok' || state === 'loading') && rows.length > 0 && (
         <ol className="space-y-1">
           {rows.map((e, i) => (
             <li
