@@ -1,0 +1,14 @@
+{
+  "name": "alchemix-scoreboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "migrate:local": "wrangler d1 migrations apply lattice-lock-scores --local",
+    "migrate": "wrangler d1 migrations apply lattice-lock-scores --remote",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.166.0"
+  }
+}

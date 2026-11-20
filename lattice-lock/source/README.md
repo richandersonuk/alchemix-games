@@ -39,6 +39,14 @@ is busy. Each track loops with a 4 s equal-power crossfade, build/combat crossfa
 phase, and menus/defeat use a low-pass filtered version of the build track.
 
 ## Online scoreboard & safety
+
+**Live:** the global scoreboard runs on Cloudflare as the Worker `lattice-lock-scores` (D1 database
+`lattice-lock-scores`) at https://lattice-lock-scores.lattice-lock.workers.dev. It now serves every
+Alchemix Arcade game; its source, deploy and moderation commands live in the arcade repo's
+`/scoreboard` folder (see `scoreboard/README.md`). `npm run build:alchemix` points this game at it.
+
+To allow another site to use the API, add its origin to `ALLOWED_ORIGINS` in `worker/wrangler.toml`
+and redeploy. The Node server below is an alternative for self-hosting; both share the same rules.
 `server/index.mjs` is a zero-dependency Node server (JSON file storage in `server/data/`).
 - **Name filter** (`shared/nameFilter.js`, enforced by client *and* server): profanity and slurs with
   leetspeak, accent and stretched-letter normalisation, Scunthorpe-safe whole-word handling,

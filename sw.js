@@ -43,6 +43,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Never cache live scoreboard data (global leaderboards must always be fresh)
+  if (url.hostname.endsWith('.workers.dev') || url.pathname.startsWith('/api/')) {
+    return;
+  }
+
   // Bypass for streamed media: <audio> uses HTTP Range requests, which the
   // cache can't answer correctly (Safari/iOS then refuses to play the track)
   if (event.request.headers.has('range') || /\.(mp3|m4a|ogg|opus|wav|mp4|webm)$/i.test(url.pathname)) {

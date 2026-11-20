@@ -739,12 +739,13 @@
 
       <!-- Single-Submission Scoreboard Entry Box -->
       <div id="verdictScoreSubmitBox" style="background:#101c36;border:1px solid var(--brass);border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;">
-        <div style="font-size:0.82rem;font-weight:700;color:var(--brass-soft);">Record your Forensic Rating in the Hall of Detectives:</div>
+        <div style="font-size:0.82rem;font-weight:700;color:var(--brass-soft);">Record your Forensic Rating in the global Hall of Detectives (don’t use your real name):</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <input id="inpDetectiveName" type="text" maxlength="16" placeholder="Detective Callsign" style="background:#070d1a;color:#fff;border:1px solid #38bdf8;border-radius:8px;padding:7px 10px;font-weight:700;font-size:0.84rem;">
+          <input id="inpDetectiveName" type="text" maxlength="16" placeholder="Detective Callsign" autocomplete="off" style="background:#070d1a;color:#fff;border:1px solid #38bdf8;border-radius:8px;padding:7px 10px;font-weight:700;font-size:0.84rem;">
           <button id="btnSaveScore" class="btn btn-sm btn-brass">Save Score</button>
         </div>
       </div>
+      <div id="detectiveScoreMsg" class="hidden" role="alert" style="font-size:0.78rem;text-align:center;font-weight:700;"></div>
       <div id="verdictScoreLockedMsg" class="hidden" style="font-size:0.8rem;color:var(--emerald-soft);text-align:center;font-weight:700;padding:6px;">
         ✓ Score recorded in the Hall of Detectives for this case!
       </div>
@@ -760,13 +761,14 @@
   <div id="scoreboardModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
     <div class="modal-box" style="max-width:560px;">
       <div class="panel-header">
-        <h2 class="panel-title">🏆 Hall of Forensic Detectives</h2>
+        <h2 class="panel-title">🏆 Hall of Forensic Detectives — Global</h2>
         <button id="btnCloseScoreboard" class="btn btn-sm">✕ Close</button>
       </div>
       <div id="scoreboardList" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
   </div>
 
+<script src="/scoreboard/client.js"></script>
 <script>
 /* ============================================================================
    1. WEB AUDIO SYNTHESIS ENGINE (Bunsen Roar, Dropper Plink, Fizz, Chimes)
@@ -2034,6 +2036,7 @@ function evaluateCaseSubmission() {
   document.getElementById('verdictRows').innerHTML = rowsHtml;
   document.getElementById('verdictScoreSubmitBox').classList.toggle('hidden', state.scoreSubmittedThisCase);
   document.getElementById('verdictScoreLockedMsg').classList.toggle('hidden', !state.scoreSubmittedThisCase);
+  if (typeof setScoreMsg === 'function') setScoreMsg('', true);
   document.getElementById('verdictModal').classList.remove('hidden');
 }
 
@@ -2113,52 +2116,105 @@ function openExamBoardManual() {
    8. HALL OF DETECTIVES SCOREBOARD (LOCALSTORAGE)
    ============================================================================ */
 const LB_KEY = 'alchemix_qad_leaderboard_v1';
+const GAME_ID = 'qad';
 
-function getScores() {
+const escapeHtml = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/** On-device copy: fallback when the global Hall can't be reached. */
+function getLocalScores() {
   try {
     const raw = localStorage.getItem(LB_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.filter((s) => s && !s.seed && !['DR. FRESENIUS', 'B. BUNSEN', 'M. CURIE'].includes(s.name));
+    }
   } catch (_) {}
-  return [
-    { name: 'DR. FRESENIUS', spec: 'WJEC A-Level', score: 2950 },
-    { name: 'B. BUNSEN',     spec: 'AQA A-Level',  score: 2680 },
-    { name: 'M. CURIE',      spec: 'OCR GCSE',     score: 2420 }
-  ];
+  return [];
 }
 
-function saveDetectiveScore() {
-  if (state.scoreSubmittedThisCase) return;
-  const inp = document.getElementById('inpDetectiveName');
-  const name = (inp.value || 'DETECTIVE').trim().toUpperCase().slice(0, 16);
-  const scores = getScores();
-  scores.push({
-    name,
-    spec: `${state.board} ${state.tier === 'ALEVEL' ? 'A-Level' : 'GCSE'}`,
-    score: state.lastFinalScore
-  });
+function saveLocalScore(entry) {
+  const scores = getLocalScores();
+  scores.push(entry);
   scores.sort((a, b) => b.score - a.score);
   try {
     localStorage.setItem(LB_KEY, JSON.stringify(scores.slice(0, 12)));
   } catch (_) {}
-  state.scoreSubmittedThisCase = true;
-  document.getElementById('verdictScoreSubmitBox').classList.add('hidden');
-  document.getElementById('verdictScoreLockedMsg').classList.remove('hidden');
 }
 
-function openScoreboardModal() {
-  const scores = getScores();
+function setScoreMsg(text, ok) {
+  const el = document.getElementById('detectiveScoreMsg');
+  if (!el) return;
+  el.textContent = text || '';
+  el.style.color = ok ? 'var(--emerald-soft)' : '#fca5a5';
+  el.classList.toggle('hidden', !text);
+}
+
+async function saveDetectiveScore() {
+  if (state.scoreSubmittedThisCase || state.scoreSubmitting) return;
+  const inp = document.getElementById('inpDetectiveName');
+  const btn = document.getElementById('btnSaveScore');
+  const name = (inp.value || '').trim().slice(0, 16);
+  if (name.length < 3) {
+    setScoreMsg('Names must be 3–16 characters.', false);
+    return;
+  }
+  const spec = `${state.board} ${state.tier === 'ALEVEL' ? 'A-Level' : 'GCSE'}`;
+  const score = state.lastFinalScore;
+  state.scoreSubmitting = true;
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  setScoreMsg('', true);
+
+  const res = window.ArcadeScores ? await ArcadeScores.submit(GAME_ID, { name, score, meta: { spec } }) : { ok: false, error: 'offline' };
+  state.scoreSubmitting = false;
+  btn.disabled = false;
+  btn.textContent = 'Save Score';
+
+  if (!res.ok && res.error !== 'offline') {
+    // Name / validation problems: let the player try again
+    setScoreMsg(window.ArcadeScores ? ArcadeScores.message(res.error) : 'This score couldn’t be submitted.', false);
+    if (res.error !== 'name' && res.error !== 'length' && res.error !== 'charset') {
+      state.scoreSubmittedThisCase = true;
+    }
+    return;
+  }
+  saveLocalScore({ name: (res.ok ? res.entry.name : name).toUpperCase(), spec, score });
+  state.scoreSubmittedThisCase = true;
+  document.getElementById('verdictScoreSubmitBox').classList.add('hidden');
+  const locked = document.getElementById('verdictScoreLockedMsg');
+  locked.textContent = res.ok
+    ? `✓ Recorded in the global Hall of Detectives${res.rank ? ` — you placed #${res.rank}!` : '!'}`
+    : '✓ Saved on this device (the global Hall is offline right now).';
+  locked.classList.remove('hidden');
+}
+
+function renderScoreRows(scores, note) {
   const list = document.getElementById('scoreboardList');
-  list.innerHTML = scores.map((s, idx) => `
+  const rows = scores.map((s, idx) => `
     <div style="display:flex;justify-content:space-between;align-items:center;background:#091224;border:1px solid #223860;border-radius:10px;padding:9px 12px;font-size:0.85rem;">
       <div>
         <strong style="color:var(--brass-soft);margin-right:8px;">#${idx + 1}</strong>
-        <strong style="color:#fff;">${s.name}</strong>
-        <span style="font-size:0.74rem;color:var(--text-muted);margin-left:8px;">(${s.spec})</span>
+        <strong style="color:#fff;">${escapeHtml(String(s.name).toUpperCase())}</strong>
+        ${s.spec ? `<span style="font-size:0.74rem;color:var(--text-muted);margin-left:8px;">(${escapeHtml(s.spec)})</span>` : ''}
       </div>
-      <div style="font-weight:900;color:var(--emerald-soft);">${s.score.toLocaleString()} pts</div>
+      <div style="font-weight:900;color:var(--emerald-soft);">${Number(s.score).toLocaleString()} pts</div>
     </div>
   `).join('');
+  list.innerHTML =
+    (note ? `<div style="font-size:0.78rem;color:var(--text-muted);text-align:center;">${note}</div>` : '') +
+    (rows || `<div style="font-size:0.85rem;color:var(--text-muted);text-align:center;padding:14px;">No detectives yet — solve a case to claim #1!</div>`);
+}
+
+async function openScoreboardModal() {
   document.getElementById('scoreboardModal').classList.remove('hidden');
+  renderScoreRows([], 'Loading the global Hall of Detectives…');
+  try {
+    if (!window.ArcadeScores) throw new Error('no client');
+    const rows = await ArcadeScores.top(GAME_ID, { limit: 12 });
+    renderScoreRows(rows.map((r) => ({ name: r.name, spec: r.meta && r.meta.spec, score: r.score })), '🌍 Global top 12');
+  } catch (_) {
+    renderScoreRows(getLocalScores(), '📴 Global Hall offline — showing scores saved on this device.');
+  }
 }
 
 /* ============================================================================

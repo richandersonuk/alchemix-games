@@ -133,6 +133,14 @@
       text-shadow: 0 0 6px rgba(255, 183, 3, 0.6);
       letter-spacing: 1px;
     }
+    /* Terminal-style cursor waiting for input */
+    .blink-cursor {
+      animation: cursor-blink 1.06s steps(1, end) infinite;
+    }
+    @keyframes cursor-blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
 
     /* Filter Controls */
     .filter-deck {
@@ -253,9 +261,9 @@
       left: 8px;
       z-index: 2;
       font-family: 'Press Start 2P', cursive;
-      font-size: 0.55rem;
-      padding: 4px 8px;
-      border-radius: 3px;
+      font-size: 0.825rem;
+      padding: 6px 12px;
+      border-radius: 4.5px;
       letter-spacing: 0.08em;
       color: #1a0010;
       background: #ff2fd0;
@@ -269,6 +277,7 @@
       50% { box-shadow: 0 0 16px rgba(255, 47, 208, 1); transform: rotate(-4deg) scale(1.08); }
     }
     @media (prefers-reduced-motion: reduce) {
+      .blink-cursor { animation: none; }
       .badge-new { animation: none; transform: rotate(-4deg); }
     }
     .badge-corner.all-devices {
@@ -420,7 +429,7 @@
   <div class="cabinet-viewport">
     <header class="arcade-marquee">
       <h1 class="arcade-title">THE ALCHEMIX ARCADE</h1>
-      <p class="arcade-subtitle">&gt; SELECT CARTRIDGE TO INITIALISE EXPERIMENT_</p>
+      <p class="arcade-subtitle">&gt; SELECT CARTRIDGE TO INITIALISE EXPERIMENT<span class="blink-cursor" aria-hidden="true">_</span></p>
     </header>
 
     <!-- Device Filter Chips -->
@@ -498,10 +507,10 @@
       </article>
 
       <!-- ChemTycoon -->
-      <article class="arcade-card" data-devices="mobile tablet desktop" data-added="2026-11-01">
+      <article class="arcade-card" data-devices="tablet desktop" data-added="2026-11-01">
         <div class="screen-bezel">
           <img src="/chem-tycoon/cartridge.svg" alt="Chem-Tycoon Cartridge">
-          <span class="badge-corner all-devices">PHONE / PC</span>
+          <span class="badge-corner desktop-only">TABLET / PC</span>
         </div>
         <div class="card-details">
           <h2 class="game-name">CHEM-TYCOON</h2>

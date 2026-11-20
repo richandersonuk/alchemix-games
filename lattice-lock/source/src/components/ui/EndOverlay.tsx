@@ -121,7 +121,7 @@ function EndCard({ onScores, onMenu }: { onScores: (highlightId?: string) => voi
               <>Submitted! {done.rank ? <>You placed <strong>#{done.rank}</strong> on the global scoreboard.</> : null}</>
             ) : (
               <span className="flex items-center justify-center gap-2">
-                <CloudOff className="h-4 w-4" /> Scoreboard offline — saved on this device.
+                <CloudOff className="h-4 w-4" /> Global scoreboard not available — saved on this device.
               </span>
             )}
           </div>
