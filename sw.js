@@ -1,9 +1,11 @@
-const CACHE_NAME = 'alchemix-arcade-v11';
+const CACHE_NAME = 'alchemix-arcade-v12';
 
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/icons/favicon.svg',
+  '/icons/icon-192.png',
   '/science-saviour/cartridge.svg',
   '/chem-tycoon/cartridge.svg',
   '/econfigs/cartridge.svg',
