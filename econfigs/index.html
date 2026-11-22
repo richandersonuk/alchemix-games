@@ -1180,73 +1180,54 @@ const ChemDB = (() => {
 })();
 
 // =============================================================================
-// 2. PROCEDURAL BGM + SFX AUDIO ENGINE (Independent BGM & SFX Gains)
+// 2. LYRIA OGG BGM + WEB AUDIO SFX ENGINE (Independent BGM & SFX Volumes)
 // =============================================================================
 const SoundFX = (() => {
-  let ctx = null, bgmGain = null, sfxGain = null;
+  let ctx = null, sfxGain = null, unlocked = false;
   let bgmVol = 0.45, sfxVol = 0.85;
-  let bgmTrack = "calm", step = 0, timerId = null, feverBoost = false;
+  let bgmTrack = "calm", feverBoost = false;
 
-  const CALM_ARP = [261.63, 329.63, 392.00, 493.88, 392.00, 329.63, 293.66, 392.00, 261.63, 329.63, 440.00, 523.25, 440.00, 392.00, 329.63, 293.66];
-  const CALM_BASS = [130.81, 0, 130.81, 0, 110.00, 0, 110.00, 0, 87.31, 0, 87.31, 0, 98.00, 0, 98.00, 0];
-  const ACT_ARP = [329.63, 392.00, 493.88, 659.25, 493.88, 392.00, 440.00, 587.33, 329.63, 392.00, 523.25, 659.25, 587.33, 493.88, 440.00, 392.00];
-  const ACT_BASS = [164.81, 164.81, 0, 164.81, 130.81, 130.81, 0, 130.81, 146.83, 146.83, 0, 146.83, 123.47, 123.47, 146.83, 164.81];
+  const bgmElements = {
+    calm: new Audio("bgm_calm.ogg"),
+    action: new Audio("bgm_action.ogg")
+  };
+  Object.values(bgmElements).forEach(el => {
+    el.loop = true;
+    el.preload = "auto";
+    el.volume = bgmVol;
+  });
 
   function ensureCtx() {
     if (!ctx && (window.AudioContext || window.webkitAudioContext)) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
-      bgmGain = ctx.createGain(); sfxGain = ctx.createGain();
-      bgmGain.gain.value = bgmVol * 0.24;
+      sfxGain = ctx.createGain();
       sfxGain.gain.value = sfxVol * 0.36;
-      bgmGain.connect(ctx.destination);
       sfxGain.connect(ctx.destination);
     }
     if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
   }
 
-  function scheduleBgmStep() {
-    if (!ctx || ctx.state !== "running" || bgmVol <= 0.01) return;
-    const t0 = ctx.currentTime + 0.02;
-    const isAct = bgmTrack === "action";
-    const arpArr = isAct ? ACT_ARP : CALM_ARP;
-    const bassArr = isAct ? ACT_BASS : CALM_BASS;
-    const idx = step % 16;
-    const freqA = arpArr[idx] * (isAct && feverBoost ? 1.5 : 1);
-    const freqB = bassArr[idx];
-
-    if (freqA > 0) {
-      const o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter();
-      o.type = isAct ? "square" : "triangle";
-      o.frequency.setValueAtTime(freqA, t0);
-      f.type = "lowpass"; f.frequency.setValueAtTime(isAct ? 1800 : 1100, t0);
-      g.gain.setValueAtTime(0.001, t0);
-      g.gain.linearRampToValueAtTime(isAct ? 0.12 : 0.11, t0 + 0.015);
-      g.gain.exponentialRampToValueAtTime(0.001, t0 + (isAct ? 0.11 : 0.16));
-      o.connect(f); f.connect(g); g.connect(bgmGain);
-      o.start(t0); o.stop(t0 + 0.18);
+  function syncBgmPlayback() {
+    const activeEl = bgmElements[bgmTrack] || bgmElements.calm;
+    const otherEl = bgmTrack === "action" ? bgmElements.calm : bgmElements.action;
+    if (!otherEl.paused) {
+      otherEl.pause();
+      otherEl.currentTime = 0;
     }
-    if (freqB > 0) {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = isAct ? "sawtooth" : "sine";
-      o.frequency.setValueAtTime(freqB, t0);
-      g.gain.setValueAtTime(0.001, t0);
-      g.gain.linearRampToValueAtTime(isAct ? 0.15 : 0.18, t0 + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.14);
-      o.connect(g); g.connect(bgmGain);
-      o.start(t0); o.stop(t0 + 0.16);
+    activeEl.volume = bgmVol;
+    activeEl.muted = bgmVol <= 0.01;
+    activeEl.playbackRate = (bgmTrack === "action" && feverBoost) ? 1.05 : 1.0;
+    if (unlocked && bgmVol > 0.01 && activeEl.paused) {
+      activeEl.play().catch(() => {});
+    } else if (bgmVol <= 0.01 && !activeEl.paused) {
+      activeEl.pause();
     }
-    step++;
-  }
-
-  function startBgmLoop() {
-    if (timerId) clearInterval(timerId);
-    const ms = bgmTrack === "action" ? 117 : 144;
-    timerId = setInterval(scheduleBgmStep, ms);
   }
 
   function unlock() {
+    unlocked = true;
     ensureCtx();
-    if (!timerId && bgmVol > 0) startBgmLoop();
+    syncBgmPlayback();
   }
 
   function tone(f1, f2, dur, type = "sine", gainVal = 0.25, delay = 0) {
@@ -1270,13 +1251,13 @@ const SoundFX = (() => {
     setVolumes(b, s) {
       bgmVol = Math.max(0, Math.min(1, b));
       sfxVol = Math.max(0, Math.min(1, s));
-      if (bgmGain && ctx) bgmGain.gain.setTargetAtTime(bgmVol * 0.24, ctx.currentTime, 0.04);
       if (sfxGain && ctx) sfxGain.gain.setTargetAtTime(sfxVol * 0.36, ctx.currentTime, 0.04);
-      if (bgmVol > 0 && !timerId && ctx) startBgmLoop();
+      syncBgmPlayback();
     },
     setTrack(track, fever = false) {
       feverBoost = fever;
-      if (bgmTrack !== track) { bgmTrack = track; step = 0; if (ctx) startBgmLoop(); }
+      bgmTrack = track === "action" ? "action" : "calm";
+      syncBgmPlayback();
     },
     spinUp() { tone(523.25, 659.25, 0.08, "sine", 0.35); },
     spinDown() { tone(659.25, 783.99, 0.09, "sine", 0.35); },
