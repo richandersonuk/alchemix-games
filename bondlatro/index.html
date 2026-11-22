@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Bondlatro: The Octet Engine</title>
+	<style>
+		html, body {
+			margin: 0;
+			padding: 0;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			background: radial-gradient(circle at 50% 45%, #123c34 0%, #091d1b 55%, #050f12 100%);
+			color: #eef6f5;
+			font-family: "Noto Sans", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+			touch-action: none;
+		}
+		#canvas {
+			display: block;
+			width: 100%;
+			height: 100%;
+		}
+		#canvas:focus {
+			outline: none;
+		}
+		#status {
+			position: fixed;
+			inset: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			background: radial-gradient(circle at 50% 42%, #134238 0%, #091b1a 62%, #050d10 100%);
+			z-index: 20;
+			gap: 16px;
+			padding: 24px;
+			text-align: center;
+		}
+		.lab-badge {
+			font-size: 12px;
+			letter-spacing: 0.16em;
+			text-transform: uppercase;
+			color: #7ee3cf;
+			background: rgba(20, 74, 65, 0.55);
+			border: 1px solid rgba(126, 227, 207, 0.35);
+			padding: 6px 14px;
+			border-radius: 999px;
+		}
+		.lab-logo {
+			width: 116px;
+			height: 116px;
+			border-radius: 24px;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), 0 0 28px rgba(77, 227, 193, 0.28);
+			border: 2px solid rgba(255, 212, 102, 0.55);
+			object-fit: cover;
+		}
+		.lab-title {
+			font-size: clamp(26px, 4vw, 42px);
+			font-weight: 800;
+			letter-spacing: 0.04em;
+			color: #fff6dc;
+			text-shadow: 0 3px 16px rgba(0, 0, 0, 0.65);
+			margin: 0;
+		}
+		.lab-sub {
+			font-size: 14px;
+			color: #a9cbc6;
+			margin: 0;
+		}
+		.ea-bar-wrap {
+			width: min(380px, 82vw);
+			height: 14px;
+			background: rgba(8, 16, 24, 0.85);
+			border: 1px solid #355a66;
+			border-radius: 999px;
+			overflow: hidden;
+			box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+		}
+		#status-progress {
+			width: 12%;
+			height: 100%;
+			background: linear-gradient(90deg, #1d9bf0 0%, #4de3c1 55%, #ffb703 100%);
+			transition: width 0.18s ease-out;
+		}
+		#status-notice {
+			display: none;
+			max-width: 540px;
+			background: rgba(48, 18, 28, 0.9);
+			border: 1px solid #ff6b8b;
+			border-radius: 12px;
+			padding: 14px 18px;
+			color: #ffdce5;
+			font-size: 13px;
+			line-height: 1.5;
+		}
+		#device-banner {
+			display: none;
+			position: fixed;
+			top: 8px;
+			left: 50%;
+			transform: translateX(-50%);
+			z-index: 30;
+			background: rgba(16, 26, 38, 0.94);
+			border: 1px solid #f2b705;
+			color: #ffe9a8;
+			font-size: 12px;
+			padding: 8px 14px;
+			border-radius: 10px;
+			max-width: 92vw;
+			text-align: center;
+		}
+		#device-banner button {
+			margin-left: 10px;
+			background: #27445c;
+			color: #fff;
+			border: 1px solid #5989ad;
+			border-radius: 6px;
+			padding: 2px 8px;
+			cursor: pointer;
+		}
+		@media (max-width: 680px) {
+			#device-banner.active {
+				display: block;
+			}
+		}
+	</style>
+	<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
+	<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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" />
+</head>
+<body>
+	<canvas id="canvas">
+		Your browser does not support HTML5 Canvas.
+	</canvas>
+
+	<div id="device-banner" class="active">
+		Bondlatro is designed for tablet &amp; PC screens (landscape view recommended).
+		<button type="button" onclick="this.parentElement.classList.remove('active')">OK</button>
+	</div>
+
+	<div id="status">
+		<img class="lab-logo" src="index.apple-touch-icon.png" alt="Bondlatro Icon" width="116" height="116" />
+		<div class="lab-badge">GCSE &amp; A-Level Chemistry Deck-Builder</div>
+		<h1 class="lab-title">BONDLATRO: THE OCTET ENGINE</h1>
+		<p class="lab-sub" id="status-label">Synthesizing Reaction Bench &amp; WebAssembly Runtime...</p>
+		<div class="ea-bar-wrap" id="ea-bar-wrap">
+			<div id="status-progress"></div>
+		</div>
+		<div id="status-notice"></div>
+	</div>
+
+	<!-- Alchemix Arcade shared global scoreboard client -->
+	<script src="/scoreboard/client.js"></script>
+	<script>
+		window.BondlatroScores = (function () {
+			const GAME_ID = "bondlatro";
+			const STORAGE_KEY = "alchemix_bondlatro_scores_v1";
+			const MAX_LOCAL = 15;
+
+			function loadLocal() {
+				try {
+					const raw = localStorage.getItem(STORAGE_KEY);
+					if (!raw) return [];
+					const arr = JSON.parse(raw);
+					return Array.isArray(arr) ? arr : [];
+				} catch (_e) {
+					return [];
+				}
+			}
+
+			function saveLocalEntry(entry) {
+				const list = loadLocal();
+				list.push(entry);
+				list.sort(function (a, b) { return (Number(b.score) || 0) - (Number(a.score) || 0); });
+				if (list.length > MAX_LOCAL) list.length = MAX_LOCAL;
+				try {
+					localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+				} catch (_e) {}
+				return list;
+			}
+
+			function fallbackMessage(err) {
+				if (window.ArcadeScores && typeof window.ArcadeScores.message === "function") {
+					try { return String(window.ArcadeScores.message(err)); } catch (_e) {}
+				}
+				const map = {
+					name: "That name isn't allowed — please pick another.",
+					length: "Name must be 3–16 characters.",
+					charset: "Use only letters, numbers, spaces, dots, dashes, or underscores (at least 2 letters).",
+					invalid: "Score submission was rejected as invalid.",
+					duplicate: "This run has already been submitted.",
+					rate: "Too many submissions — please wait a moment and try again.",
+					offline: "Global scoreboard offline — score saved on this device."
+				};
+				return map[err] || "Could not submit score right now.";
+			}
+
+			const bridge = {
+				_fetchState: { done: true, ok: false, offline: false, scores: [] },
+				_submitState: { done: true, ok: false, rank: 0, error: "", message: "" },
+
+				hasArcadeClient: function () {
+					return Boolean(window.ArcadeScores && typeof window.ArcadeScores.top === "function" && typeof window.ArcadeScores.submit === "function");
+				},
+
+				getLocalJSON: function () {
+					return JSON.stringify(loadLocal());
+				},
+
+				getErrorMessage: function (err) {
+					return fallbackMessage(err);
+				},
+
+				startFetch: function (board, limit) {
+					const state = { done: false, ok: false, offline: false, scores: [] };
+					bridge._fetchState = state;
+					if (!bridge.hasArcadeClient()) {
+						state.done = true;
+						state.ok = false;
+						state.offline = true;
+						state.scores = loadLocal();
+						return;
+					}
+					window.ArcadeScores.top(GAME_ID, { board: board || "main", limit: Number(limit) || 10 })
+						.then(function (rows) {
+							state.done = true;
+							state.ok = true;
+							state.offline = false;
+							state.scores = Array.isArray(rows) ? rows : [];
+						})
+						.catch(function () {
+							state.done = true;
+							state.ok = false;
+							state.offline = true;
+							state.scores = loadLocal();
+						});
+				},
+
+				pollFetch: function () {
+					return JSON.stringify(bridge._fetchState);
+				},
+
+				startSubmit: function (name, score, board, ante, mode) {
+					const state = { done: false, ok: false, rank: 0, error: "", message: "" };
+					bridge._submitState = state;
+					const cleanScore = Math.floor(Number(score) || 0);
+					const cleanAnte = Math.max(1, Math.min(20, Math.floor(Number(ante) || 1)));
+					const cleanMode = mode === "CHALLENGE" ? "CHALLENGE" : "STANDARD";
+					const meta = { ante: cleanAnte, mode: cleanMode };
+					const localEntry = {
+						id: "local-" + Date.now(),
+						name: String(name),
+						score: cleanScore,
+						meta: meta,
+						date: new Date().toISOString().slice(0, 10)
+					};
+
+					if (!bridge.hasArcadeClient()) {
+						saveLocalEntry(localEntry);
+						state.done = true;
+						state.ok = false;
+						state.error = "offline";
+						state.message = "Global scoreboard offline — score saved on this device.";
+						return;
+					}
+
+					window.ArcadeScores.submit(GAME_ID, {
+						name: String(name),
+						score: cleanScore,
+						board: board || "main",
+						meta: meta
+					}).then(function (res) {
+						state.done = true;
+						if (res && res.ok) {
+							saveLocalEntry(res.entry || localEntry);
+							state.ok = true;
+							state.rank = Number(res.rank) || 0;
+							state.message = state.rank > 0 ? ("Global rank #" + state.rank) : "Score submitted!";
+						} else {
+							const err = (res && res.error) ? String(res.error) : "invalid";
+							state.ok = false;
+							state.error = err;
+							if (err === "offline") {
+								saveLocalEntry(localEntry);
+								state.message = "Global scoreboard offline — score saved on this device.";
+							} else {
+								state.message = fallbackMessage(err);
+							}
+						}
+					}).catch(function () {
+						saveLocalEntry(localEntry);
+						state.done = true;
+						state.ok = false;
+						state.error = "offline";
+						state.message = "Global scoreboard offline — score saved on this device.";
+					});
+				},
+
+				pollSubmit: function () {
+					return JSON.stringify(bridge._submitState);
+				}
+			};
+			return bridge;
+		})();
+	</script>
+
+	<script src="index.js"></script>
+	<script>
+		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3267488,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+		const engine = new Engine(GODOT_CONFIG);
+
+		(function () {
+			const statusOverlay = document.getElementById("status");
+			const statusProgress = document.getElementById("status-progress");
+			const statusNotice = document.getElementById("status-notice");
+			const statusLabel = document.getElementById("status-label");
+			const barWrap = document.getElementById("ea-bar-wrap");
+
+			function setNotice(text) {
+				statusNotice.style.display = "block";
+				statusNotice.textContent = text;
+				barWrap.style.display = "none";
+			}
+
+			const missing = Engine.getMissingFeatures({
+				threads: false
+			});
+
+			if (missing.length !== 0) {
+				setNotice(
+					"WebAssembly launch blocked — missing browser features:\n" + missing.join("\n")
+				);
+				return;
+			}
+
+			engine.startGame({
+				onProgress: function (current, total) {
+					if (current > 0 && total > 0) {
+						const pct = Math.min(100, Math.round((current / total) * 100));
+						statusProgress.style.width = pct + "%";
+						statusLabel.textContent = "Loading Octet Engine (" + pct + "%)...";
+					} else {
+						statusProgress.style.width = "65%";
+					}
+				}
+			}).then(function () {
+				statusOverlay.style.display = "none";
+			}, function (err) {
+				console.error(err);
+				setNotice(err instanceof Error ? err.message : String(err));
+			});
+		})();
+	</script>
+</body>
+</html>
+
