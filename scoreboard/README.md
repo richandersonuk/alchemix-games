@@ -12,7 +12,11 @@ Live API: https://lattice-lock-scores.lattice-lock.workers.dev
 | QAD | main | `/api/games/qad/scores` |
 | Science Saviour | main | `/api/games/science-saviour/scores` |
 | Subatomic Sorter (Godot) | main | `/api/games/subatomic-sorter/scores` |
+| Titration Rush (Godot) | `SOLO-GCSE`, `SOLO-KS3`, `COOP-GCSE`, `COOP-KS3`, `CAREER` | `/api/games/titration-rush/scores` |
 
+- `worker/src/rooms.js` — online co-op relay: a Durable Object per 4-letter room code at
+  `GET /api/rooms/:CODE/ws?role=host|guest` (WebSocket). It pairs one host with one guest and forwards
+  their messages; used by Titration Rush. Idle rooms hibernate and cost nothing.
 - `client.js` — tiny browser helper the web games load (`<script src="/scoreboard/client.js">`).
 - `worker/` — the Worker. Per-game rules (score caps, allowed boards, whitelisted display fields)
   are in `worker/src/games.js`. Player names (and class codes) go through the shared safety filter

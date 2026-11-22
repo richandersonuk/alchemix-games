@@ -39,6 +39,12 @@ export const GAMES = {
     maxScore: () => 2_000_000,
     meta: { stage: int(1, 50), badge: oneOf('🎸', '🇧🇷', '🇯🇲', '⚡') },
   },
+  // Titration Rush (/titration-rush, Godot) — solo & co-op shifts per level, plus career total
+  'titration-rush': {
+    boards: (b) => ['SOLO-GCSE', 'SOLO-KS3', 'COOP-GCSE', 'COOP-KS3', 'CAREER'].includes(b),
+    maxScore: (b) => (b === 'CAREER' ? 60_000 : 25_000),
+    meta: { concordant: int(0, 999), stars: int(0, 3) },
+  },
   // Subatomic Sorter (/subatomic-sorter, Godot)
   'subatomic-sorter': {
     boards: (b) => b === 'main',

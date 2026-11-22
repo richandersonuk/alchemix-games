@@ -13,19 +13,28 @@
 //   GET    /api/games/:game/scores?board=main&tag=&limit=10   → { scores }
 //   POST   /api/games/:game/scores  { runId, name, score, board, tag?, meta? } → { ok, rank, entry }
 //   DELETE /api/games/:game/scores/:id    Authorization: Bearer $ADMIN_TOKEN
+//
+// Online co-op relay (rooms.js, Durable Object per room code):
+//   GET    /api/rooms/:CODE/ws?role=host|guest   WebSocket
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { checkName } from '../../../lattice-lock/source/shared/nameFilter.js';
 import { computeScore, validateSummary } from '../../../lattice-lock/source/shared/scoring.js';
 import { GAMES, cleanMeta } from './games.js';
 
+export { RoomRelay } from './rooms.js';
+
 const MAX_BODY = 4096;
 const POST_LIMIT = { windowMs: 60_000, max: 8 }; // per IP, across all games
 const KEEP_TOP = 1000;
+const ROOM_CODE = /^\/api\/rooms\/([A-HJ-NP-Z]{4})\/ws$/;
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    // WebSocket rooms are handled before CORS: an upgrade response can't take extra headers.
+    const room = url.pathname.match(ROOM_CODE);
+    if (room) return openRoom(request, env, room[1]);
     const cors = corsHeaders(request, env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     try {
@@ -294,4 +303,15 @@ async function adminOk(request, env) {
   let diff = 0;
   for (let i = 0; i < x.length; i++) diff |= x[i] ^ y[i];
   return diff === 0;
+}
+
+// ── Online co-op rooms ──────────────────────────────────────────────────────
+
+function openRoom(request, env, code) {
+  if (!env.ROOMS) return new Response('Rooms are not configured', { status: 503 });
+  // Browsers always send Origin on WebSocket upgrades; desktop builds may not.
+  const origin = request.headers.get('origin');
+  const allowed = (env.ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  if (origin && !allowed.includes('*') && !allowed.includes(origin)) return new Response('Forbidden', { status: 403 });
+  return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch(request);
 }
