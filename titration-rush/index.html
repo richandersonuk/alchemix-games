@@ -75,9 +75,28 @@
 
 	<script src="index.js"></script>
 	<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3163408,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3175368,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
+
+// Fullscreen bridge. Browsers only allow fullscreen *during* a key press or click,
+// but Godot handles input a frame later. So the game sets trFullscreen.want
+// (true / false) and the next key or pointer event applies it right here.
+window.trFullscreen = { want: null };
+function trApplyFullscreen() {
+	const want = window.trFullscreen.want;
+	if (want === null) { return; }
+	window.trFullscreen.want = null;
+	const el = document.documentElement;
+	if (want && !document.fullscreenElement && el.requestFullscreen) {
+		el.requestFullscreen().catch(function () {});
+	} else if (!want && document.fullscreenElement) {
+		document.exitFullscreen().catch(function () {});
+	}
+}
+['keydown', 'keyup', 'pointerdown', 'pointerup'].forEach(function (t) {
+	window.addEventListener(t, trApplyFullscreen, true);
+});
 
 (function () {
 	const statusOverlay = document.getElementById('status');
