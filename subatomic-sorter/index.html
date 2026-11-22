@@ -102,6 +102,7 @@
 		}
 		.title-badge {
 			text-align: center;
+			padding: 0 20px;
 		}
 		.title-badge h1 {
 			margin: 0;
@@ -222,7 +223,183 @@
 			}
 		};
 
-		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":2969756,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+		window.ShellShockBGM = (function () {
+			const AudioCtx = window.AudioContext || window.webkitAudioContext;
+			let _ctx = null;
+			let _gainNode = null;
+			let _rawBytes = null;
+			let _expectedDuration = 32.0;
+			let _buffer = null;
+			let _decoding = false;
+			let _source = null;
+			let _loopStart = 0.0;
+			let _loopEnd = 0.0;
+			let _enabled = true;
+			let _volume = 0.70;
+			let _duckDb = -3.5;
+
+			function _computeGain() {
+				if (!_enabled || _volume <= 0.001) {
+					return 0.0;
+				}
+				return Math.max(0.0, Math.min(1.0, _volume)) * Math.pow(10.0, _duckDb / 20.0);
+			}
+
+			function _ensureContext() {
+				if (!AudioCtx) {
+					return null;
+				}
+				if (!_ctx) {
+					try {
+						_ctx = new AudioCtx({ latencyHint: "playback" });
+					} catch (_err) {
+						_ctx = new AudioCtx();
+					}
+					_gainNode = _ctx.createGain();
+					_gainNode.gain.setValueAtTime(_computeGain(), _ctx.currentTime);
+					_gainNode.connect(_ctx.destination);
+				}
+				return _ctx;
+			}
+
+			function _decodeIfReady() {
+				if (!_rawBytes || _buffer || _decoding) {
+					return;
+				}
+				const ctx = _ensureContext();
+				if (!ctx) {
+					return;
+				}
+				_decoding = true;
+				const copyBuf = _rawBytes.buffer.slice(_rawBytes.byteOffset, _rawBytes.byteOffset + _rawBytes.byteLength);
+				ctx.decodeAudioData(copyBuf).then(function (decoded) {
+					_buffer = decoded;
+					_decoding = false;
+					if (_expectedDuration > 0.0 && decoded.duration > _expectedDuration + 0.004) {
+						const startPad = Math.min(0.0250567, decoded.duration - _expectedDuration);
+						_loopStart = Math.max(0.0, startPad);
+						_loopEnd = Math.min(decoded.duration, _loopStart + _expectedDuration);
+					} else {
+						_loopStart = 0.0;
+						_loopEnd = decoded.duration;
+					}
+					_syncPlayback(0.05);
+				}).catch(function (err) {
+					_decoding = false;
+					console.warn("ShellShockBGM decode error:", err);
+				});
+			}
+
+			function _stopSource() {
+				if (_source) {
+					try {
+						_source.stop();
+						_source.disconnect();
+					} catch (_err) {}
+					_source = null;
+				}
+			}
+
+			function _syncPlayback(rampSec) {
+				if (!_ctx || !_gainNode) {
+					return;
+				}
+				const now = _ctx.currentTime;
+				const targetGain = _computeGain();
+				const tau = Math.max(0.015, (Number(rampSec) || 0.08) * 0.35);
+				try {
+					_gainNode.gain.cancelScheduledValues(now);
+					_gainNode.gain.setTargetAtTime(targetGain, now, tau);
+				} catch (_err) {
+					_gainNode.gain.value = targetGain;
+				}
+
+				if (!_enabled) {
+					_stopSource();
+					return;
+				}
+				if (!_buffer || _ctx.state !== "running") {
+					return;
+				}
+				if (!_source) {
+					const src = _ctx.createBufferSource();
+					src.buffer = _buffer;
+					src.loop = true;
+					src.loopStart = _loopStart;
+					src.loopEnd = _loopEnd > _loopStart ? _loopEnd : _buffer.duration;
+					src.connect(_gainNode);
+					src.start(0, _loopStart);
+					_source = src;
+				}
+			}
+
+			function unlock() {
+				const ctx = _ensureContext();
+				if (!ctx) {
+					return;
+				}
+				if (_rawBytes && !_buffer) {
+					_decodeIfReady();
+				}
+				if (ctx.state === "suspended") {
+					ctx.resume().then(function () {
+						_syncPlayback(0.05);
+					}).catch(function () {});
+				} else {
+					_syncPlayback(0.05);
+				}
+			}
+
+			["pointerdown", "touchstart", "keydown"].forEach(function (evName) {
+				window.addEventListener(evName, unlock, { passive: true });
+			});
+
+			document.addEventListener("visibilitychange", function () {
+				if (!_ctx) {
+					return;
+				}
+				if (document.hidden) {
+					_ctx.suspend().catch(function () {});
+				} else if (_enabled) {
+					_ctx.resume().then(function () {
+						_syncPlayback(0.05);
+					}).catch(function () {});
+				}
+			});
+
+			return {
+				initBase64: function (b64, expectedDurationSec) {
+					if (!b64) {
+						return;
+					}
+					const binStr = atob(b64);
+					const bytes = new Uint8Array(binStr.length);
+					for (let i = 0; i < binStr.length; i++) {
+						bytes[i] = binStr.charCodeAt(i);
+					}
+					_rawBytes = bytes;
+					_expectedDuration = Number(expectedDurationSec) || 32.0;
+					_buffer = null;
+					_stopSource();
+					_decodeIfReady();
+				},
+				setConfig: function (enabled, volumeLinear, duckDb, rampSec) {
+					_enabled = Boolean(enabled);
+					_volume = Number(volumeLinear);
+					if (!Number.isFinite(_volume)) {
+						_volume = 0.70;
+					}
+					_duckDb = Number(duckDb);
+					if (!Number.isFinite(_duckDb)) {
+						_duckDb = -3.5;
+					}
+					_syncPlayback(rampSec);
+				},
+				unlock: unlock
+			};
+		})();
+
+		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":3421608,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 		const GODOT_THREADS_ENABLED = false;
 		(function () {
 			const statusOverlay = document.getElementById("status");
