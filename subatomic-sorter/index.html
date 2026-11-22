@@ -179,7 +179,6 @@
 
 </head>
 <body>
-	<a id="quit-hub-btn" href="../" title="Quit to Alchemix Arcade Hub" onclick="if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});}">◀ HUB</a>
 	<canvas id="canvas" oncontextmenu="return false;">
 		HTML5 canvas is required to run Subatomic Sorter: ShellShock.
 	</canvas>
@@ -199,11 +198,15 @@
 			<div id="status-progress-inner"></div>
 		</div>
 		<div id="status-notice" role="alert"></div>
+		<a id="quit-hub-btn" href="../" title="Quit to Alchemix Arcade Hub" onclick="if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});}">◀ HUB</a>
 	</div>
 
 	<script src="index.js"></script>
 	<script>
 		window.exitToArcadeHub = function () {
+			if (document.fullscreenElement) {
+				document.exitFullscreen().catch(function () {});
+			}
 			try {
 				if (window.parent && window.parent !== window) {
 					window.parent.postMessage({ type: "ARCADE_QUIT", game: "subatomic-sorter" }, "*");
@@ -220,6 +223,8 @@
 				window.location.href = document.referrer;
 			} else if (window.history.length > 1) {
 				window.history.back();
+			} else {
+				window.location.href = "../";
 			}
 		};
 
