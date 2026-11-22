@@ -442,8 +442,39 @@
       <button type="button" class="coin-btn" data-filter="tablet-only">🖥️ TABLET / PC ONLY</button>
     </nav>
 
-    <!-- Game List (newest first) -->
+    <!-- Game List: NEW first, then COMING SOON, then the library, each newest first (re-sorted by the script below) -->
     <main class="cabinet-grid">
+      <!-- Lattice Lock: Crystal Defender (/lattice-lock) -->
+      <article class="arcade-card" data-devices="mobile tablet desktop" data-added="2026-11-20">
+        <div class="screen-bezel">
+          <img src="/lattice-lock/cartridge.svg" alt="Lattice Lock Cartridge">
+          <span class="badge-corner all-devices">PHONE / PC</span>
+        </div>
+        <div class="card-details">
+          <h2 class="game-name">LATTICE LOCK</h2>
+          <p class="game-lore">3D crystal tower defence. Build giant ionic, covalent, metallic &amp; molecular barriers and match bonding to properties to stop heat, arcs, shear &amp; solvent waves.</p>
+          <a href="/lattice-lock/" class="arcade-trigger-btn">LOCK THE LATTICE</a>
+        </div>
+      </article>
+
+      <!-- Mechanism Maestro (/mechanism-maestro) - A-Level curly-arrow mechanisms.
+           COMING SOON: the game is live at /mechanism-maestro/ for testing but not linked yet.
+           To launch: remove the coming-soon badge (top left),
+           swap the <span> below for <a href="/mechanism-maestro/" class="arcade-trigger-btn">DRAW THE ARROWS</a>,
+           and set data-added to the launch date (that shows the NEW tag for a week). -->
+      <article class="arcade-card" data-devices="tablet desktop" data-added="2026-11-22">
+        <div class="screen-bezel">
+          <img src="/mechanism-maestro/cartridge.svg" alt="Mechanism Maestro Cartridge">
+          <span class="badge-corner coming-soon" style="right:auto;left:8px;">COMING SOON</span>
+          <span class="badge-corner desktop-only">TABLET / PC</span>
+        </div>
+        <div class="card-details">
+          <h2 class="game-name">MECHANISM MAESTRO</h2>
+          <p class="game-lore">A-Level curly-arrow trainer. Drag electron pairs, track formal charges and beat the examiner across 10 organic mechanisms, from Markovnikov addition to acyl chlorides.</p>
+          <span class="arcade-trigger-btn coming-soon-btn" role="button" aria-disabled="true" style="cursor:default;">COMING SOON</span>
+        </div>
+      </article>
+
       <!-- Titration Rush (/titration-rush) - keyboard / gamepad only.
            COMING SOON: the game is live at /titration-rush/ for testing but not linked yet.
            To launch: remove the coming-soon badge (top left),
@@ -459,19 +490,6 @@
           <h2 class="game-name">TITRATION RUSH</h2>
           <p class="game-lore">3D lab-service frenzy. Rinse, pipette and titrate to concordant endpoints for customer orders before they walk out. GCSE / KS3 required practical.</p>
           <span class="arcade-trigger-btn coming-soon-btn" role="button" aria-disabled="true" style="cursor:default;">COMING SOON</span>
-        </div>
-      </article>
-
-      <!-- Lattice Lock: Crystal Defender (/lattice-lock) -->
-      <article class="arcade-card" data-devices="mobile tablet desktop" data-added="2026-11-20">
-        <div class="screen-bezel">
-          <img src="/lattice-lock/cartridge.svg" alt="Lattice Lock Cartridge">
-          <span class="badge-corner all-devices">PHONE / PC</span>
-        </div>
-        <div class="card-details">
-          <h2 class="game-name">LATTICE LOCK</h2>
-          <p class="game-lore">3D crystal tower defence. Build giant ionic, covalent, metallic &amp; molecular barriers and match bonding to properties to stop heat, arcs, shear &amp; solvent waves.</p>
-          <a href="/lattice-lock/" class="arcade-trigger-btn">LOCK THE LATTICE</a>
         </div>
       </article>
 
@@ -568,23 +586,28 @@
   </dialog>
 
   <script>
-    // 1. Sort cartridges newest-first by data-added & setup filters
+    // 1. Order cartridges: NEW first, then COMING SOON, then the rest of the
+    //    library. Within each group, newest data-added first.
+    //    "NEW" = data-added="YYYY-MM-DD" within the last 7 days (the tag then
+    //    disappears automatically). COMING SOON cards never count as NEW.
     const filterBtns = document.querySelectorAll('.coin-btn');
     const grid = document.querySelector('.cabinet-grid');
     const cards = Array.from(grid.querySelectorAll('.arcade-card'));
-    cards.sort((a, b) => (Date.parse(b.dataset.added || '') || 0) - (Date.parse(a.dataset.added || '') || 0));
+    const NEW_FOR_MS = 7 * 24 * 60 * 60 * 1000;
+    const addedAt = card => Date.parse(card.dataset.added || '') || 0;
+    const isComingSoon = card => !!card.querySelector('.badge-corner.coming-soon');
+    const isNew = card => {
+      if (isComingSoon(card) || !addedAt(card)) return false;
+      const age = Date.now() - addedAt(card);
+      return age >= 0 && age < NEW_FOR_MS;
+    };
+    const group = card => (isNew(card) ? 0 : isComingSoon(card) ? 1 : 2);
+    cards.sort((a, b) => group(a) - group(b) || addedAt(b) - addedAt(a));
     cards.forEach(card => grid.appendChild(card));
 
-    // 0. "NEW" tags — any card with data-added="YYYY-MM-DD" shows a NEW tag for
-    //    7 days from that date, then it disappears automatically.
-    //    Cards marked COMING SOON never get the NEW tag.
-    const NEW_FOR_MS = 7 * 24 * 60 * 60 * 1000;
+    // NEW tags on recently launched cartridges.
     cards.forEach(card => {
-      if (card.querySelector('.badge-corner.coming-soon')) return;
-      const added = Date.parse(card.dataset.added || '');
-      if (Number.isNaN(added)) return;
-      const age = Date.now() - added;
-      if (age < 0 || age >= NEW_FOR_MS) return;
+      if (!isNew(card)) return;
       const bezel = card.querySelector('.screen-bezel');
       if (!bezel || bezel.querySelector('.badge-new')) return;
       const tag = document.createElement('span');

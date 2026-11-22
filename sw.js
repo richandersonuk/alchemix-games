@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alchemix-arcade-v12';
+const CACHE_NAME = 'alchemix-arcade-v13';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -13,7 +13,8 @@ const PRECACHE_ASSETS = [
   '/redox-rogue/cartridge.svg',
   '/subatomic-sorter/cartridge.svg',
   '/lattice-lock/cartridge.svg',
-  '/titration-rush/cartridge.svg'
+  '/titration-rush/cartridge.svg',
+  '/mechanism-maestro/cartridge.svg'
 ];
 
 self.addEventListener('install', (event) => {
