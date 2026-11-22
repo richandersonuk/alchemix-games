@@ -13,7 +13,6 @@ import ExamLogHUD from './ExamLogHUD';
 // Touch-first HUD for phones and tablets (portrait + landscape).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const VERDICT_DOT = { counter: 'bg-emerald-400', neutral: 'bg-amber-300', weak: 'bg-rose-400' } as const;
 
 export function CompactTopBar({ onMenu, onLog, unread }: { onMenu: () => void; onLog: () => void; unread: boolean }) {
   useUiTick();
@@ -60,7 +59,7 @@ export function CompactShop({ vertical }: { vertical?: boolean }) {
   return (
     <div
       className={`panel pointer-events-auto scroll-thin ${
-        vertical ? 'flex h-full w-[8.75rem] flex-col gap-1.5 overflow-y-auto p-1.5' : 'flex w-full gap-1.5 overflow-x-auto p-1.5'
+        vertical ? 'flex h-full w-[10.75rem] flex-col gap-1.5 overflow-y-auto p-1.5' : 'flex w-full snap-x gap-1.5 overflow-x-auto p-1.5'
       }`}
       style={{ overscrollBehavior: 'contain' }}
       aria-label="Lattice tray"
@@ -79,15 +78,18 @@ export function CompactShop({ vertical }: { vertical?: boolean }) {
             aria-pressed={selected}
             aria-disabled={!usable}
             onClick={() => usable && engine.setPlacing(selected ? null : id)}
-            className={`relative shrink-0 rounded-lg border px-2 py-1.5 ${vertical ? 'w-full' : 'w-[7.6rem]'} ${
+            className={`relative shrink-0 snap-start rounded-lg border px-2 py-1.5 ${vertical ? 'w-full' : 'w-[calc(50%-3px)] max-w-[13.5rem]'} ${
               selected ? 'border-cyan-300/80 bg-cyan-500/20' : usable ? 'border-slate-700/70 bg-slate-900/70 active:bg-slate-800' : 'border-slate-800 bg-slate-900/40'
             }`}
           >
             <span className="absolute inset-x-2 top-0 h-0.5 rounded-full" style={{ background: BONDING_META[lat.bonding].color }} />
             <div className={`flex items-start justify-between gap-1 ${!usable && lat.buildable ? 'opacity-50' : ''}`}>
               <div className="min-w-0">
-                <div className="truncate text-[12px] font-semibold leading-tight text-slate-100">{lat.name}</div>
-                <div className="font-mono text-[10px] text-slate-400">{lat.formula}</div>
+                <div className="truncate text-[13px] font-semibold leading-tight text-slate-100">{lat.name}</div>
+                <div className="truncate text-[10px] text-slate-400">
+                  <span className="font-mono">{lat.formula}</span>
+                  <span style={{ color: BONDING_META[lat.bonding].color }}> · {BONDING_META[lat.bonding].label}</span>
+                </div>
               </div>
               <button
                 type="button"
@@ -101,14 +103,24 @@ export function CompactShop({ vertical }: { vertical?: boolean }) {
                 <Info className="h-3.5 w-3.5" />
               </button>
             </div>
-            <div className="mt-0.5 flex items-center justify-between">
-              <div className="flex gap-1" aria-hidden>
-                {(Object.keys(p) as DamageType[]).map((d) => (
-                  <span key={d} className={`h-2 w-2 rounded-full ${VERDICT_DOT[p[d]]}`} title={`${DAMAGE_META[d].label}: ${VERDICT_STYLE[p[d]].label}`} />
-                ))}
+            <div className="mt-1 flex items-center justify-between gap-1">
+              <div className="flex gap-1">
+                {(Object.keys(p) as DamageType[]).map((d) => {
+                  const Icon = DAMAGE_ICON[d];
+                  return (
+                    <span
+                      key={d}
+                      className={`chip px-1 py-1 ${VERDICT_STYLE[p[d]].cls}`}
+                      title={`${DAMAGE_META[d].label}: ${VERDICT_STYLE[p[d]].label}`}
+                      aria-label={`${DAMAGE_META[d].label}: ${VERDICT_STYLE[p[d]].label}`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                  );
+                })}
               </div>
-              <span className={`font-mono text-[11px] font-semibold ${lat.buildable ? (afford ? 'text-cyan-200' : 'text-rose-300') : 'text-slate-500'}`}>
-                {lat.buildable ? lat.cost : 'upg'}
+              <span className={`font-mono text-[12px] font-semibold ${lat.buildable ? (afford ? 'text-cyan-200' : 'text-rose-300') : 'text-slate-500'}`}>
+                {lat.buildable ? `${lat.cost}` : 'upg'}
               </span>
             </div>
           </div>
@@ -118,27 +130,64 @@ export function CompactShop({ vertical }: { vertical?: boolean }) {
   );
 }
 
-/** Shown while placing on touch: tells the player what to do and confirms the build. */
+/**
+ * Shown while a lattice is selected on touch screens: what it is, how it fares against each
+ * threat (in words, not just colours), then confirms the build once a tile is tapped.
+ */
 export function PlacementBar() {
   useUiTick();
   const { placing, pending } = engine.selection;
+  const preds = useMemo(() => Object.fromEntries(LATTICE_ORDER.map((id) => [id, predictMatchups(LATTICES[id])])), []);
   if (!placing) return null;
   const lat = LATTICES[placing];
+  const p = preds[placing];
   const ok = pending ? engine.canPlace(pending.x, pending.z) && engine.moles >= lat.cost : false;
   return (
-    <div className="panel pointer-events-auto flex items-center gap-2 px-2.5 py-1.5">
-      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: lat.accent }} />
-      <span className="min-w-0 flex-1 truncate text-[13px] text-slate-200">
-        {pending ? (ok ? <>Build <strong>{lat.name}</strong> here?</> : 'Can’t build on that tile') : <>Tap a free tile for <strong>{lat.name}</strong></>}
-      </span>
-      {pending && ok && (
-        <button type="button" onClick={() => engine.confirmPending()} className="btn-primary min-h-[40px] px-3 text-sm">
-          <Check className="h-4 w-4" /> {lat.cost}
+    <div className="panel pointer-events-auto px-2.5 py-2" role="region" aria-label={`${lat.name} selected`}>
+      <div className="flex items-start gap-2">
+        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: lat.accent }} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-1.5">
+            <span className="truncate text-[14px] font-bold text-white">{lat.name}</span>
+            <span className="font-mono text-[11px] text-slate-400">{lat.formula}</span>
+            <span className="ml-auto shrink-0 font-mono text-[12px] font-semibold text-cyan-200">{lat.cost} mol</span>
+          </div>
+          <div className="text-[11px] leading-snug text-slate-400">
+            <span style={{ color: BONDING_META[lat.bonding].color }}>{BONDING_META[lat.bonding].label}</span>
+            <span className="short:hidden"> · {lat.tagline}</span>
+          </div>
+        </div>
+        <button type="button" onClick={() => engine.setInspect(placing)} className="btn-ghost tap-target shrink-0" aria-label={`Inspect ${lat.name} unit cell`}>
+          <Info className="h-4 w-4" />
         </button>
-      )}
-      <button type="button" onClick={() => engine.clearSelection()} className="btn-ghost tap-target" aria-label="Cancel placement">
-        <X className="h-4 w-4" />
-      </button>
+        <button type="button" onClick={() => engine.clearSelection()} className="btn-ghost tap-target shrink-0" aria-label="Cancel placement">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="mt-1.5 grid grid-cols-2 gap-1 short:grid-cols-4">
+        {(Object.keys(p) as DamageType[]).map((d) => {
+          const Icon = DAMAGE_ICON[d];
+          return (
+            <span key={d} className={`chip justify-start gap-1.5 px-2 py-1 text-[11px] ${VERDICT_STYLE[p[d]].cls}`}>
+              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                <span className="short:hidden">{DAMAGE_META[d].label}: </span>
+                <strong>{VERDICT_STYLE[p[d]].label}</strong>
+              </span>
+            </span>
+          );
+        })}
+      </div>
+      <div className="mt-1.5 flex items-center gap-2 border-t border-slate-700/50 pt-1.5 short:mt-1 short:pt-1">
+        <span className="min-w-0 flex-1 text-[12.5px] text-slate-200">
+          {pending ? (ok ? <>Build here?</> : 'Can’t build on that tile — tap another') : 'Tap a free tile beside the lane'}
+        </span>
+        {pending && ok && (
+          <button type="button" onClick={() => engine.confirmPending()} className="btn-primary min-h-[40px] px-3 text-sm">
+            <Check className="h-4 w-4" /> Build
+          </button>
+        )}
+      </div>
     </div>
   );
 }
