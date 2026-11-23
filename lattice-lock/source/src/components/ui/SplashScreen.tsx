@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, LogOut, Play, RotateCcw, Settings2, Trophy } from 'lucide-react';
+import { BookOpen, Layers, LogOut, Play, RotateCcw, Settings2, Trophy } from 'lucide-react';
 import { hubLabel } from '../../services/arcadeHub';
+import { SECTORS } from '../../data/waves';
+import { engine, useUiTick } from '../../hooks/useEngine';
+import type { SectorId } from '../../types/chemistry';
 
 export type MenuAction = 'continue' | 'new' | 'howto' | 'scores' | 'settings' | 'quit';
 
@@ -32,6 +35,8 @@ export function CrystalLogo({ size = 132 }: { size?: number }) {
   );
 }
 
+const SECTOR_IDS: SectorId[] = ['foundation', 'reactor', 'crucible'];
+
 export default function SplashScreen({
   stage,
   canContinue,
@@ -43,6 +48,7 @@ export default function SplashScreen({
   onStart: () => void;
   onAction: (a: MenuAction) => void;
 }) {
+  useUiTick();
   // Any key also starts from the title card
   useEffect(() => {
     if (stage !== 'title') return;
@@ -66,10 +72,10 @@ export default function SplashScreen({
       role={stage === 'title' ? 'button' : undefined}
       aria-label={stage === 'title' ? 'Start' : undefined}
     >
-     <div className="flex min-h-full flex-col items-center justify-center px-4 py-6 short:flex-row short:gap-10 short:py-3">
+     <div className="flex min-h-full flex-col items-center justify-center px-4 py-6 short:flex-row short:gap-8 short:py-3">
       <div className={`flex flex-col items-center text-center transition-all duration-1000 ${shown ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <span className="short:hidden">
-          <CrystalLogo size={stage === 'title' ? 140 : 96} />
+          <CrystalLogo size={stage === 'title' ? 140 : 88} />
         </span>
         <span className="hidden short:block">
           <CrystalLogo size={64} />
@@ -87,19 +93,52 @@ export default function SplashScreen({
           <span className="hidden pointer-coarse:inline">Tap to start</span>
         </p>
       ) : (
-        <nav className="mt-8 flex w-full max-w-xs flex-col gap-2.5 short:mt-0 short:gap-2" aria-label="Main menu">
-          {canContinue && <MenuButton primary icon={<Play className="h-5 w-5" />} label="Continue" onClick={() => onAction('continue')} />}
-          <MenuButton
-            primary={!canContinue}
-            icon={canContinue ? <RotateCcw className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-            label={canContinue ? 'New run' : 'Play'}
-            onClick={() => onAction('new')}
-          />
-          <MenuButton icon={<BookOpen className="h-5 w-5" />} label="How to play" onClick={() => onAction('howto')} />
-          <MenuButton icon={<Trophy className="h-5 w-5" />} label="Scoreboard" onClick={() => onAction('scores')} />
-          <MenuButton icon={<Settings2 className="h-5 w-5" />} label="Settings" onClick={() => onAction('settings')} />
-          <MenuButton icon={<LogOut className="h-5 w-5" />} label={hubLabel()} onClick={() => onAction('quit')} subtle />
-        </nav>
+        <div className="mt-6 flex w-full max-w-md flex-col gap-3 short:mt-0 short:max-w-lg short:flex-row short:items-center">
+          <div className="space-y-1.5 rounded-xl border border-cyan-400/15 bg-slate-950/60 p-2.5 short:w-56">
+            <div className="flex items-center gap-1.5 px-1 text-[10.5px] font-semibold uppercase tracking-[0.2em] text-cyan-300/80">
+              <Layers className="h-3.5 w-3.5" /> Select Sector
+            </div>
+            {SECTOR_IDS.map((sid) => {
+              const s = SECTORS[sid];
+              const active = engine.sectorId === sid;
+              return (
+                <button
+                  key={sid}
+                  type="button"
+                  onClick={() => {
+                    if (engine.sectorId !== sid) engine.setSector(sid);
+                  }}
+                  className={`w-full rounded-lg border px-2.5 py-1.5 text-left transition ${
+                    active
+                      ? 'border-cyan-300/70 bg-cyan-500/20 text-white shadow-[0_0_16px_-6px_rgba(34,211,238,0.6)]'
+                      : 'border-slate-700/60 bg-slate-900/60 text-slate-300 hover:border-cyan-400/40 hover:bg-slate-800/70'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[12.5px] font-semibold leading-tight">{s.name}</span>
+                    <span className={`rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider ${active ? 'bg-cyan-400/25 text-cyan-100' : 'bg-slate-800 text-slate-400'}`}>
+                      {s.badge}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 text-[10.5px] text-slate-400">{s.subtitle}</div>
+                </button>
+              );
+            })}
+          </div>
+          <nav className="flex flex-1 flex-col gap-2" aria-label="Main menu">
+            {canContinue && <MenuButton primary icon={<Play className="h-5 w-5" />} label="Continue" onClick={() => onAction('continue')} />}
+            <MenuButton
+              primary={!canContinue}
+              icon={canContinue ? <RotateCcw className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              label={canContinue ? 'New run' : 'Play'}
+              onClick={() => onAction('new')}
+            />
+            <MenuButton icon={<BookOpen className="h-5 w-5" />} label="How to play" onClick={() => onAction('howto')} />
+            <MenuButton icon={<Trophy className="h-5 w-5" />} label="Scoreboard" onClick={() => onAction('scores')} />
+            <MenuButton icon={<Settings2 className="h-5 w-5" />} label="Settings" onClick={() => onAction('settings')} />
+            <MenuButton icon={<LogOut className="h-5 w-5" />} label={hubLabel()} onClick={() => onAction('quit')} subtle />
+          </nav>
+        </div>
       )}
      </div>
       <p className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-[10px] uppercase tracking-[0.25em] text-slate-600 short:hidden">GCSE · A-Level Chemistry</p>

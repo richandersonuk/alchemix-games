@@ -8,8 +8,8 @@ import { DAMAGE_ICON } from './damageIcons';
 export default function GameControls({ onMenu }: { onMenu: () => void }) {
   useUiTick();
   const [hint, setHint] = useState(false);
-  const { phase, waveIndex } = engine;
-  const wave = WAVES[Math.min(waveIndex, WAVES.length - 1)];
+  const { phase, waveIndex, overtime } = engine;
+  const wave = engine.currentWave();
 
   // Aggregate threat counts for the preview
   const counts = new Map<string, number>();
@@ -25,7 +25,9 @@ export default function GameControls({ onMenu }: { onMenu: () => void }) {
           <div>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-[0.2em] text-rose-300/80">Incoming · Wave {waveIndex + 1} / {WAVES.length}</div>
+                <div className="text-[10px] uppercase tracking-[0.2em] text-rose-300/80">
+                  Incoming · {overtime ? `Overtime Wave ${waveIndex + 1}` : `Wave ${waveIndex + 1} / ${WAVES.length}`}
+                </div>
                 <div className="truncate text-base font-bold text-white">{wave.name}</div>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">

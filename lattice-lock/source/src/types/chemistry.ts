@@ -14,25 +14,35 @@ export type LatticeId =
   | 'nacl'
   | 'mgo'
   | 'diamond'
+  | 'sio2'
   | 'graphite'
   | 'graphene'
   | 'copper'
+  | 'brass'
   | 'iron'
   | 'steel'
   | 'ice'
   | 'iodine'
-  | 'polyethylene';
+  | 'c60'
+  | 'cnt'
+  | 'polyethylene'
+  | 'thermoset';
 
 export type ThreatId =
   | 'thermal-wave'
   | 'plasma-front'
+  | 'cryo-shock'
   | 'arc-discharge'
   | 'static-spark'
   | 'shear-parallel'
   | 'shear-glancing'
-  | 'solvent-jet';
+  | 'solvent-jet'
+  | 'nonpolar-jet'
+  | 'acid-jet';
 
-export type ElementSymbol = 'Na' | 'Cl' | 'Mg' | 'O' | 'C' | 'Cu' | 'Fe' | 'H' | 'I';
+export type ElementSymbol = 'Na' | 'Cl' | 'Mg' | 'O' | 'C' | 'Si' | 'Cu' | 'Zn' | 'Fe' | 'H' | 'I' | 'S';
+
+export type SectorId = 'foundation' | 'reactor' | 'crucible';
 
 // ── Unit-cell geometry ──────────────────────────────────────────────────────
 
@@ -46,6 +56,8 @@ export interface Atom {
   charge?: string;
   /** Interstitial alloying atom (steel). */
   interstitial?: boolean;
+  /** Substitutional alloying atom (brass). */
+  substitutional?: boolean;
 }
 
 export type BondKind = 'covalent' | 'ionic' | 'metallic' | 'intermolecular' | 'hydrogen';
@@ -87,7 +99,10 @@ export type ShearResponse =
   | 'alloy-pinned'
   | 'brittle-molecular'
   | 'soft-molecular'
-  | 'flexible-chains';
+  | 'flexible-chains'
+  | 'molecular-lubricant'
+  | 'nanotube-cylinder'
+  | 'cross-linked';
 
 export type SolventResponse =
   | 'dissolves'
@@ -96,7 +111,9 @@ export type SolventResponse =
   | 'inert-metal'
   | 'corrodes'
   | 'erodes'
-  | 'non-polar';
+  | 'non-polar'
+  | 'basic-oxide'
+  | 'swells-nonpolar';
 
 export interface LatticeProperties {
   /** Melting / sublimation point in kelvin. */
@@ -164,7 +181,9 @@ export interface ThreatSpec {
   coreDamage: number;
   reward: number;
   plasma?: boolean;
+  cryo?: boolean;
   shearMode?: 'parallel' | 'glancing';
+  solventKind?: 'polar' | 'nonpolar' | 'acid';
   color: string;
   description: string;
 }
@@ -178,12 +197,20 @@ export interface WaveGroup {
   delay: number;
 }
 
+export interface WaveQuiz {
+  question: string;
+  options: [string, string, string];
+  correctIndex: 0 | 1 | 2;
+  explanation: string;
+}
+
 export interface WaveDefinition {
   name: string;
   briefing: string;
   hint: string;
   groups: WaveGroup[];
   bonus: number;
+  quiz?: WaveQuiz;
 }
 
 // ── Interaction resolution ──────────────────────────────────────────────────
@@ -278,6 +305,8 @@ export interface ThreatState {
   heading: number;
   slow: number;
   lane: number;
+  /** Multi-lane sector route index (default 0). */
+  route?: number;
 }
 
 export type LogSeverity = 'success' | 'fail' | 'info' | 'warning';

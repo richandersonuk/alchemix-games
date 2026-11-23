@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { engine, useStructureTick, useUiTick } from '../../hooks/useEngine';
 import { LATTICES, BONDING_META } from '../../data/lattices';
 import { DAMAGE_META } from '../../data/waves';
-import { CORE_TILE, GRID_H, GRID_W, PATH_WORLD_POINTS, isBuildable, isPathTile, tileToWorld } from '../../engine/map';
+import { getActiveCoreTile, getActiveLanesWorldPoints, GRID_H, GRID_W, isBuildable, isPathTile, tileToWorld } from '../../engine/map';
 import type { TowerState, Verdict } from '../../types/chemistry';
 import UnitCellMesh from './UnitCellMesh';
 import { useSettings } from '../../engine/settings';
@@ -122,21 +122,23 @@ function EngineDriver() {
 const TILE_GEO = new THREE.BoxGeometry(0.94, 0.18, 0.94);
 
 function Board({ interactive }: { interactive: boolean }) {
+  useStructureTick();
+  const sector = engine.sectorId;
   const pointerType = useRef<string>('mouse');
   const ground = useRef<THREE.InstancedMesh>(null);
   const lane = useRef<THREE.InstancedMesh>(null);
-  const dashRef = useRef<any>(null);
 
   const tiles = useMemo(() => {
+    const core = getActiveCoreTile();
     const g: [number, number][] = [];
     const p: [number, number][] = [];
     for (let x = 0; x < GRID_W; x++)
       for (let z = 0; z < GRID_H; z++) {
-        if (x === CORE_TILE.x && z === CORE_TILE.z) continue;
+        if (x === core.x && z === core.z) continue;
         (isPathTile(x, z) ? p : g).push([x, z]);
       }
     return { g, p };
-  }, []);
+  }, [sector]);
 
   useLayoutEffect(() => {
     const m = new THREE.Matrix4();
@@ -161,12 +163,10 @@ function Board({ interactive }: { interactive: boolean }) {
     lane.current!.instanceColor!.needsUpdate = true;
   }, [tiles]);
 
-  useFrame((_, dt) => {
-    const mat = dashRef.current?.material;
-    if (mat) mat.dashOffset -= dt * 0.8;
-  });
-
-  const pathPts = useMemo(() => PATH_WORLD_POINTS.map((p) => new THREE.Vector3(p[0], 0.0, p[2])), []);
+  const lanes = useMemo(
+    () => getActiveLanesWorldPoints().map((pts) => pts.map((p) => new THREE.Vector3(p[0], 0.0, p[2]))),
+    [sector],
+  );
 
   const tileFromEvent = (e: ThreeEvent<PointerEvent | MouseEvent>) => {
     const x = Math.round(e.point.x + (GRID_W - 1) / 2);
@@ -177,21 +177,25 @@ function Board({ interactive }: { interactive: boolean }) {
 
   return (
     <group>
-      <instancedMesh ref={ground} args={[TILE_GEO, undefined, tiles.g.length]} receiveShadow>
+      <instancedMesh key={`g-${sector}-${tiles.g.length}`} ref={ground} args={[TILE_GEO, undefined, tiles.g.length]} receiveShadow>
         <meshStandardMaterial roughness={0.85} metalness={0.2} />
       </instancedMesh>
-      <instancedMesh ref={lane} args={[TILE_GEO, undefined, tiles.p.length]} receiveShadow>
+      <instancedMesh key={`p-${sector}-${tiles.p.length}`} ref={lane} args={[TILE_GEO, undefined, tiles.p.length]} receiveShadow>
         <meshStandardMaterial roughness={0.4} metalness={0.4} emissive="#0e7490" emissiveIntensity={0.25} />
       </instancedMesh>
-      <Line ref={dashRef} points={pathPts} color="#22d3ee" lineWidth={2} dashed dashSize={0.25} gapSize={0.2} transparent opacity={0.65} toneMapped={false} />
+      {lanes.map((pts, idx) => (
+        <LaneLine key={`${sector}-${idx}`} points={pts} />
+      ))}
       {/* base slab */}
       <mesh position={[0, -0.3, 0]} receiveShadow>
         <boxGeometry args={[GRID_W + 0.6, 0.2, GRID_H + 0.6]} />
         <meshStandardMaterial color="#060b14" roughness={0.9} />
       </mesh>
       <gridHelper args={[GRID_W, GRID_W, '#0e2a3a', '#0e2a3a']} position={[0, 0.002, 0]} scale={[1, 1, GRID_H / GRID_W]} />
-      {/* spawn portal */}
-      <SpawnPortal />
+      {/* spawn portals */}
+      {lanes.map((pts, idx) => (
+        <SpawnPortal key={`${sector}-portal-${idx}`} point={[pts[0].x, pts[0].y, pts[0].z]} />
+      ))}
       {/* pointer catcher */}
       <mesh
         rotation-x={-Math.PI / 2}
@@ -237,14 +241,22 @@ function Board({ interactive }: { interactive: boolean }) {
   );
 }
 
-function SpawnPortal() {
+function LaneLine({ points }: { points: THREE.Vector3[] }) {
+  const dashRef = useRef<any>(null);
+  useFrame((_, dt) => {
+    const mat = dashRef.current?.material;
+    if (mat) mat.dashOffset -= dt * 0.8;
+  });
+  return <Line ref={dashRef} points={points} color="#22d3ee" lineWidth={2} dashed dashSize={0.25} gapSize={0.2} transparent opacity={0.65} toneMapped={false} />;
+}
+
+function SpawnPortal({ point }: { point: [number, number, number] }) {
   const ref = useRef<THREE.Mesh>(null);
-  const p = PATH_WORLD_POINTS[0];
   useFrame(({ clock }) => {
     if (ref.current) ref.current.rotation.z = clock.elapsedTime * 0.8;
   });
   return (
-    <group position={[p[0] + 0.3, 0.45, p[2]]} rotation-y={Math.PI / 2}>
+    <group position={[point[0] + 0.3, 0.45, point[2]]} rotation-y={Math.PI / 2}>
       <mesh ref={ref}>
         <torusGeometry args={[0.45, 0.04, 8, 6]} />
         <meshBasicMaterial color="#f43f5e" toneMapped={false} />
@@ -306,11 +318,13 @@ function PlacementGhost() {
 // ── Core ────────────────────────────────────────────────────────────────────
 
 function Core() {
+  useStructureTick();
   const crystal = useRef<THREE.Mesh>(null);
   const shell = useRef<THREE.Mesh>(null);
   const mat = useRef<THREE.MeshStandardMaterial>(null);
   const light = useRef<THREE.PointLight>(null);
-  const pos = tileToWorld(CORE_TILE.x, CORE_TILE.z);
+  const coreTile = getActiveCoreTile();
+  const pos = tileToWorld(coreTile.x, coreTile.z);
   const cyan = useMemo(() => new THREE.Color('#22d3ee'), []);
   const red = useMemo(() => new THREE.Color('#f43f5e'), []);
   const tmp = useMemo(() => new THREE.Color(), []);

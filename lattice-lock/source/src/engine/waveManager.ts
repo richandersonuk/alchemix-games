@@ -5,18 +5,20 @@ import type {
   LogEntry,
   LogSeverity,
   Outcome,
+  SectorId,
   ThreatId,
   ThreatState,
   TowerState,
   Vec3,
   Verdict,
+  WaveDefinition,
 } from '../types/chemistry';
 import { LATTICES } from '../data/lattices';
-import { DAMAGE_META, THREATS, WAVES, waveHpMultiplier } from '../data/waves';
+import { DAMAGE_META, SECTORS, THREATS, WAVES, generateOvertimeWave, waveHpMultiplier } from '../data/waves';
 import { resolveInteraction } from './damageCalculator';
-import { PATH_LENGTH, isBuildable, samplePath, tileToWorld } from './map';
+import { getActiveLanesWorldPoints, getLaneLength, isBuildable, sampleLanePath, setActiveSectorMap, tileToWorld } from './map';
 import { sfx } from './audio';
-import { computeScore, type RunSummary } from '../../shared/scoring.js';
+import { MAX_MARKS, MAX_WAVES, WAVE_THREATS, computeScore, type RunSummary } from '../../shared/scoring.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Game engine: wave spawning, pathing, tower ↔ threat resolution, win/loss.
@@ -91,6 +93,11 @@ const newRunId = () =>
 const emptySelection = (): Selection => ({ placing: null, towerId: null, inspect: null, hover: null, pending: null });
 
 export class GameEngine {
+  sectorId: SectorId = 'foundation';
+  overtime = false;
+  quizAnsweredWave = -1;
+  scoreSubmitted = false;
+  private campaignSummary: RunSummary | null = null;
   phase: Phase = 'build';
   waveIndex = 0;
   moles = START_MOLES;
@@ -263,13 +270,14 @@ export class GameEngine {
         structural = true;
         continue;
       }
+      const route = th.route ?? 0;
       th.progress += spec.speed * th.slow * dt;
-      if (th.progress >= PATH_LENGTH) {
+      if (th.progress >= getLaneLength(route)) {
         this.breach(th);
         structural = true;
         continue;
       }
-      const s = samplePath(th.progress);
+      const s = sampleLanePath(th.progress, route);
       th.heading = s.heading;
       th.position[0] = s.x + Math.cos(s.heading) * th.lane;
       th.position[2] = s.z - Math.sin(s.heading) * th.lane;
@@ -295,7 +303,9 @@ export class GameEngine {
   private spawnThreat(id: ThreatId) {
     const spec = THREATS[id];
     const hp = spec.hp * waveHpMultiplier(this.waveIndex);
-    const s = samplePath(0);
+    const laneCount = getActiveLanesWorldPoints().length;
+    const route = this.waveSpawned % laneCount;
+    const s = sampleLanePath(0, route);
     this.threats.push({
       id: this.nextId++,
       specId: id,
@@ -306,6 +316,7 @@ export class GameEngine {
       heading: s.heading,
       slow: 1,
       lane: (Math.random() - 0.5) * 0.36,
+      route,
     });
     this.waveSpawned++;
   }
@@ -369,8 +380,46 @@ export class GameEngine {
     }
   }
 
+  currentWave(idx = this.waveIndex): WaveDefinition {
+    const campaign = SECTORS[this.sectorId].waves;
+    if (idx < campaign.length) return campaign[idx];
+    return generateOvertimeWave(idx);
+  }
+
+  setSector(id: SectorId) {
+    this.sectorId = id;
+    setActiveSectorMap(id);
+    this.reset();
+  }
+
+  enterOvertime() {
+    if (this.phase !== 'victory') return;
+    this.overtime = true;
+    this.phase = 'build';
+    this.waveCleared = null;
+    this.log('info', 'Endless Overtime engaged', 'Campaign victory locked in for the scoreboard. Procedurally escalating waves begin at Wave 11.', ['overtime', 'endless']);
+    sfx.play('upgrade');
+    this.bumpStructure();
+  }
+
+  answerWaveQuiz(correct: boolean, explanation: string) {
+    if (this.quizAnsweredWave === this.waveIndex) return;
+    this.quizAnsweredWave = this.waveIndex;
+    if (correct) {
+      this.moles += 25;
+      this.marks++;
+      sfx.play('upgrade');
+      this.log('success', 'Examiner Spot-Check passed (+25 mol, +1 mark)', explanation, ['mark scheme', 'spot-check'], 1);
+    } else {
+      sfx.play('deny');
+      this.log('warning', 'Examiner Spot-Check missed', explanation, ['mark scheme', 'revision']);
+    }
+    this.emitUi();
+  }
+
   private endWave() {
-    const w = WAVES[this.waveIndex];
+    const w = this.currentWave();
+    const campaignLen = SECTORS[this.sectorId].waves.length;
     this.moles += w.bonus;
     for (const t of this.towers) {
       const max = LATTICES[t.latticeId].stats.maxIntegrity;
@@ -380,10 +429,11 @@ export class GameEngine {
     this.contacts.clear();
     this.log('info', `Wave ${this.waveIndex + 1} "${w.name}" neutralised${w.bonus ? ` (+${w.bonus} mol)` : ''}`, 'Surviving barriers recrystallise between waves, recovering half their lost integrity.', []);
     this.waveIndex++;
-    if (this.waveIndex >= WAVES.length) {
+    if (!this.overtime && this.waveIndex >= campaignLen) {
+      this.campaignSummary = this.buildCampaignSummary(true);
       this.phase = 'victory';
       sfx.play('victory');
-      this.log('success', 'Core held — all ten waves defeated', `Final score: ${this.marks} mark-scheme points earned from correct structure → property matches.`, ['structure', 'bonding', 'properties']);
+      this.log('success', `Core held — ${SECTORS[this.sectorId].name} cleared`, `Final score: ${this.marks} mark-scheme points earned from correct structure → property matches. Endless Overtime unlocked!`, ['structure', 'bonding', 'properties']);
     } else {
       this.phase = 'build';
       this.waveCleared = {
@@ -394,7 +444,7 @@ export class GameEngine {
         neutralised: this.stats.neutralised - this.waveStart.neutralised,
         lost: this.stats.towersLost - this.waveStart.lost,
         marks: this.marks - this.waveStart.marks,
-        next: WAVES[this.waveIndex].name,
+        next: this.currentWave().name,
       };
       sfx.play('clear');
     }
@@ -404,7 +454,7 @@ export class GameEngine {
 
   startWave() {
     if (this.phase !== 'build') return;
-    const w = WAVES[this.waveIndex];
+    const w = this.currentWave();
     this.queue = [];
     for (const g of w.groups) for (let i = 0; i < g.count; i++) this.queue.push({ at: g.delay + i * g.interval, threat: g.threat });
     this.queue.sort((a, b) => a.at - b.at);
@@ -548,17 +598,23 @@ export class GameEngine {
     return (this.phase === 'build' || this.phase === 'wave') && (this.waveIndex > 0 || this.towers.length > 0 || this.phase === 'wave');
   }
 
-  summary(): RunSummary {
-    const victory = this.phase === 'victory';
+  private buildCampaignSummary(victory: boolean): RunSummary {
+    const wavesCleared = victory ? MAX_WAVES : Math.min(MAX_WAVES, this.waveIndex);
+    const reachable = WAVE_THREATS.slice(0, Math.min(MAX_WAVES, wavesCleared + 1)).reduce((a, b) => a + b, 0);
     return {
-      wavesCleared: victory ? WAVES.length : this.waveIndex,
-      marks: this.marks,
-      neutralised: this.stats.neutralised,
+      wavesCleared,
+      marks: Math.min(MAX_MARKS, this.marks),
+      neutralised: Math.min(reachable, this.stats.neutralised),
       coreRemaining: Math.max(0, Math.round(this.core)),
       victory,
-      durationSec: Math.round(this.time),
-      towersLost: this.stats.towersLost,
+      durationSec: Math.min(6 * 3600, Math.max(wavesCleared * 10, Math.round(this.time))),
+      towersLost: Math.min(5000, this.stats.towersLost),
     };
+  }
+
+  summary(): RunSummary {
+    if (this.campaignSummary) return this.campaignSummary;
+    return this.buildCampaignSummary(this.phase === 'victory');
   }
 
   get score() {
@@ -567,6 +623,10 @@ export class GameEngine {
 
   reset() {
     this.phase = 'build';
+    this.overtime = false;
+    this.quizAnsweredWave = -1;
+    this.scoreSubmitted = false;
+    this.campaignSummary = null;
     this.waveIndex = 0;
     this.moles = START_MOLES;
     this.core = CORE_MAX;
@@ -589,7 +649,7 @@ export class GameEngine {
     this.logKeys.clear();
     this.markKeys.clear();
     this.breachKeys.clear();
-    this.log('info', 'Lattice reset', 'New run started. Moles restored.', []);
+    this.log('info', `${SECTORS[this.sectorId].name} online`, 'New run started. Moles restored.', []);
     this.bumpStructure();
   }
 

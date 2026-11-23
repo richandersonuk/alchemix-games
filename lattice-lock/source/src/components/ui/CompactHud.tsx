@@ -31,7 +31,7 @@ export function CompactTopBar({ onMenu, onLog, unread }: { onMenu: () => void; o
           <span className="font-mono text-[11px] text-slate-300">{Math.ceil(engine.core)}</span>
         </div>
         <Chip icon={<Atom className="h-3.5 w-3.5 text-amber-300" />} value={`${Math.floor(engine.moles)}`} label="moles" />
-        <Chip icon={<Waves className="h-3.5 w-3.5 text-rose-300" />} value={`${Math.min(engine.waveIndex + 1, WAVES.length)}/${WAVES.length}`} label="wave" />
+        <Chip icon={<Waves className="h-3.5 w-3.5 text-rose-300" />} value={engine.overtime ? `OT ${engine.waveIndex + 1}` : `${Math.min(engine.waveIndex + 1, WAVES.length)}/${WAVES.length}`} label="wave" />
         <Chip icon={<GraduationCap className="h-3.5 w-3.5 text-emerald-300" />} value={String(engine.marks)} label="marks" />
       </div>
       <button type="button" onClick={onLog} className="panel tap-target relative shrink-0 text-cyan-200" aria-label="Open failure log">
@@ -196,8 +196,8 @@ export function PlacementBar() {
 export function CompactControls() {
   useUiTick();
   const [open, setOpen] = useState(false);
-  const { phase, waveIndex } = engine;
-  const wave = WAVES[Math.min(waveIndex, WAVES.length - 1)];
+  const { phase, waveIndex, overtime } = engine;
+  const wave = engine.currentWave();
   if (phase === 'victory' || phase === 'defeat') return null;
 
   if (phase === 'wave') {
@@ -233,7 +233,9 @@ export function CompactControls() {
         <button type="button" onClick={() => setOpen(!open)} className="flex min-h-[40px] min-w-0 flex-1 items-center gap-1.5 text-left" aria-expanded={open}>
           <ChevronUp className={`h-4 w-4 shrink-0 text-slate-400 transition ${open ? '' : 'rotate-180'}`} />
           <span className="min-w-0">
-            <span className="block text-[10px] uppercase tracking-[0.18em] text-rose-300/80">Wave {waveIndex + 1}/{WAVES.length}</span>
+            <span className="block text-[10px] uppercase tracking-[0.18em] text-rose-300/80">
+              {overtime ? `Overtime W${waveIndex + 1}` : `Wave ${waveIndex + 1}/${WAVES.length}`}
+            </span>
             <span className="block truncate text-[14px] font-bold leading-tight text-white">{wave.name}</span>
           </span>
         </button>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Atom, GraduationCap, Hexagon, Menu, Shield, Waves } from 'lucide-react';
 import { engine, useUiTick } from '../hooks/useEngine';
-import { useLayout, type LayoutMode } from '../hooks/useLayout';
+import { enterFullscreen, useLayout, type LayoutMode } from '../hooks/useLayout';
 import { WAVES } from '../data/waves';
 import { CORE_MAX } from '../engine/waveManager';
 import { settings } from '../engine/settings';
@@ -125,8 +125,9 @@ export default function App() {
         const id = t?.latticeId ?? engine.selection.placing;
         if (id) engine.setInspect(id);
       } else if (e.key.toLowerCase() === 'u' && engine.selection.towerId !== null) engine.upgradeTower(engine.selection.towerId);
-      else if (/^[0-9]$/.test(e.key)) {
-        const id = HOTKEY_LATTICES[e.key === '0' ? 9 : Number(e.key) - 1];
+      else if (/^[0-9-]$/.test(e.key)) {
+        const idx = e.key === '-' ? 10 : e.key === '0' ? 9 : Number(e.key) - 1;
+        const id = HOTKEY_LATTICES[idx];
         if (id) engine.setPlacing(engine.selection.placing === id ? null : id);
       }
     };
@@ -185,6 +186,7 @@ export default function App() {
           canContinue={engine.runActive}
           onStart={() => {
             unlockAudio();
+            void enterFullscreen();
             setScreen('menu');
           }}
           onAction={onMenuAction}
@@ -256,7 +258,11 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
           </div>
         </div>
         <Stat icon={<Atom className="h-4 w-4 text-amber-300" />} label="Moles" value={`${Math.floor(engine.moles)} mol`} />
-        <Stat icon={<Waves className="h-4 w-4 text-rose-300" />} label="Wave" value={`${Math.min(engine.waveIndex + 1, WAVES.length)} / ${WAVES.length}`} />
+        <Stat
+          icon={<Waves className="h-4 w-4 text-rose-300" />}
+          label="Wave"
+          value={engine.overtime ? `OT ${engine.waveIndex + 1}` : `${Math.min(engine.waveIndex + 1, WAVES.length)} / ${WAVES.length}`}
+        />
         <Stat icon={<GraduationCap className="h-4 w-4 text-emerald-300" />} label="Marks" value={String(engine.marks)} />
         <div className="ml-auto hidden items-center gap-2 text-[11px] xl:flex">
           <span className={`rounded-full px-2 py-0.5 font-semibold uppercase tracking-wider ${engine.phase === 'wave' ? 'bg-rose-500/20 text-rose-200' : 'bg-cyan-500/15 text-cyan-200'}`}>

@@ -45,6 +45,50 @@ function thermal(lat: LatticeDefinition, t: ThreatSpec): InteractionResult {
   const T = t.intensity;
   const mp = p.meltingPointK;
 
+  if (t.cryo) {
+    if (lat.id === 'ice') {
+      return r({
+        outcome: 'absorbed',
+        verdict: 'counter',
+        threatDamageMult: 1.6,
+        towerDamageMult: 0.05,
+        slow: 0.5,
+        title: 'Cryogenic quench absorbed: H₂O(s) locked tighter at 77 K',
+        rationale:
+          'Lowering temperature to 77 K removes thermal kinetic energy from water molecules, strengthening the rigid hydrogen-bonded ice lattice.',
+        keywords: ['lower kinetic energy', 'hydrogen bonds locked', 'molecular crystal'],
+        sfx: 'thud',
+      });
+    }
+    if (p.shear === 'brittle-ionic' || p.shear === 'soft-molecular') {
+      return r({
+        outcome: 'fractured',
+        verdict: 'weak',
+        threatDamageMult: 0.35,
+        towerDamageMult: 2.6,
+        title: `Thermal shock fracture: ${lat.formula} cracked at ${T} K`,
+        rationale: `Rapid cooling from ambient to ${T} K creates steep contraction gradients across a low-conductivity, brittle lattice — ${lat.name} fractures under internal stress.`,
+        keywords: ['thermal shock', 'low thermal conductivity', 'brittle fracture'],
+        sfx: 'crack',
+      });
+    }
+    return r({
+      outcome: 'dissipated',
+      verdict: 'counter',
+      threatDamageMult: 1.25,
+      towerDamageMult: 0.15,
+      title: `Thermal shock survived: ${lat.name} resisted ${T} K quench`,
+      rationale:
+        lat.bonding === 'metallic'
+          ? 'Non-directional metallic bonding and high thermal conductivity equalise temperature rapidly without brittle cleavage.'
+          : lat.id === 'c60' || lat.id === 'polyethylene' || lat.id === 'thermoset'
+            ? 'Flexible molecular packing or covalent cross-links accommodate thermal contraction without shattering.'
+            : 'Strong covalent networks with high thermal conductivity or low thermal expansion resist cryogenic cracking.',
+      keywords: ['thermal equilibration', 'no brittle cleavage', 'resists thermal shock'],
+      sfx: 'clang',
+    });
+  }
+
   if (t.plasma && lat.id === 'diamond') {
     return r({
       outcome: 'graphitised',
@@ -56,6 +100,34 @@ function thermal(lat: LatticeDefinition, t: ThreatSpec): InteractionResult {
       rationale:
         'Diamond still conducts the heat away, but sustained extreme temperature supplies the activation energy for sp³ carbon to rearrange into the more stable sp² layers of graphite. Hold too long and the barrier converts.',
       keywords: ['sp³ → sp²', 'activation energy', 'graphite more stable'],
+      sfx: 'hiss',
+    });
+  }
+
+  if (t.plasma && lat.id === 'graphene') {
+    return r({
+      outcome: 'vaporised',
+      verdict: 'weak',
+      threatDamageMult: 0.7,
+      towerDamageMult: 1.65,
+      title: `Monolayer ablation: ${T} K plasma eroded graphene`,
+      rationale:
+        'Although graphene has high in-plane thermal conductivity, a single-atom-thick sheet has negligible bulk thermal mass and oxidises/ablates rapidly in ionised 2900 K plasma.',
+      keywords: ['monolayer lacks bulk', 'plasma ablation', 'one atom thick'],
+      sfx: 'hiss',
+    });
+  }
+
+  if (t.plasma && lat.id === 'thermoset') {
+    return r({
+      outcome: 'vaporised',
+      verdict: 'weak',
+      threatDamageMult: 0.3,
+      towerDamageMult: 3.5,
+      title: `Thermoset charred: ${T} K plasma decomposed cross-links`,
+      rationale:
+        'Thermosetting polymers resist moderate heat without melting, but sustained 2900 K plasma breaks the C–C and C–S covalent bonds, charring the network.',
+      keywords: ['thermal decomposition', 'covalent bonds broken', 'charring'],
       sfx: 'hiss',
     });
   }
@@ -76,6 +148,7 @@ function thermal(lat: LatticeDefinition, t: ThreatSpec): InteractionResult {
       });
     }
     const ionic = lat.bonding === 'giant-ionic';
+    const covalent = lat.bonding === 'giant-covalent';
     return r({
       outcome: 'melted',
       verdict: 'weak',
@@ -84,10 +157,28 @@ function thermal(lat: LatticeDefinition, t: ThreatSpec): InteractionResult {
       title: `Lattice melted: ${T} K exceeds m.p. of ${lat.formula} (${mp} K)`,
       rationale: ionic
         ? 'Enough energy was supplied to overcome the electrostatic attraction between the ions. The molten ions are now free to move — the barrier conducts and has lost its structure.'
-        : 'Enough energy was supplied to overcome the metallic bonding (attraction between positive ions and delocalised electrons). The barrier has melted.',
+        : covalent
+          ? 'Extreme thermal energy broke enough strong covalent bonds in the giant network to melt the solid.'
+          : 'Enough energy was supplied to overcome the metallic bonding (attraction between positive ions and delocalised electrons). The barrier has melted.',
       keywords: ionic
         ? ['overcome electrostatic attraction', 'ions free to move', 'molten conducts']
-        : ['overcome metallic bonding', 'energy supplied > bond strength'],
+        : covalent
+          ? ['strong covalent bonds broken', 'exceeds melting point']
+          : ['overcome metallic bonding', 'energy supplied > bond strength'],
+      sfx: 'hiss',
+    });
+  }
+
+  if (lat.id === 'thermoset') {
+    return r({
+      outcome: 'absorbed',
+      verdict: 'counter',
+      threatDamageMult: 1.1,
+      towerDamageMult: 0.25,
+      title: `Cross-linked network held: ${lat.name} refused to melt at ${T} K`,
+      rationale:
+        'Unlike thermosoftening poly(ethene), covalent sulfur cross-links lock the chains together so they cannot slide apart when heated.',
+      keywords: ['thermosetting polymer', 'covalent cross-links', 'does not melt'],
       sfx: 'hiss',
     });
   }
@@ -243,9 +334,11 @@ function shear(lat: LatticeDefinition, t: ThreatSpec): InteractionResult {
         verdict: 'counter',
         threatDamageMult: 1.5,
         towerDamageMult: 0.3,
-        title: `Impact resisted: diamond's covalent network did not yield to ${P}`,
+        title: `Impact resisted: ${lat.name}'s covalent network did not yield to ${P}`,
         rationale:
-          'Each carbon is held by four strong covalent bonds in a rigid three-dimensional tetrahedral network. There are no layers that can slide — diamond is the hardest natural substance.',
+          lat.id === 'sio2'
+            ? 'Each silicon is covalently bonded to four oxygens in a rigid tetrahedral network. There are no planes that can slide easily.'
+            : 'Each carbon is held by four strong covalent bonds in a rigid three-dimensional tetrahedral network. There are no layers that can slide — diamond is the hardest natural substance.',
         keywords: ['4 strong covalent bonds', 'rigid 3D network', 'very hard'],
         sfx: 'clang',
       });
@@ -275,15 +368,80 @@ function shear(lat: LatticeDefinition, t: ThreatSpec): InteractionResult {
         sfx: 'crack',
       });
     case 'tensile-sheet':
+      if (t.shearMode === 'glancing') {
+        return r({
+          outcome: 'fractured',
+          verdict: 'weak',
+          threatDamageMult: 0.55,
+          towerDamageMult: 1.85,
+          title: `Monolayer punctured: ${P} glancing impact tore out-of-plane`,
+          rationale:
+            'Graphene is extraordinarily strong along its flat plane, but a one-atom-thick sheet lacks bulk thickness to absorb oblique out-of-plane impacts.',
+          keywords: ['2D monolayer', 'out-of-plane puncture', 'one atom thick'],
+          sfx: 'crack',
+        });
+      }
       return r({
         outcome: 'resisted',
         verdict: 'counter',
-        threatDamageMult: 1.6,
-        towerDamageMult: 0.25,
+        threatDamageMult: 1.35,
+        towerDamageMult: 0.4,
         title: 'Shear resisted: graphene sheet took the load in-plane',
         rationale:
-          'A single continuous layer has no weak interlayer forces to fail. The load is spread across a network of strong covalent bonds — one of the strongest materials known.',
+          'A single continuous layer has no weak interlayer forces to fail. The load is spread across a network of strong covalent bonds — very high in-plane tensile strength.',
         keywords: ['single layer', 'strong covalent bonds', 'high tensile strength'],
+        sfx: 'clang',
+      });
+    case 'molecular-lubricant':
+      if (t.shearMode === 'glancing') {
+        return r({
+          outcome: 'deflected',
+          verdict: 'counter',
+          threatDamageMult: 1.65,
+          towerDamageMult: 0.1,
+          slow: 0.55,
+          title: 'Glancing blow deflected: C₆₀ cages rolled like ball bearings',
+          rationale:
+            'Spherical C₆₀ molecules are held only by weak intermolecular forces, so they roll past each other and deflect oblique mechanical impacts.',
+          keywords: ['spherical molecules', 'weak intermolecular forces', 'molecular lubricant'],
+          sfx: 'thud',
+        });
+      }
+      return r({
+        outcome: 'fractured',
+        verdict: 'weak',
+        threatDamageMult: 0.4,
+        towerDamageMult: 2.2,
+        title: `C₆₀ lattice disrupted: ${P} shear separated the cages`,
+        rationale:
+          'Under direct parallel shear, the weak intermolecular forces between discrete C₆₀ molecules give way easily without breaking covalent bonds inside the cages.',
+        keywords: ['weak intermolecular forces', 'discrete C₆₀ molecules'],
+        sfx: 'crack',
+      });
+    case 'nanotube-cylinder':
+      return r({
+        outcome: 'resisted',
+        verdict: 'counter',
+        threatDamageMult: 1.65,
+        towerDamageMult: 0.2,
+        slow: 0.7,
+        title: `Tube wall held: carbon nanotube resisted ${P} shear`,
+        rationale:
+          'Rolling sp² carbon into a seamless cylinder distributes both parallel tension and oblique impact across strong covalent bonds in three dimensions.',
+        keywords: ['cylindrical fullerene', 'strong covalent bonds', '3D tensile rigidity'],
+        sfx: 'clang',
+      });
+    case 'cross-linked':
+      return r({
+        outcome: 'resisted',
+        verdict: 'counter',
+        threatDamageMult: 1.35,
+        towerDamageMult: 0.25,
+        slow: 0.65,
+        title: `Cross-links held: vulcanised polymer resisted ${P} shear`,
+        rationale:
+          'Covalent sulfur cross-links tie the hydrocarbon chains together so they cannot slide past one another permanently under shear.',
+        keywords: ['covalent cross-links', 'chains anchored', 'thermoset rigidity'],
         sfx: 'clang',
       });
     case 'malleable':
@@ -306,9 +464,11 @@ function shear(lat: LatticeDefinition, t: ThreatSpec): InteractionResult {
         threatDamageMult: 2.0,
         towerDamageMult: 0.12,
         slow: 0.6,
-        title: `Slip blocked: interstitial carbon pinned the iron layers against ${P}`,
+        title: `Slip blocked: ${lat.id === 'brass' ? 'substitutional zinc' : 'interstitial carbon'} pinned the layers against ${P}`,
         rationale:
-          'Carbon atoms are a different size from iron ions, so they distort the layers. The layers can no longer slide over one another easily — the alloy is much harder and stronger than pure iron.',
+          lat.id === 'brass'
+            ? 'Zinc atoms are a different size from copper ions, distorting the regular close-packed layers so they can no longer slide easily — brass is harder than pure copper.'
+            : 'Carbon atoms are a different size from iron ions, so they distort the layers. The layers can no longer slide over one another easily — the alloy is much harder and stronger than pure iron.',
         keywords: ['different-sized atoms', 'distort the layers', 'layers cannot slide', 'alloy harder'],
         sfx: 'clang',
       });
@@ -344,12 +504,146 @@ function shear(lat: LatticeDefinition, t: ThreatSpec): InteractionResult {
 
 // ── Solvent ─────────────────────────────────────────────────────────────────
 
-function solvent(lat: LatticeDefinition, _t: ThreatSpec): InteractionResult {
+function solvent(lat: LatticeDefinition, t: ThreatSpec): InteractionResult {
   const p = lat.properties;
+  const kind = t.solventKind ?? 'polar';
+
+  if (kind === 'nonpolar') {
+    if (p.solvent === 'non-polar') {
+      return r({
+        outcome: 'dissolved',
+        verdict: 'weak',
+        threatDamageMult: 0.35,
+        towerDamageMult: 2.8,
+        title: `Dissolved in hexane: non-polar ${lat.formula} matches non-polar C₆H₁₄`,
+        rationale: `"Like dissolves like": both ${lat.formula} and hexane are non-polar, so dispersion forces between hexane and ${lat.formula} replace the weak intermolecular forces in the crystal.`,
+        keywords: ['like dissolves like', 'non-polar solvent', 'weak intermolecular forces'],
+        sfx: 'splash',
+      });
+    }
+    if (p.solvent === 'swells-nonpolar') {
+      return r({
+        outcome: 'dissolved',
+        verdict: 'weak',
+        threatDamageMult: 0.45,
+        towerDamageMult: 1.9,
+        title: 'Polymer swelled: hexane penetrated poly(ethene) chains',
+        rationale:
+          'Poly(ethene) chains are non-polar and lack covalent cross-links, so non-polar hexane molecules slip between the chains, softening and swelling the barrier.',
+        keywords: ['no cross-links', 'non-polar solvent', 'swells polymer'],
+        sfx: 'splash',
+      });
+    }
+    return r({
+      outcome: 'repelled',
+      verdict: 'counter',
+      threatDamageMult: 1.25,
+      towerDamageMult: 0.05,
+      title: `Hexane repelled: ${lat.formula} is insoluble in non-polar solvent`,
+      rationale:
+        lat.bonding === 'giant-ionic'
+          ? 'Non-polar hexane cannot form ion–dipole attractions to pull charged ions out of the ionic lattice.'
+          : lat.id === 'ice'
+            ? 'Polar hydrogen-bonded water molecules attract each other far more strongly than non-polar hexane ("like dissolves like").'
+            : lat.id === 'thermoset'
+              ? 'Covalent sulfur cross-links lock the chains together so non-polar solvent molecules cannot separate or swell them.'
+              : 'Giant covalent networks and metallic lattices cannot be dissolved by weak dispersion forces from hexane.',
+      keywords: ['insoluble in non-polar solvent', 'like dissolves like'],
+      sfx: 'splash',
+    });
+  }
+
+  if (kind === 'acid') {
+    if (p.solvent === 'basic-oxide') {
+      return r({
+        outcome: 'dissolved',
+        verdict: 'weak',
+        threatDamageMult: 0.45,
+        towerDamageMult: 2.4,
+        hydrate: true,
+        title: 'Acid–base reaction: H⁺ neutralised MgO lattice',
+        rationale:
+          'Magnesium oxide is a basic metal oxide: MgO(s) + 2H⁺(aq) → Mg²⁺(aq) + H₂O(l). The reaction breaks down the lattice and leaves mobile hydrated ions that conduct.',
+        keywords: ['basic oxide', 'neutralisation', 'Mg²⁺ ions freed'],
+        sfx: 'splash',
+      });
+    }
+    if (p.solvent === 'dissolves') {
+      return r({
+        outcome: 'dissolved',
+        verdict: 'weak',
+        threatDamageMult: 0.4,
+        towerDamageMult: 2.4,
+        hydrate: true,
+        title: `Acidic brine: ${lat.formula} dissolved in aqueous HCl`,
+        rationale:
+          'Polar water in the aqueous acid pulls Na⁺ and Cl⁻ ions from the lattice; mobile hydrated ions now conduct arcs.',
+        keywords: ['aqueous acid', 'ions hydrated', 'solution conducts'],
+        sfx: 'splash',
+      });
+    }
+    if (p.solvent === 'corrodes') {
+      const rate = lat.id === 'iron' ? 2.2 : 1.5;
+      return r({
+        outcome: 'corroded',
+        verdict: 'weak',
+        threatDamageMult: 0.5,
+        towerDamageMult: rate,
+        title: `Acid attack: ${lat.name} displaced H₂ from HCl(aq)`,
+        rationale:
+          'Iron lies above hydrogen in the reactivity series, so H⁺ oxidises iron atoms into Fe²⁺(aq) ions and hydrogen gas: Fe + 2H⁺ → Fe²⁺ + H₂.',
+        keywords: ['above hydrogen in reactivity series', 'oxidation', 'acid + metal'],
+        sfx: 'hiss',
+      });
+    }
+    if (p.solvent === 'inert-metal') {
+      return r({
+        outcome: 'repelled',
+        verdict: 'counter',
+        threatDamageMult: 1.25,
+        towerDamageMult: lat.id === 'copper' ? 0.08 : 0.2,
+        title: `Acid resisted: ${lat.name} is below hydrogen in reactivity`,
+        rationale:
+          lat.id === 'copper'
+            ? 'Copper is below hydrogen in the reactivity series, so it does not react with dilute hydrochloric acid.'
+            : 'Brass is predominantly unreactive copper below hydrogen, resisting dilute acid attack far better than iron or steel.',
+        keywords: ['below hydrogen in reactivity series', 'unreactive with dilute acid'],
+        sfx: 'splash',
+      });
+    }
+    if (p.solvent === 'erodes') {
+      return r({
+        outcome: 'eroded',
+        verdict: 'weak',
+        threatDamageMult: 0.5,
+        towerDamageMult: 1.6,
+        title: 'Ice eroded: aqueous acid melted hydrogen-bonded lattice',
+        rationale:
+          'Aqueous ions lower the freezing point and disrupt the weak hydrogen bonds holding H₂O molecules in solid ice.',
+        keywords: ['freezing-point depression', 'hydrogen bonds broken'],
+        sfx: 'splash',
+      });
+    }
+    return r({
+      outcome: 'repelled',
+      verdict: 'counter',
+      threatDamageMult: 1.3,
+      towerDamageMult: 0.05,
+      title: `Acid repelled: ${lat.name} is chemically unreactive`,
+      rationale:
+        lat.bonding === 'giant-covalent'
+          ? 'Strong covalent bonds throughout the network are unattacked by aqueous H⁺ ions.'
+          : 'Non-polar molecules do not react with or dissolve in aqueous acid.',
+      keywords: ['chemically inert', 'insoluble in acid'],
+      sfx: 'splash',
+    });
+  }
+
   switch (p.solvent) {
     case 'dissolves':
-    case 'slightly-soluble': {
-      const slight = p.solvent === 'slightly-soluble';
+    case 'slightly-soluble':
+    case 'basic-oxide': {
+      const slight = p.solvent === 'slightly-soluble' || p.solvent === 'basic-oxide';
       const [c, a] = lat.id === 'mgo' ? ['Mg²⁺', 'O²⁻'] : ['Na⁺', 'Cl⁻'];
       return r({
         outcome: 'dissolved',
@@ -359,7 +653,7 @@ function solvent(lat: LatticeDefinition, _t: ThreatSpec): InteractionResult {
         hydrate: true,
         title: `${lat.formula} ${slight ? 'surface hydrating' : 'dissolving'}: water pulled ions from the lattice`,
         rationale: `Polar water molecules surround the ions — δ− oxygen is attracted to ${c}, δ+ hydrogen to ${a}. Ions are pulled out of the lattice and hydrated.${
-          slight ? ' The stronger 2+/2− attraction in MgO makes it only sparingly soluble.' : ''
+          slight ? ' The stronger 2+/2− attraction in MgO makes it only sparingly soluble in pure water.' : ''
         } The wet barrier now contains mobile ions and will conduct.`,
         keywords: ['polar water', 'attracted to ions', 'ions hydrated', 'solution conducts'],
         sfx: 'splash',
@@ -383,9 +677,9 @@ function solvent(lat: LatticeDefinition, _t: ThreatSpec): InteractionResult {
         verdict: 'counter',
         threatDamageMult: 1.1,
         towerDamageMult: 0.12,
-        title: 'Solvent shed: copper does not react with water',
+        title: `Solvent shed: ${lat.name} does not react with water`,
         rationale:
-          'Copper is low in the reactivity series and does not react with water. Metals do not dissolve in water — there are no separate ions or molecules for water to pull away.',
+          'Copper sits low in the reactivity series and does not react with water. Metals do not dissolve in water — there are no separate ions or molecules for water to pull away.',
         keywords: ['unreactive metal', 'low in reactivity series', 'insoluble'],
         sfx: 'splash',
       });
@@ -418,6 +712,7 @@ function solvent(lat: LatticeDefinition, _t: ThreatSpec): InteractionResult {
         sfx: 'splash',
       });
     case 'non-polar':
+    case 'swells-nonpolar':
       return r({
         outcome: 'repelled',
         verdict: 'counter',

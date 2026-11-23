@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CloudOff, Dices, Home, RotateCcw, Send, Skull, Trophy } from 'lucide-react';
+import { CloudOff, Dices, Flame, Home, RotateCcw, Send, Skull, Trophy } from 'lucide-react';
 import { engine, useUiTick } from '../../hooks/useEngine';
-import { WAVES } from '../../data/waves';
+import { SECTORS } from '../../data/waves';
 import { NAME_MAX, randomAlias } from '../../../shared/nameFilter.js';
 import { lastName, submitScore, type SubmitError } from '../../services/scoreboard';
 import { reportScoreToHub } from '../../services/arcadeHub';
@@ -21,11 +21,13 @@ export default function EndOverlay({ onScores, onMenu }: { onScores: (highlightI
   useUiTick();
   const { phase } = engine;
   if (phase !== 'victory' && phase !== 'defeat') return null;
-  return <EndCard key={engine.runId} onScores={onScores} onMenu={onMenu} />;
+  return <EndCard key={`${engine.runId}-${phase}`} onScores={onScores} onMenu={onMenu} />;
 }
 
 function EndCard({ onScores, onMenu }: { onScores: (highlightId?: string) => void; onMenu: () => void }) {
   const win = engine.phase === 'victory';
+  const overtimeDefeat = !win && engine.overtime;
+  const sectorName = SECTORS[engine.sectorId].name;
   const summary = useMemo(() => engine.summary(), []);
   const score = engine.score;
   const [name, setName] = useState(lastName());
@@ -45,21 +47,31 @@ function EndCard({ onScores, onMenu }: { onScores: (highlightId?: string) => voi
     setErr(null);
     const r = await submitScore(name, engine.runId, summary);
     setBusy(false);
-    if (r.ok) setDone({ rank: r.rank, online: r.online, id: r.entry.id });
-    else setErr(r.error);
+    if (r.ok) {
+      engine.scoreSubmitted = true;
+      setDone({ rank: r.rank, online: r.online, id: r.entry.id });
+    } else setErr(r.error);
   };
 
   return (
     <div className="hud-safe fixed z-50 flex items-center justify-center bg-black/70 p-3 backdrop-blur-sm">
       <div className="panel scroll-thin max-h-full w-full max-w-md overflow-y-auto p-5 text-center sm:p-6">
         {win ? <Trophy className="mx-auto h-12 w-12 text-amber-300" /> : <Skull className="mx-auto h-12 w-12 text-rose-400" />}
-        <h2 className="mt-2 text-2xl font-bold text-white">{win ? 'Lattice Locked!' : 'Core Collapsed'}</h2>
+        <h2 className="mt-2 text-2xl font-bold text-white">
+          {win ? 'Lattice Locked!' : overtimeDefeat ? 'Overtime Ended' : 'Core Collapsed'}
+        </h2>
         <p className="mt-1 text-sm text-slate-400">
-          {win ? 'All ten waves neutralised. Structure → bonding → property: mastered.' : `Fell on wave ${engine.waveIndex + 1}: ${WAVES[engine.waveIndex]?.name ?? ''}.`}
+          {win
+            ? `${sectorName}: all ten campaign waves neutralised. Structure → bonding → property: mastered.`
+            : overtimeDefeat
+              ? `Reached Overtime Wave ${engine.waveIndex + 1} (${engine.currentWave().name}) in ${sectorName}.`
+              : `Fell on wave ${engine.waveIndex + 1}: ${engine.currentWave().name}.`}
         </p>
 
         <div className="mt-4 rounded-xl border border-cyan-400/25 bg-cyan-500/10 py-3">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-cyan-300/80">Score</div>
+          <div className="text-[10px] uppercase tracking-[0.25em] text-cyan-300/80">
+            {overtimeDefeat ? 'Campaign Clear Score' : 'Score'}
+          </div>
           <div className="font-mono text-4xl font-bold text-white">{score.toLocaleString()}</div>
         </div>
         <div className="mt-2 grid grid-cols-3 gap-2">
@@ -68,7 +80,21 @@ function EndCard({ onScores, onMenu }: { onScores: (highlightId?: string) => voi
           <Stat label="Barriers lost" value={engine.stats.towersLost} />
         </div>
 
-        {!done ? (
+        {win && (
+          <button
+            type="button"
+            onClick={() => engine.enterOvertime()}
+            className="mt-4 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl border border-amber-300/50 bg-amber-500/20 px-4 text-sm font-semibold text-amber-100 shadow-[0_0_24px_-8px_rgba(251,191,36,0.6)] transition hover:bg-amber-400/30"
+          >
+            <Flame className="h-4 w-4 text-amber-300" /> Enter Endless Overtime (Wave 11+)
+          </button>
+        )}
+
+        {engine.scoreSubmitted && !done ? (
+          <div className="mt-4 rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">
+            Campaign victory score already submitted to the scoreboard!
+          </div>
+        ) : !done ? (
           <form
             className="mt-4 text-left"
             onSubmit={(e) => {

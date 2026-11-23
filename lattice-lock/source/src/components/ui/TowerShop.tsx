@@ -107,7 +107,7 @@ function ShopCard({ lat, pred, hotkey }: { lat: LatticeDefinition; pred: Record<
             </span>
           );
         })}
-        {hotkey > 0 && <span className="ml-auto font-mono text-[10px] text-slate-500">[{hotkey === 10 ? 0 : hotkey}]</span>}
+        {hotkey > 0 && <span className="ml-auto font-mono text-[10px] text-slate-500">[{hotkey === 11 ? '-' : hotkey === 10 ? 0 : hotkey}]</span>}
       </div>
     </div>
   );

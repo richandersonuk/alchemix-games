@@ -72,7 +72,7 @@ export default function HowToPlay({ onClose, cta = 'Got it' }: { onClose: () => 
         <ul className="mt-2 grid gap-x-6 gap-y-1.5 text-[13px] text-slate-300 sm:grid-cols-2">
           <li><Kbd>Click</Kbd> lattice → <Kbd>Click</Kbd> tile to build</li>
           <li><Kbd>Drag</Kbd> orbit camera · <Kbd>Scroll</Kbd> zoom</li>
-          <li><Kbd>1</Kbd>–<Kbd>9</Kbd> quick-select lattice</li>
+          <li><Kbd>1</Kbd>–<Kbd>0</Kbd>, <Kbd>-</Kbd> quick-select lattice</li>
           <li><Kbd>Space</Kbd> launch wave / pause</li>
           <li><Kbd>I</Kbd> inspect unit cell · <Kbd>U</Kbd> upgrade</li>
           <li><Kbd>Esc</Kbd> cancel / menu · right-click cancel</li>

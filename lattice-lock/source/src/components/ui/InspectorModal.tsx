@@ -45,8 +45,8 @@ function Inspector({ id }: { id: LatticeId }) {
   const legend = useMemo(() => {
     const m = new Map<string, { label: string; color: string; count: number }>();
     for (const a of cell.atoms) {
-      const k = `${a.element}${a.charge ?? ''}${a.interstitial ? 'i' : ''}`;
-      const label = `${a.element}${a.charge ?? ''}${a.interstitial ? ' (interstitial)' : ''}`;
+      const k = `${a.element}${a.charge ?? ''}${a.interstitial ? 'i' : a.substitutional ? 's' : ''}`;
+      const label = `${a.element}${a.charge ?? ''}${a.interstitial ? ' (interstitial)' : a.substitutional ? ' (substitutional)' : ''}`;
       const e = m.get(k);
       if (e) e.count++;
       else m.set(k, { label, color: a.color, count: 1 });

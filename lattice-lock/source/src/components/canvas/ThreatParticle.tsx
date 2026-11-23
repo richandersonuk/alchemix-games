@@ -32,7 +32,7 @@ export default function ThreatParticle({ threat }: { threat: ThreatState }) {
   let visual: JSX.Element;
   switch (spec.type) {
     case 'thermal':
-      visual = <ThermalOrb color={spec.color} plasma={!!spec.plasma} />;
+      visual = <ThermalOrb color={spec.color} plasma={!!spec.plasma} cryo={!!spec.cryo} />;
       break;
     case 'electrical':
       visual = <ArcBolt color={spec.color} big={spec.intensity > 2} />;
@@ -41,7 +41,7 @@ export default function ThreatParticle({ threat }: { threat: ThreatState }) {
       visual = <Shockwave color={spec.color} glancing={spec.shearMode === 'glancing'} />;
       break;
     case 'solvent':
-      visual = <SolventJet color={spec.color} />;
+      visual = <SolventJet color={spec.color} solventKind={spec.solventKind ?? 'polar'} />;
       break;
   }
 
@@ -62,32 +62,33 @@ export default function ThreatParticle({ threat }: { threat: ThreatState }) {
   );
 }
 
-function ThermalOrb({ color, plasma }: { color: string; plasma: boolean }) {
+function ThermalOrb({ color, plasma, cryo }: { color: string; plasma: boolean; cryo: boolean }) {
   const glow = useRef<THREE.Mesh>(null);
   const halo = useRef<THREE.Mesh>(null);
   const seed = useMemo(() => Math.random() * 10, []);
-  const size = plasma ? 1.45 : 1;
+  const size = plasma ? 1.45 : cryo ? 1.12 : 1;
   useFrame(({ clock }) => {
     const t = clock.elapsedTime + seed;
     const p = 1 + Math.sin(t * 9) * 0.08 + Math.sin(t * 23) * 0.05;
     glow.current?.scale.setScalar(p * size);
     halo.current?.scale.setScalar((1.1 + Math.sin(t * 3) * 0.15) * size);
+    if (cryo && glow.current) glow.current.rotation.y = t * 1.4;
   });
   return (
     <group position-y={0.5}>
-      <mesh scale={size}>
-        <sphereGeometry args={[0.13, 16, 12]} />
-        <meshBasicMaterial color={plasma ? '#ffffff' : '#fff7ed'} toneMapped={false} />
+      <mesh scale={size} rotation={cryo ? [0.6, 0.4, 0.2] : [0, 0, 0]}>
+        {cryo ? <octahedronGeometry args={[0.16, 0]} /> : <sphereGeometry args={[0.13, 16, 12]} />}
+        <meshBasicMaterial color={cryo ? '#e0f2fe' : plasma ? '#ffffff' : '#fff7ed'} toneMapped={false} />
       </mesh>
       <mesh ref={glow}>
-        <sphereGeometry args={[0.24, 16, 12]} />
-        <meshBasicMaterial color={color} opacity={0.55} {...additive} />
+        {cryo ? <octahedronGeometry args={[0.24, 0]} /> : <sphereGeometry args={[0.24, 16, 12]} />}
+        <meshBasicMaterial color={color} opacity={0.55} wireframe={cryo} {...additive} />
       </mesh>
       <mesh ref={halo}>
         <sphereGeometry args={[0.42, 16, 12]} />
-        <meshBasicMaterial color={plasma ? '#8b5cf6' : '#ef4444'} opacity={0.16} {...additive} />
+        <meshBasicMaterial color={cryo ? '#0284c7' : plasma ? '#8b5cf6' : '#ef4444'} opacity={0.16} {...additive} />
       </mesh>
-      <Sparkles count={plasma ? 22 : 12} scale={plasma ? 1.2 : 0.8} size={plasma ? 5 : 3} speed={1.6} color={color} />
+      <Sparkles count={plasma ? 22 : cryo ? 16 : 12} scale={plasma ? 1.2 : 0.85} size={plasma ? 5 : 3} speed={cryo ? 0.9 : 1.6} color={color} />
     </group>
   );
 }
@@ -184,7 +185,42 @@ function WaterMolecule() {
   );
 }
 
-function SolventJet({ color }: { color: string }) {
+function HexaneChain() {
+  // Zig-zag non-polar C₆ backbone
+  return (
+    <group>
+      {[-2, -1, 0, 1, 2].map((i) => (
+        <mesh key={i} position={[i * 0.055, (i % 2 ? 1 : -1) * 0.028, 0]}>
+          <sphereGeometry args={[0.038, 10, 8]} />
+          <meshStandardMaterial color="#84cc16" emissive="#365314" roughness={0.35} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function HydroniumIon() {
+  // Pyramidal H₃O⁺
+  return (
+    <group>
+      <mesh>
+        <sphereGeometry args={[0.058, 12, 8]} />
+        <meshStandardMaterial color="#4ade80" emissive="#14532d" roughness={0.25} />
+      </mesh>
+      {[0, 1, 2].map((i) => {
+        const ang = (i / 3) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(ang) * 0.075, 0.045, Math.sin(ang) * 0.075]}>
+            <sphereGeometry args={[0.032, 10, 8]} />
+            <meshStandardMaterial color="#f8fafc" emissive="#22c55e" emissiveIntensity={0.35} roughness={0.3} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+function SolventJet({ color, solventKind }: { color: string; solventKind: 'polar' | 'nonpolar' | 'acid' }) {
   const orbit = useRef<THREE.Group>(null);
   const blob = useRef<THREE.Mesh>(null);
   const seed = useMemo(() => Math.random() * 10, []);
@@ -209,7 +245,7 @@ function SolventJet({ color }: { color: string }) {
           const ang = (i / 4) * Math.PI * 2;
           return (
             <group key={i} position={[Math.cos(ang) * 0.32, (i % 2 ? 0.06 : -0.06), Math.sin(ang) * 0.32]} rotation={[ang, ang * 2, 0]}>
-              <WaterMolecule />
+              {solventKind === 'nonpolar' ? <HexaneChain /> : solventKind === 'acid' ? <HydroniumIon /> : <WaterMolecule />}
             </group>
           );
         })}

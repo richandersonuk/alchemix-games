@@ -20,10 +20,13 @@ export const ELEMENT_INFO: Record<ElementSymbol, { name: string; color: string }
   Mg: { name: 'Magnesium', color: '#fde047' },
   O: { name: 'Oxygen', color: '#f87171' },
   C: { name: 'Carbon', color: '#94a3b8' },
+  Si: { name: 'Silicon', color: '#38bdf8' },
   Cu: { name: 'Copper', color: '#f59e0b' },
+  Zn: { name: 'Zinc', color: '#7dd3fc' },
   Fe: { name: 'Iron', color: '#cbd5e1' },
   H: { name: 'Hydrogen', color: '#f8fafc' },
   I: { name: 'Iodine', color: '#c026d3' },
+  S: { name: 'Sulfur', color: '#facc15' },
 };
 
 export const BONDING_META: Record<
@@ -231,8 +234,15 @@ function hexLayers(o: { layers: number; b: number; spacing: number; radius: numb
   };
 }
 
-/** Cuboctahedral cluster cut from an FCC (cubic close-packed) metal: shows 12-coordination. */
-function fccCluster(o: { h: number; element: ElementSymbol; radius: number; label: string }): UnitCell {
+/** Cuboctahedral cluster cut from an FCC (cubic close-packed) metal, optionally with substitutional alloy atoms (brass). */
+function fccCluster(o: {
+  h: number;
+  element: ElementSymbol;
+  radius: number;
+  label: string;
+  substitutionalSites?: number[];
+  substitutionalElement?: ElementSymbol;
+}): UnitCell {
   const b = new CellBuilder();
   let centre = 0;
   for (let i = -1; i <= 1; i++)
@@ -242,7 +252,31 @@ function fccCluster(o: { h: number; element: ElementSymbol; radius: number; labe
         const id = b.add(o.element, [i * o.h, j * o.h, k * o.h], o.radius, undefined, { charge: '+' });
         if (i === 0 && j === 0 && k === 0) centre = id;
       }
-  b.bondByDistance(o.h * Math.SQRT2, 'metallic');
+  if (o.substitutionalSites && o.substitutionalElement) {
+    const subEl = o.substitutionalElement;
+    for (const idx of o.substitutionalSites) {
+      const target = b.atoms[idx];
+      if (!target || idx === centre) continue;
+      target.element = subEl;
+      target.color = ELEMENT_INFO[subEl].color;
+      target.radius = o.radius * 1.12;
+      target.charge = '²⁺';
+      target.substitutional = true;
+      for (const other of b.atoms) {
+        if (other.id === target.id) continue;
+        const d = dist(other.position, target.position);
+        if (d < o.h * 1.55 && d > 1e-6) {
+          const push = 0.04 * o.h;
+          other.position = [
+            other.position[0] + ((other.position[0] - target.position[0]) / d) * push,
+            other.position[1] + ((other.position[1] - target.position[1]) / d) * push,
+            other.position[2] + ((other.position[2] - target.position[2]) / d) * push,
+          ];
+        }
+      }
+    }
+  }
+  b.bondByDistance(o.h * Math.SQRT2, 'metallic', o.substitutionalSites ? 0.16 : 0.06);
   return {
     label: o.label,
     atoms: b.atoms,
@@ -252,8 +286,9 @@ function fccCluster(o: { h: number; element: ElementSymbol; radius: number; labe
     coordination: {
       number: '12',
       geometry: 'Cuboctahedral (cubic close-packed)',
-      detail:
-        'Each positive copper ion touches 12 neighbours — the most efficient packing possible. Metallic bonding is non-directional: the delocalised electron sea attracts every ion equally, so layers can slide without the bonding being broken.',
+      detail: o.substitutionalSites
+        ? 'Substitutional zinc atoms (larger radius) replace copper ions in the close-packed lattice, distorting the layers so they can no longer slide over each other easily.'
+        : 'Each positive copper ion touches 12 neighbours — the most efficient packing possible. Metallic bonding is non-directional: the delocalised electron sea attracts every ion equally, so layers can slide without the bonding being broken.',
     },
   };
 }
@@ -382,6 +417,136 @@ function iodineCell(): UnitCell {
   };
 }
 
+/** Silicon dioxide (quartz / β-cristobalite network): Si on a diamond sublattice, O bridging each Si–Si edge. */
+function sio2Cell(): UnitCell {
+  const b = new CellBuilder();
+  const a = 1.65;
+  const { centre, bondLen } = diamondPositions(b, a, 'Si', 0.115, ELEMENT_INFO.Si.color);
+  const siCount = b.atoms.length;
+  for (let i = 0; i < siCount; i++) {
+    for (let j = i + 1; j < siCount; j++) {
+      const p = b.atoms[i].position;
+      const q = b.atoms[j].position;
+      if (Math.abs(dist(p, q) - bondLen) > 0.06 * bondLen) continue;
+      const dx = q[0] - p[0];
+      const dy = q[1] - p[1];
+      const dz = q[2] - p[2];
+      // Slight perpendicular offset to show the bent ~144° Si–O–Si bridge
+      let px = dz;
+      let py = 0;
+      let pz = -dx;
+      let plen = Math.hypot(px, py, pz);
+      if (plen < 1e-5) {
+        px = 0;
+        py = dz;
+        pz = -dy;
+        plen = Math.hypot(px, py, pz) || 1;
+      }
+      const off = 0.08;
+      const ox = (p[0] + q[0]) * 0.5 + (px / plen) * off;
+      const oy = (p[1] + q[1]) * 0.5 + (py / plen) * off;
+      const oz = (p[2] + q[2]) * 0.5 + (pz / plen) * off;
+      const oId = b.add('O', [ox, oy, oz], 0.082, ELEMENT_INFO.O.color);
+      b.bond(i, oId, 'covalent');
+      b.bond(oId, j, 'covalent');
+    }
+  }
+  return {
+    label: 'Silicon dioxide (SiO₂) network',
+    atoms: b.atoms,
+    bonds: b.bonds,
+    centreAtomId: centre,
+    box: [a, a, a],
+    coordination: {
+      number: '4 : 2',
+      geometry: 'Tetrahedral SiO₄ sharing corners',
+      detail:
+        'Each silicon atom is covalently bonded to four oxygen atoms, and each oxygen atom bridges two silicon atoms — giving the empirical formula SiO₂ in a rigid giant covalent network.',
+    },
+  };
+}
+
+/** Buckminsterfullerene (C₆₀): 60 carbon atoms in a truncated icosahedron cage. */
+function c60Cell(): UnitCell {
+  const b = new CellBuilder();
+  const phi = (1 + Math.sqrt(5)) / 2;
+  const s = 0.72 / Math.sqrt(10 + 9 * phi);
+  const seen = new Set<string>();
+  const pushPerms = (x: number, y: number, z: number) => {
+    const perms: Vec3[] = [
+      [x, y, z],
+      [y, z, x],
+      [z, x, y],
+    ];
+    for (const [px, py, pz] of perms) {
+      const k = `${px.toFixed(4)},${py.toFixed(4)},${pz.toFixed(4)}`;
+      if (!seen.has(k)) {
+        seen.add(k);
+        b.add('C', [px * s, py * s, pz * s], 0.068, '#cbd5e1');
+      }
+    }
+  };
+  for (const s1 of [-1, 1])
+    for (const s2 of [-1, 1]) {
+      pushPerms(0, s1 * 1, s2 * 3 * phi);
+      for (const s3 of [-1, 1]) {
+        pushPerms(s1 * 1, s2 * (2 + phi), s3 * 2 * phi);
+        pushPerms(s1 * phi, s2 * 2, s3 * (2 * phi + 1));
+      }
+    }
+  b.bondByDistance(2 * s, 'covalent', 0.08);
+  return {
+    label: 'Buckminsterfullerene (C₆₀)',
+    atoms: b.atoms,
+    bonds: b.bonds,
+    centreAtomId: 0,
+    coordination: {
+      number: '3',
+      geometry: 'Hollow soccer-ball cage (12 pentagons, 20 hexagons)',
+      detail:
+        'Each C₆₀ molecule has 60 carbon atoms joined by strong covalent bonds (3 per carbon). Only weak intermolecular forces hold separate C₆₀ cages together, so they roll easily as a lubricant and dissolve in non-polar solvents.',
+    },
+  };
+}
+
+/** Single-walled armchair (5,5) carbon nanotube segment. */
+function cntCell(): UnitCell {
+  const b = new CellBuilder();
+  const N = 5;
+  const layers = 7;
+  const R = 0.46;
+  const bond = (2 * Math.PI * R) / (3 * N); // ~0.193
+  const dy = (bond * Math.sqrt(3)) / 2;
+  const alpha = Math.PI / (3 * N); // 12°
+  let centre = 0;
+  for (let m = 0; m < layers; m++) {
+    const y = (m - (layers - 1) / 2) * dy;
+    const baseShift = m % 2 === 1 ? Math.PI / N : 0;
+    for (let j = 0; j < N; j++) {
+      const th0 = (j * 2 * Math.PI) / N + baseShift;
+      for (const side of [-1, 1]) {
+        const th = th0 + side * alpha;
+        const id = b.add('C', [Math.cos(th) * R, y, Math.sin(th) * R], 0.062, '#67e8f9');
+        if (m === Math.floor(layers / 2) && j === 0 && side === 1) centre = id;
+      }
+    }
+  }
+  b.bondByDistance(bond, 'covalent', 0.1);
+  return {
+    label: 'Carbon nanotube (5,5) wall',
+    atoms: b.atoms,
+    bonds: b.bonds,
+    centreAtomId: centre,
+    electronSea: 'volume',
+    coordination: {
+      number: '3',
+      geometry: 'Rolled sp² hexagonal tube',
+      detail:
+        'A continuous hexagonal sheet of sp² carbon rolled into a seamless cylinder. Strong covalent bonds around and along the tube resist both parallel and glancing stress, while delocalised electrons conduct along the axis.',
+    },
+  };
+}
+
 /** Poly(ethene): parallel zig-zag chains with weak forces between chains. */
 function polyethyleneCell(): UnitCell {
   const b = new CellBuilder();
@@ -423,6 +588,61 @@ function polyethyleneCell(): UnitCell {
       geometry: 'Tetrahedral C along zig-zag chains',
       detail:
         'Each carbon has four covalent bonds (two C–C, two C–H). Very long chains are held to neighbouring chains only by weak intermolecular forces, so the polymer softens and melts at a low temperature.',
+    },
+  };
+}
+
+/** Cross-linked thermosetting polymer: covalent sulfur bridges lock adjacent chains together. */
+function thermosetCell(): UnitCell {
+  const b = new CellBuilder();
+  const chains: [number, number][] = [
+    [-0.27, -0.27],
+    [-0.27, 0.27],
+    [0.27, -0.27],
+    [0.27, 0.27],
+  ];
+  const chainC: number[][] = [];
+  chains.forEach(([yc, zc]) => {
+    const ids: number[] = [];
+    let prev = -1;
+    for (let i = 0; i < 7; i++) {
+      const x = (i - 3) * 0.21;
+      const zig = (i % 2 ? 1 : -1) * 0.065;
+      const c = b.add('C', [x, yc + zig, zc], 0.08, '#94a3b8');
+      ids.push(c);
+      if (prev >= 0) b.bond(prev, c, 'covalent');
+      prev = c;
+      const sg = Math.sign(zig);
+      for (const dz of [-0.1, 0.1]) {
+        const h = b.add('H', [x, yc + zig + sg * 0.07, zc + dz], 0.042);
+        b.bond(c, h, 'covalent');
+      }
+    }
+    chainC.push(ids);
+  });
+  const bridges: [number, number, number][] = [
+    [0, 1, 1],
+    [2, 3, 3],
+    [0, 2, 4],
+    [1, 3, 5],
+  ];
+  for (const [p, q, idx] of bridges) {
+    const ca = b.atoms[chainC[p][idx]].position;
+    const cb = b.atoms[chainC[q][idx]].position;
+    const sId = b.add('S', [(ca[0] + cb[0]) * 0.5, (ca[1] + cb[1]) * 0.5, (ca[2] + cb[2]) * 0.5], 0.09, ELEMENT_INFO.S.color);
+    b.bond(chainC[p][idx], sId, 'covalent');
+    b.bond(sId, chainC[q][idx], 'covalent');
+  }
+  return {
+    label: 'Cross-linked thermoset polymer',
+    atoms: b.atoms,
+    bonds: b.bonds,
+    centreAtomId: chainC[0][4],
+    coordination: {
+      number: '4 per carbon (cross-linked)',
+      geometry: 'Covalent 3D polymer network',
+      detail:
+        'Strong covalent sulfur bridges cross-link neighbouring polymer chains into one giant network. Chains cannot slide past each other when heated or exposed to solvents.',
     },
   };
 }
@@ -478,7 +698,7 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
     cost: 95,
     buildable: true,
     upgradeFrom: 'nacl',
-    stats: { maxIntegrity: 300, power: 18, range: 2.2 },
+    stats: { maxIntegrity: 310, power: 19, range: 2.25 },
     properties: {
       meltingPointK: 3125,
       phaseChange: 'melts',
@@ -488,19 +708,19 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
       conductivityRank: 0,
       breakdownKV: 40,
       shear: 'brittle-ionic',
-      solvent: 'slightly-soluble',
+      solvent: 'basic-oxide',
       hardnessMohs: 5.5,
       ionCharges: 'Mg²⁺ / O²⁻',
     },
     accent: '#fde047',
-    tagline: 'Heat-proof refractory — double thermal durability.',
+    tagline: 'Heat-proof refractory — double thermal durability; reacts with acid.',
     description:
-      'Same rock-salt structure as NaCl but with 2+ and 2− ions. Higher charge density means far stronger attraction — used to line furnaces. Still an ionic solid: still brittle.',
+      'Same rock-salt structure as NaCl but with 2+ and 2− ions. Higher charge density means far stronger attraction — used to line furnaces. Still an ionic solid: brittle and basic.',
     examPoints: [
       'Ions have charges 2+ and 2− (vs 1+ and 1− in NaCl).',
       'Stronger electrostatic attraction → much more energy to overcome → higher melting point.',
       'Smaller ions pack more closely, strengthening the attraction further.',
-      'Still brittle and still an insulator when solid.',
+      'Basic metal oxide: neutralised by acids (MgO + 2H⁺ → Mg²⁺ + H₂O).',
     ],
     buildCell: () => rockSalt({ label: 'Rock salt (MgO) lattice', cation: 'Mg', anion: 'O', rc: 0.12, ra: 0.19, qc: '²⁺', qa: '²⁻', s: 0.55 }),
   },
@@ -511,7 +731,7 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
     bonding: 'giant-covalent',
     cost: 140,
     buildable: true,
-    stats: { maxIntegrity: 320, power: 22, range: 2.4 },
+    stats: { maxIntegrity: 340, power: 23, range: 2.4 },
     properties: {
       meltingPointK: 3820,
       phaseChange: 'sublimes',
@@ -537,6 +757,38 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
     ],
     buildCell: diamondCell,
   },
+  sio2: {
+    id: 'sio2',
+    name: 'Silicon Dioxide',
+    formula: 'SiO₂',
+    bonding: 'giant-covalent',
+    cost: 110,
+    buildable: true,
+    stats: { maxIntegrity: 260, power: 18, range: 2.3 },
+    properties: {
+      meltingPointK: 1986,
+      phaseChange: 'melts',
+      thermalConductivity: 12,
+      thermalDurability: 1.7,
+      conductsSolid: false,
+      conductivityRank: 0,
+      breakdownKV: 120,
+      shear: 'hard-network',
+      solvent: 'insoluble',
+      hardnessMohs: 7,
+    },
+    accent: '#7dd3fc',
+    tagline: 'Quartz ceramic — rigid insulator, immune to water and acid.',
+    description:
+      'Giant covalent network of SiO₄ tetrahedra sharing oxygen corners (4:2 coordination). Hard, high-melting, completely insoluble in water or acid, and an electrical insulator.',
+    examPoints: [
+      'Giant covalent lattice: each Si bonded to 4 O atoms, each O to 2 Si atoms.',
+      'High melting point: many strong covalent Si–O bonds must be broken.',
+      'Insoluble in water and unreactive with dilute acids.',
+      'Does not conduct electricity: no delocalised electrons or mobile ions.',
+    ],
+    buildCell: sio2Cell,
+  },
   graphite: {
     id: 'graphite',
     name: 'Graphite',
@@ -545,9 +797,9 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
     cost: 60,
     buildable: true,
     upgradeTo: 'graphene',
-    upgradeCost: 90,
+    upgradeCost: 110,
     upgradeNote:
-      'Exfoliate to a single layer: with no weak interlayer forces left to fail, the sheet has enormous tensile strength and even better conductivity.',
+      'Exfoliate to a single layer: removes weak interlayer slip against parallel stress and boosts conductivity — though a 1-atom sheet can puncture under glancing blows and ablates in plasma.',
     stats: { maxIntegrity: 170, power: 15, range: 2.2 },
     properties: {
       meltingPointK: 3900,
@@ -578,10 +830,10 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
     name: 'Graphene',
     formula: 'C (monolayer)',
     bonding: 'giant-covalent',
-    cost: 150,
+    cost: 170,
     buildable: false,
     upgradeFrom: 'graphite',
-    stats: { maxIntegrity: 270, power: 24, range: 2.6 },
+    stats: { maxIntegrity: 190, power: 21, range: 2.45 },
     properties: {
       meltingPointK: 3900,
       phaseChange: 'sublimes',
@@ -595,13 +847,14 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
       hardnessMohs: 1.5,
     },
     accent: '#22d3ee',
-    tagline: 'Single-atom sheet. Conducts heat and charge superbly.',
+    tagline: 'Single-atom sheet. Superb in-plane; punctures under glancing blows & plasma.',
     description:
-      'One layer of graphite. A continuous sheet of strong covalent bonds with delocalised electrons: very high tensile strength, excellent electrical and thermal conductor.',
+      'One layer of graphite. Continuous covalent bonds give huge in-plane tensile strength and extreme electrical conductivity, yet a one-atom-thick sheet lacks bulk against oblique puncture and 2900 K plasma.',
     examPoints: [
       'Single layer of graphite, one atom thick.',
-      'Very strong: continuous network of covalent bonds.',
-      'Conducts electricity: delocalised electrons move across the sheet.',
+      'Very strong in-plane: continuous network of strong covalent bonds.',
+      'Conducts electricity: delocalised electrons move freely across the sheet.',
+      'Limitation: 2D monolayer lacks bulk thermal mass against extreme plasma and out-of-plane puncture.',
     ],
     buildCell: () => hexLayers({ layers: 1, b: 0.27, spacing: 0, radius: 0.27 * 3.7, color: '#a5f3fc', label: 'Graphene monolayer' }),
   },
@@ -612,6 +865,10 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
     bonding: 'metallic',
     cost: 75,
     buildable: true,
+    upgradeTo: 'brass',
+    upgradeCost: 65,
+    upgradeNote:
+      'Substitutional alloying: replace some copper ions with larger zinc atoms. The distorted layers resist slip while remaining unreactive to water and dilute acid.',
     stats: { maxIntegrity: 220, power: 17, range: 2.2 },
     properties: {
       meltingPointK: 1358,
@@ -626,16 +883,57 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
       hardnessMohs: 3,
     },
     accent: '#f59e0b',
-    tagline: 'Best arc ground. Malleable. Unreactive to water.',
+    tagline: 'Best arc ground. Malleable. Unreactive to water & acid.',
     description:
-      'Close-packed positive copper ions in a sea of delocalised electrons. The mobile electrons carry charge and heat; non-directional bonding lets layers slide without shattering.',
+      'Close-packed positive copper ions in a sea of delocalised electrons. The mobile electrons carry charge and heat; non-directional bonding lets layers slide without shattering. Below hydrogen in reactivity.',
     examPoints: [
       'Giant structure of positive ions surrounded by delocalised electrons.',
       'Strong electrostatic attraction between ions and electrons → high melting point.',
       'Good conductor of electricity and heat: delocalised electrons move through the structure.',
-      'Malleable/ductile: layers of ions slide over each other.',
+      'Below hydrogen in the reactivity series: does not react with water or dilute acid.',
     ],
     buildCell: () => fccCluster({ h: 0.48, element: 'Cu', radius: 0.21, label: 'Cubic close-packed Cu cluster' }),
+  },
+  brass: {
+    id: 'brass',
+    name: 'Brass',
+    formula: 'Cu–Zn alloy',
+    bonding: 'metallic',
+    cost: 140,
+    buildable: false,
+    upgradeFrom: 'copper',
+    stats: { maxIntegrity: 295, power: 20, range: 2.3 },
+    properties: {
+      meltingPointK: 1200,
+      phaseChange: 'melts',
+      thermalConductivity: 120,
+      thermalDurability: 1.25,
+      conductsSolid: true,
+      conductivityRank: 2,
+      breakdownKV: 0,
+      shear: 'alloy-pinned',
+      solvent: 'inert-metal',
+      hardnessMohs: 4,
+    },
+    accent: '#fbbf24',
+    tagline: 'Substitutional Cu–Zn alloy. Pinned layers + acid resistance.',
+    description:
+      'Copper alloyed with larger zinc atoms. Different-sized atoms distort the close-packed layers so they cannot slide easily, creating a shear-resistant, corrosion-resistant conductor.',
+    examPoints: [
+      'Substitutional alloy: zinc atoms have a different atomic radius from copper.',
+      'Distorted layers cannot slide easily → much harder than pure copper.',
+      'Conducts electricity via the delocalised electron sea.',
+      'Resists water and mild acid corrosion far better than steel.',
+    ],
+    buildCell: () =>
+      fccCluster({
+        h: 0.48,
+        element: 'Cu',
+        radius: 0.2,
+        label: 'Brass substitutional alloy (Cu–Zn)',
+        substitutionalSites: [1, 4, 9, 11],
+        substitutionalElement: 'Zn',
+      }),
   },
   iron: {
     id: 'iron',
@@ -782,6 +1080,75 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
     ],
     buildCell: iodineCell,
   },
+  c60: {
+    id: 'c60',
+    name: 'Buckminsterfullerene',
+    formula: 'C₆₀',
+    bonding: 'simple-molecular',
+    cost: 50,
+    buildable: true,
+    upgradeTo: 'cnt',
+    upgradeCost: 85,
+    upgradeNote:
+      'Catalytic synthesis: coalesce discrete C₆₀ cages into a continuous cylindrical carbon nanotube (giant covalent) with immense tensile strength and axial conductivity.',
+    stats: { maxIntegrity: 135, power: 13, range: 2.1 },
+    properties: {
+      meltingPointK: 800,
+      phaseChange: 'sublimes',
+      thermalConductivity: 0.4,
+      thermalDurability: 0.85,
+      conductsSolid: false,
+      conductivityRank: 0,
+      breakdownKV: 12,
+      shear: 'molecular-lubricant',
+      solvent: 'non-polar',
+      hardnessMohs: 1.5,
+    },
+    accent: '#e879f9',
+    tagline: 'Molecular ball bearings — deflects glancing impacts; dissolves in hexane.',
+    description:
+      'Hollow 60-carbon cages held together only by weak intermolecular forces. Acts as a dry molecular lubricant against glancing blows and repels water, though non-polar hexane dissolves it.',
+    examPoints: [
+      'Simple molecular fullerene: discrete C₆₀ molecules with weak intermolecular forces between cages.',
+      'Low melting/sublimation point compared with diamond and graphite.',
+      'Slippery: spherical molecules roll past each other (lubricant).',
+      'Poor electrical conductor between molecules; non-polar so dissolves in hexane.',
+    ],
+    buildCell: c60Cell,
+  },
+  cnt: {
+    id: 'cnt',
+    name: 'Carbon Nanotube',
+    formula: 'C (CNT)',
+    bonding: 'giant-covalent',
+    cost: 135,
+    buildable: false,
+    upgradeFrom: 'c60',
+    stats: { maxIntegrity: 250, power: 21, range: 2.7 },
+    properties: {
+      meltingPointK: 3800,
+      phaseChange: 'sublimes',
+      thermalConductivity: 3000,
+      thermalDurability: 1.75,
+      conductsSolid: true,
+      conductivityRank: 3,
+      breakdownKV: 0,
+      shear: 'nanotube-cylinder',
+      solvent: 'insoluble',
+      hardnessMohs: 9,
+    },
+    accent: '#2dd4bf',
+    tagline: 'Longest reach. Seamless sp² cylinder — resists all shear & grounds arcs.',
+    description:
+      'A rolled hexagonal sheet of sp² carbon forming a hollow cylinder with a huge length-to-diameter ratio. Delocalised electrons conduct along the axis and strong covalent walls resist shear in every direction.',
+    examPoints: [
+      'Cylindrical fullerene: hexagonal carbon rings rolled into a continuous covalent tube.',
+      'Very high tensile strength: strong covalent bonds along and around the tube.',
+      'High electrical and thermal conductivity via delocalised electrons.',
+      'Insoluble in water, acids, and organic solvents.',
+    ],
+    buildCell: cntCell,
+  },
   polyethylene: {
     id: 'polyethylene',
     name: 'Poly(ethene)',
@@ -789,6 +1156,10 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
     bonding: 'simple-molecular',
     cost: 35,
     buildable: true,
+    upgradeTo: 'thermoset',
+    upgradeCost: 55,
+    upgradeNote:
+      'Vulcanisation: form covalent sulfur cross-links between adjacent chains. Chains can no longer slide apart when heated or exposed to hexane.',
     stats: { maxIntegrity: 125, power: 11, range: 2.0 },
     properties: {
       meltingPointK: 400,
@@ -799,20 +1170,53 @@ export const LATTICES: Record<LatticeId, LatticeDefinition> = {
       conductivityRank: 0,
       breakdownKV: 20,
       shear: 'flexible-chains',
-      solvent: 'non-polar',
+      solvent: 'swells-nonpolar',
       hardnessMohs: 1.5,
     },
     accent: '#86efac',
-    tagline: 'Polymer insulator. Flexible, waterproof, low m.p.',
+    tagline: 'Thermosoftening insulator — waterproof, swells in hexane, melts easily.',
     description:
-      'Long hydrocarbon chains. Covalent bonds along each chain, but weak forces between chains — flexible, waterproof and an excellent electrical insulator, though it melts easily.',
+      'Long hydrocarbon chains. Covalent bonds along each chain, but weak forces between chains — flexible, waterproof and a solid insulator, though it softens in heat and swells in non-polar solvents.',
     examPoints: [
-      'Polymers: very long molecules; intermolecular forces stronger than small molecules but still relatively weak.',
+      'Thermosoftening polymer: no cross-links between chains; weak intermolecular forces.',
       'Insulator: no delocalised electrons or ions.',
-      'Non-polar chains are insoluble in water.',
-      'Low melting point compared with giant structures.',
+      'Non-polar chains repel water and acid, but swell in non-polar hexane.',
+      'Low melting point compared with cross-linked or giant structures.',
     ],
     buildCell: polyethyleneCell,
+  },
+  thermoset: {
+    id: 'thermoset',
+    name: 'Vulcanised Polymer',
+    formula: '(C₂H₄)ₙ–Sₓ',
+    bonding: 'giant-covalent',
+    cost: 90,
+    buildable: false,
+    upgradeFrom: 'polyethylene',
+    stats: { maxIntegrity: 225, power: 16, range: 2.2 },
+    properties: {
+      meltingPointK: 1400,
+      phaseChange: 'sublimes',
+      thermalConductivity: 0.6,
+      thermalDurability: 1.35,
+      conductsSolid: false,
+      conductivityRank: 0,
+      breakdownKV: 45,
+      shear: 'cross-linked',
+      solvent: 'insoluble',
+      hardnessMohs: 3.5,
+    },
+    accent: '#facc15',
+    tagline: 'Cross-linked thermoset — refuses to melt, snap, or dissolve.',
+    description:
+      'Hydrocarbon chains covalently cross-linked by sulfur bridges into a single rigid polymer network. Resists 750 K heat, mechanical shear, water, acid, and hexane while staying an electrical insulator.',
+    examPoints: [
+      'Thermosetting polymer: strong covalent cross-links between polymer chains.',
+      'Does not melt on heating (chains cannot slide past one another; chars only at extreme temperature).',
+      'Insoluble and does not swell in non-polar solvents.',
+      'Insulator: all valence electrons held in covalent bonds.',
+    ],
+    buildCell: thermosetCell,
   },
 };
 
@@ -820,12 +1224,17 @@ export const LATTICE_ORDER: LatticeId[] = [
   'nacl',
   'mgo',
   'diamond',
+  'sio2',
   'graphite',
   'graphene',
+  'cnt',
+  'thermoset',
   'copper',
+  'brass',
   'iron',
   'steel',
   'ice',
   'iodine',
+  'c60',
   'polyethylene',
 ];

@@ -48,6 +48,18 @@ type FsEl = HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
 
 const fsElement = () => document.fullscreenElement ?? (document as FsDoc).webkitFullscreenElement ?? null;
 
+export async function enterFullscreen() {
+  try {
+    const el = document.documentElement as FsEl;
+    const supported = !!(el.requestFullscreen || el.webkitRequestFullscreen) && (document.fullscreenEnabled ?? true);
+    if (supported && !fsElement()) {
+      await (el.requestFullscreen?.({ navigationUI: 'hide' }) ?? el.webkitRequestFullscreen?.());
+    }
+  } catch {
+    /* user agent refused */
+  }
+}
+
 export function useFullscreen() {
   const el = document.documentElement as FsEl;
   const supported = !!(el.requestFullscreen || el.webkitRequestFullscreen) && (document.fullscreenEnabled ?? true);
