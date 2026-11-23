@@ -45,6 +45,12 @@ export const GAMES = {
     maxScore: (b) => (b === 'CAREER' ? 60_000 : 25_000),
     meta: { concordant: int(0, 999), stars: int(0, 3) },
   },
+  // Bondlatro: The Octet Engine (/bondlatro, Godot) — total run yield in kJ/mol
+  bondlatro: {
+    boards: (b) => b === 'main',
+    maxScore: () => 10_000_000,
+    meta: { ante: int(1, 20), mode: oneOf('STANDARD', 'CHALLENGE') },
+  },
   // Subatomic Sorter (/subatomic-sorter, Godot)
   'subatomic-sorter': {
     boards: (b) => b === 'main',

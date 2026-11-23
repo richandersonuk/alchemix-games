@@ -7,6 +7,7 @@ Live API: https://lattice-lock-scores.lattice-lock.workers.dev
 
 | Game | Board(s) | Endpoint |
 |---|---|---|
+| Bondlatro (Godot) | main; meta `ante` 1–20, `mode` `STANDARD`/`CHALLENGE` | `/api/games/bondlatro/scores` |
 | Lattice Lock | main | `/api/scores` (server recomputes the score from the run summary) |
 | Orbital Blitz (`econfigs`) | `BLITZ`, `GAUNTLET`, `DAILY-YYYY-MM-DD`; class code = `tag` | `/api/games/econfigs/scores` |
 | QAD | main | `/api/games/qad/scores` |

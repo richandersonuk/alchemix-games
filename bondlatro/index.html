@@ -308,8 +308,43 @@
 
 	<script src="index.js"></script>
 	<script>
-		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3267488,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3308448,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 		const engine = new Engine(GODOT_CONFIG);
+
+		// Fullscreen bridge. Browsers only allow fullscreen *during* a key press or tap,
+		// but Godot handles input a frame later. So the game sets bondFullscreen.want
+		// (true / false) and the next key / mouse / touch event applies it here. The game
+		// queues `true` at start-up (fullscreen by default), so the first input enters
+		// fullscreen. A refused request stays queued so the next input tries again.
+		window.bondFullscreen = { want: null, busy: false };
+		function bondApplyFullscreen() {
+			const fs = window.bondFullscreen;
+			if (fs.want === null || fs.busy) { return; }
+			const want = fs.want;
+			const canvas = document.getElementById("canvas");
+			const current = document.fullscreenElement || document.webkitFullscreenElement;
+			if (want === !!current) { fs.want = null; return; }
+			let p = null;
+			try {
+				if (want) {
+					const req = canvas.requestFullscreen || canvas.webkitRequestFullscreen;
+					p = req ? req.call(canvas, { navigationUI: "hide" }) : null;
+				} else {
+					const exit = document.exitFullscreen || document.webkitExitFullscreen;
+					p = exit ? exit.call(document) : null;
+				}
+			} catch (e) { return; }
+			if (p && p.then) {
+				fs.busy = true;
+				p.then(function () { fs.busy = false; if (fs.want === want) { fs.want = null; } },
+					function () { fs.busy = false; });
+			} else {
+				fs.want = null;
+			}
+		}
+		["keydown", "keyup", "mousedown", "mouseup", "pointerdown", "pointerup", "touchend", "click"].forEach(function (t) {
+			window.addEventListener(t, bondApplyFullscreen, true);
+		});
 
 		(function () {
 			const statusOverlay = document.getElementById("status");
