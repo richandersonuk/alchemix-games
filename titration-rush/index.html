@@ -133,6 +133,9 @@ function trApplyFullscreen() {
 		if (statusMode === mode || !initializing) { return; }
 		if (mode === 'hidden') {
 			statusOverlay.remove();
+			// Loaded: the game's own menu handles quitting, so drop the loading-screen hub button
+			const hubBtn = document.getElementById('quit-hub-btn');
+			if (hubBtn) { hubBtn.remove(); }
 			initializing = false;
 			return;
 		}

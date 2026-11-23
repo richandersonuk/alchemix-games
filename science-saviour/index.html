@@ -99,11 +99,8 @@
 
     <!-- TOP HUD OVERLAY -->
     <div id="top-hud" class="absolute top-0 left-0 right-0 p-2 md:p-3.5 flex items-center justify-between pointer-events-none z-30">
-      <!-- Left: Hub Link, Health, Flasks, Active Genre -->
+      <!-- Left: Health, Flasks, Active Genre (quit lives in the pause menu) -->
       <div class="flex items-center gap-1.5 md:gap-2.5 pointer-events-auto">
-        <a href="../" title="Return to Arcade Portal" class="h-10 w-10 md:h-11 md:w-11 rounded-xl hud-pill flex items-center justify-center text-purple-300 hover:text-white hover:bg-purple-800/60 transition">
-          <i class="ph-bold ph-house text-lg"></i>
-        </a>
 
         <!-- Health & Flasks Pill -->
         <div class="hud-pill rounded-xl px-2.5 py-1.5 flex items-center gap-2.5">
@@ -260,6 +257,9 @@
             <i class="ph-fill ph-trophy"></i> Scoreboard
           </button>
         </div>
+        <a href="../" class="mt-2 w-full py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+          <i class="ph-bold ph-house"></i> Arcade Hub
+        </a>
       </div>
     </div>
 

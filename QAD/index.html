@@ -952,6 +952,15 @@
     .splash { transition: none; }
   }
 
+  .sheet-eq {
+    margin-top: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.7rem;
+    color: var(--emerald-soft);
+  }
+  .debrief-eqs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .debrief-eqs .obs-eq { font-size: 0.72rem; white-space: normal; }
+
   .hidden { display: none !important; }
 </style>
 </head>
@@ -989,7 +998,6 @@
   <!-- Top Forensic Navigation & Telemetry -->
   <header class="topbar">
     <div class="topbar-left">
-      <a href="../" class="btn btn-sm btn-hub btn-icon" title="Return to Alchemix Arcade Hub" aria-label="Return to Alchemix Arcade Hub">◀<span class="btn-txt">&nbsp;Arcade Hub</span></a>
       <div class="brand-title">🕵️‍♂️🧪 <span class="brand-full">QUALITATIVE ANALYSIS DETECTIVE</span><span class="brand-short">QA DETECTIVE</span></div>
       <button type="button" id="activeSpecBadge" class="badge-pill badge-spec" title="Change exam board / level in Settings">WJEC • GCSE</button>
     </div>
@@ -1189,6 +1197,8 @@
         <button type="button" class="btn btn-cyan" id="btnFullscreen" style="width:100%;">⛶ Enter Fullscreen</button>
         <div id="fsHint" class="setting-note hidden" style="text-align:center;color:var(--brass-soft);">Fullscreen isn’t available in this browser. On iPhone, use Share → Add to Home Screen for a full-screen view.</div>
       </div>
+
+      <button type="button" class="btn btn-crimson" id="btnQuitArcade" style="width:100%;">◀ Quit to Arcade Hub</button>
     </div>
   </div>
 
@@ -1453,7 +1463,7 @@ const CATIONS_DB = {
     id: 'Al', symbol: 'Al³⁺', name: 'Aluminium (Al³⁺)',
     solutionColor: 'rgba(224, 242, 254, 0.18)',
     solutionDesc: 'Colourless solution',
-    na2co3: { ppt: '#f8fafc', fizz: true, obs: 'White precipitate AND effervescence (CO₂ evolved) — the acidic [Al(H₂O)₆]³⁺ ion gives the hydroxide, not a carbonate.', eq: '2[Al(H₂O)₆]³⁺(aq) + 3CO₃²⁻(aq) → 2[Al(H₂O)₃(OH)₃](s) + 3CO₂(g) + 3H₂O(l)' },
+    na2co3: { ppt: '#f8fafc', fizz: true, obs: 'White precipitate AND effervescence (CO₂ evolved).', eq: '2[Al(H₂O)₆]³⁺(aq) + 3CO₃²⁻(aq) → 2[Al(H₂O)₃(OH)₃](s) + 3CO₂(g) + 3H₂O(l)' },
     flame: { color: '#38bdf8', core: '#e0f2fe', label: 'No distinctive flame colour observed' },
     naoh: {
       ppt: '#f8fafc',
@@ -1618,7 +1628,7 @@ const CATIONS_DB = {
     solutionColor: 'rgba(224, 242, 254, 0.18)',
     solutionDesc: 'Colourless solution',
     flame: { color: '#dc2626', core: '#fecaca', label: 'Crimson-red flame observed', labelByBoard: { EDEXCEL: 'Red (crimson) flame observed' } },
-    naoh: { ppt: '#f1f5f9', obs: 'Very slight white precipitate (faint cloudiness) — Sr(OH)₂ is fairly soluble.' },
+    naoh: { ppt: '#f1f5f9', obs: 'Very slight white precipitate (faint cloudiness).' },
     naoh_excess: { ppt: '#f1f5f9', obs: 'Faint white cloudiness remains in excess NaOH(aq).' },
     nh3_excess: { ppt: null, obs: 'No precipitate with NH₃(aq).' },
     h2so4: {
@@ -1670,7 +1680,7 @@ const CATIONS_DB = {
     // Chloride ions in the BaCl₂ reagent precipitate PbCl₂ (WJEC: reactions of Pb²⁺ with Cl⁻)
     bacl2Override: {
       ppt: '#f8fafc',
-      obs: 'White precipitate formed — this is PbCl₂ from the chloride ions in BaCl₂(aq), not BaSO₄ (it dissolves on warming).',
+      obs: 'White precipitate formed, which dissolves on warming.',
       eq: 'Pb²⁺(aq) + 2Cl⁻(aq) → PbCl₂(s)'
     }
   }
@@ -1766,11 +1776,11 @@ const ANIONS_DB = {
     id: 'OH', symbol: 'OH⁻', name: 'Hydroxide (OH⁻)',
     acid: {
       fizz: false,
-      obs: 'No effervescence — the acid is simply neutralised (the tube warms slightly).',
+      obs: 'No effervescence (the tube warms slightly).',
       eq: 'H⁺(aq) + OH⁻(aq) → H₂O(l)'
     },
     bacl2: { ppt: null, obs: 'No precipitate formed with acidified BaCl₂(aq).' },
-    agno3: { ppt: null, obs: 'No precipitate with acidified AgNO₃(aq) — the nitric acid neutralises the OH⁻ first.' },
+    agno3: { ppt: null, obs: 'No precipitate formed with acidified AgNO₃(aq).' },
     agno3_nh3: { ppt: null, obs: 'No precipitate present to test.' }
   },
   NO3: {
@@ -1909,6 +1919,51 @@ function isSolubleSalt(catId, anId) {
   // Cu2+ oxidises I- to CuI + I2
   if (catId === 'Cu' && anId === 'I') return false;
   return true;
+}
+
+// During play only a general equation is shown (e.g. Ag⁺ + X⁻ → AgX), so the result strip never
+// names the ion. The exact equations appear in the Data Sheet and the case debrief.
+function generalEquation(reagentId, cat, an, eqText, ppt, fizz) {
+  switch (reagentId) {
+    case 'naoh':
+      return ppt ? 'Mⁿ⁺(aq) + nOH⁻(aq) → M(OH)ₙ(s)' : '';
+    case 'naoh_excess':
+      return eqText && !ppt ? 'M(OH)ₙ(s) + excess OH⁻(aq) → soluble hydroxo complex ion(aq)' : '';
+    case 'nh3_excess':
+      if (ppt) return 'Mⁿ⁺(aq) + nOH⁻(aq) → M(OH)ₙ(s)';
+      return eqText ? 'M(OH)ₙ(s) + xNH₃(aq) → [M(NH₃)ₓ]ⁿ⁺(aq) + nOH⁻(aq)' : '';
+    case 'acid':
+      return an.acid.fizz ? 'carbonate / hydrogencarbonate + H⁺(aq) → CO₂(g) + H₂O(l)' : '';
+    case 'bacl2':
+      if (!ppt) return '';
+      return cat.bacl2Override ? 'Mⁿ⁺(aq) + nCl⁻(aq) → MClₙ(s)' : 'Ba²⁺(aq) + Yⁿ⁻(aq) → insoluble barium salt(s)';
+    case 'agno3':
+      return ppt ? 'Ag⁺(aq) + X⁻(aq) → AgX(s)' : '';
+    case 'agno3_nh3':
+      return eqText && !ppt ? 'AgX(s) + 2NH₃(aq) → [Ag(NH₃)₂]⁺(aq) + X⁻(aq)' : '';
+    case 'h2so4':
+      if (ppt) return 'M²⁺(aq) + SO₄²⁻(aq) → MSO₄(s)';
+      return fizz ? 'carbonate / hydrogencarbonate + H⁺(aq) → CO₂(g) + H₂O(l)' : '';
+    case 'na2co3':
+      if (!ppt) return '';
+      return fizz ? '2M³⁺(aq) + 3CO₃²⁻(aq) + 3H₂O(l) → 2M(OH)₃(s) + 3CO₂(g)' : 'M²⁺(aq) + CO₃²⁻(aq) → MCO₃(s)';
+    case 'indicator':
+      return ['Al', 'Fe3', 'Cr3'].includes(cat.id) && !['OH', 'CO3', 'HCO3'].includes(an.id)
+        ? '[M(H₂O)₆]³⁺(aq) + H₂O(l) ⇌ [M(H₂O)₅(OH)]²⁺(aq) + H₃O⁺(aq)' : '';
+    default:
+      return '';
+  }
+}
+
+// Exact equations for a tube's real ions, for the debrief (only tests this board/level uses)
+function exactEquations(cfg, cat, an) {
+  const has = (r) => cfg.reagents.includes(r);
+  const out = [];
+  const add = (eq) => { if (eq && !out.includes(eq)) out.push(eq); };
+  ['naoh', 'naoh_excess', 'nh3_excess', 'h2so4', 'na2co3'].forEach(r => { if (has(r) && cat[r]) add(cat[r].eq); });
+  if (has('bacl2') && cat.bacl2Override) add(cat.bacl2Override.eq);
+  ['acid', 'bacl2', 'agno3', 'agno3_nh3'].forEach(r => { if (has(r) && an[r]) add(an[r].eq); });
+  return out;
 }
 
 // Universal indicator colour of the starting solution. Basic anions win (they only pair with
@@ -2170,7 +2225,10 @@ function runChemicalTest(reagentId) {
     });
   }
 
-  setObservation(`Tube ${tube.label} • ${meta.name}${alreadyTested ? ' (recalled from log)' : ''}`, obsText, eqText);
+  const fizzed = (reagentId === 'h2so4' && !cat.h2so4 && (an.id === 'CO3' || an.id === 'HCO3'))
+    || (reagentId === 'na2co3' && !!cat.na2co3 && !!cat.na2co3.fizz);
+  const shownEq = generalEquation(reagentId, cat, an, eqText, newPpt, fizzed);
+  setObservation(`Tube ${tube.label} • ${meta.name}${alreadyTested ? ' (recalled from log)' : ''}`, obsText, shownEq);
 
   renderAllUI();
 }
@@ -2738,6 +2796,10 @@ function evaluateCaseSubmission() {
         <div style="font-size:0.78rem;color:var(--text-muted);">
           Your Report: Cation = <strong>${userCatName}</strong> ${catOk ? '✓' : `(was ${actualCat.symbol})`} • Anion = <strong>${userAnName}</strong> ${anOk ? '✓' : `(was ${actualAn.symbol})`}
         </div>
+        ${(() => {
+          const eqs = exactEquations(SPEC_CONFIG[state.board][state.tier], actualCat, actualAn);
+          return eqs.length ? `<div class="debrief-eqs">${eqs.map(e => `<span class="obs-eq">${e}</span>`).join('')}</div>` : '';
+        })()}
       </div>
     `;
   }).join('');
@@ -2791,21 +2853,23 @@ function openExamBoardManual() {
     `📖 ${state.board} ${state.tier === 'ALEVEL' ? 'A-Level' : 'GCSE'} Qualitative Analysis Reference Sheet`;
 
   const has = (r) => cfg.reagents.includes(r);
+  // Observation plus its exact equation (Data Sheet only)
+  const withEq = (res) => res ? `${res.obs}${res.eq ? `<div class="sheet-eq">${res.eq}</div>` : ''}` : '';
   const catCols = [
     has('flame') && { th: 'Flame Test', td: c => (c.flame.labelByBoard && c.flame.labelByBoard[state.board]) || c.flame.label },
-    has('naoh') && { th: 'Dilute NaOH(aq) + Warm', td: c => c.naoh.obs },
-    has('naoh_excess') && { th: 'Excess NaOH(aq)', td: c => c.naoh_excess.obs },
-    has('nh3_excess') && { th: 'Excess NH₃(aq)', td: c => c.nh3_excess.obs },
-    has('na2co3') && { th: 'Na₂CO₃(aq)', td: c => (c.na2co3 && c.na2co3.obs) || 'No visible change.' },
-    has('h2so4') && { th: 'Dilute H₂SO₄(aq)', td: c => (c.h2so4 && c.h2so4.obs) || 'No precipitate.' },
+    has('naoh') && { th: 'Dilute NaOH(aq) + Warm', td: c => withEq(c.naoh) },
+    has('naoh_excess') && { th: 'Excess NaOH(aq)', td: c => withEq(c.naoh_excess) },
+    has('nh3_excess') && { th: 'Excess NH₃(aq)', td: c => withEq(c.nh3_excess) },
+    has('na2co3') && { th: 'Na₂CO₃(aq)', td: c => c.na2co3 ? withEq(c.na2co3) : 'No visible change.' },
+    has('h2so4') && { th: 'Dilute H₂SO₄(aq)', td: c => c.h2so4 ? withEq(c.h2so4) : 'No precipitate.' },
     has('bacl2') && cfg.cations.some(id => CATIONS_DB[id].bacl2Override) &&
-      { th: 'Acidified BaCl₂(aq)', td: c => (c.bacl2Override && c.bacl2Override.obs) || '—' }
+      { th: 'Acidified BaCl₂(aq)', td: c => c.bacl2Override ? withEq(c.bacl2Override) : '—' }
   ].filter(Boolean);
   const anCols = [
-    has('acid') && { th: 'Dilute Acid (HNO₃/HCl)', td: a => a.acid.obs },
-    has('bacl2') && { th: 'Acidified BaCl₂(aq)', td: a => a.bacl2.obs },
-    has('agno3') && { th: 'Acidified AgNO₃(aq)', td: a => a.agno3.obs },
-    has('agno3_nh3') && { th: 'AgX + NH₃(aq) Solubility', td: a => a.agno3_nh3.obs },
+    has('acid') && { th: 'Dilute Acid (HNO₃/HCl)', td: a => withEq(a.acid) },
+    has('bacl2') && { th: 'Acidified BaCl₂(aq)', td: a => withEq(a.bacl2) },
+    has('agno3') && { th: 'Acidified AgNO₃(aq)', td: a => withEq(a.agno3) },
+    has('agno3_nh3') && { th: 'AgX + NH₃(aq) Solubility', td: a => withEq(a.agno3_nh3) },
     has('indicator') && { th: 'Universal Indicator', td: a => ({ OH: 'Purple, pH ≈ 13', CO3: 'Blue, pH ≈ 11', HCO3: 'Green-blue, pH ≈ 8' }[a.id] || 'Set by the cation: M³⁺ acidic (orange-red), others ≈ neutral') }
   ].filter(Boolean);
 
@@ -3050,6 +3114,16 @@ $id('btnFullscreen').addEventListener('click', () => {
     : (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
   if (p && p.catch) p.catch(() => $id('fsHint').classList.remove('hidden'));
 });
+// Quit from Settings (the in-game header has no hub button). Confirm if a case is in progress.
+$id('btnQuitArcade').addEventListener('click', () => {
+  const inProgress = state.tubes.some(t => t.logs.length || t.guessedCation || t.guessedAnion);
+  const splashOpen = !$id('splash').classList.contains('hidden');
+  if (inProgress && !splashOpen && !state.scoreSubmittedThisCase &&
+      !confirm('Leave this case and return to the Alchemix Arcade?')) return;
+  if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  window.location.href = '../';
+});
+
 document.addEventListener('fullscreenchange', refreshSettingsUI);
 document.addEventListener('webkitfullscreenchange', refreshSettingsUI);
 
