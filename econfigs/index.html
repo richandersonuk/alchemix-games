@@ -238,6 +238,24 @@
     transition: width 0.28s ease;
   }
 
+  /* Guided Exam Spotlight Coach Banner */
+  .drill-banner {
+    background: linear-gradient(135deg, rgba(14, 48, 56, 0.96), rgba(15, 27, 52, 0.96));
+    border-color: var(--emerald);
+    display: flex; align-items: flex-start; gap: 11px; padding: 11px 14px;
+  }
+  .drill-banner.a2 {
+    background: linear-gradient(135deg, rgba(42, 24, 68, 0.96), rgba(15, 27, 52, 0.96));
+    border-color: var(--violet);
+  }
+  .drill-step-pill {
+    font-size: 0.7rem; font-weight: 900; padding: 3px 8px; border-radius: 999px;
+    background: rgba(52, 211, 153, 0.18); color: #a7f3d0; letter-spacing: 0.4px; white-space: nowrap;
+  }
+  .drill-banner.a2 .drill-step-pill {
+    background: rgba(167, 139, 250, 0.22); color: #ddd6fe;
+  }
+
   /* Question & Forge Core */
   .q-header { display: flex; gap: 12px; align-items: center; }
   .species-badge {
@@ -355,6 +373,65 @@
   .lb-row.me { background: #12363e; border-color: var(--emerald); }
   .hidden { display: none !important; }
 
+  /* Identity & Class Mask Controls */
+  .id-stack { display: flex; flex-direction: column; gap: 8px; flex: 1 1 260px; min-width: 0; width: 100%; }
+  .id-name-row { display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 7px; align-items: center; }
+  .id-class-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: center; }
+  .class-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 0 10px; min-height: 36px; border-radius: 8px;
+    background: #0d172d; border: 1px solid #2d487a; color: #cfe2ff;
+    font-size: 0.82rem; font-weight: 800; cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  .class-toggle input[type="checkbox"] {
+    width: 16px; height: 16px; margin: 0; accent-color: var(--cyan); cursor: pointer;
+  }
+  .class-mask-field { text-transform: uppercase; letter-spacing: 0.9px; font-weight: 800; }
+  .field:disabled { opacity: 0.45; cursor: not-allowed; background: #070d1a; }
+  .id-msg {
+    font-size: 0.78rem; font-weight: 700; color: #fda4af; line-height: 1.3;
+    min-height: 1em;
+  }
+  .id-msg.ok { color: var(--emerald); }
+
+  /* Fullscreen Entry Splash Screen */
+  body.splash-open .topbar,
+  body.splash-open main.container {
+    filter: blur(5px);
+    pointer-events: none;
+    user-select: none;
+  }
+  .splash-backdrop {
+    position: fixed; inset: 0; z-index: 90;
+    background: radial-gradient(circle at 50% 20%, rgba(20, 44, 86, 0.96) 0%, rgba(5, 10, 22, 0.98) 74%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; overflow-y: auto;
+  }
+  .splash-card {
+    width: 100%; max-width: 470px;
+    background: rgba(13, 22, 43, 0.97);
+    border: 1.5px solid var(--cyan);
+    border-radius: 20px; padding: 22px 20px;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.65), 0 0 38px rgba(56, 189, 248, 0.14);
+    display: flex; flex-direction: column; gap: 14px; text-align: center;
+  }
+  .splash-emblem {
+    width: 60px; height: 60px; margin: 0 auto;
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; background: radial-gradient(circle, #183b66 0%, #0d1a34 78%);
+    border: 2px solid var(--cyan); color: var(--cyan);
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.28);
+  }
+  .splash-title { font-size: 1.5rem; font-weight: 900; letter-spacing: 0.5px; color: var(--text); }
+  .splash-sub { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.7px; color: var(--emerald); text-transform: uppercase; }
+  .splash-blurb { font-size: 0.86rem; color: #c7dbf7; line-height: 1.4; margin: 0; }
+  .splash-form {
+    background: #0a1326; border: 1px solid #263f6f; border-radius: 13px;
+    padding: 12px; display: flex; flex-direction: column; gap: 9px; text-align: left;
+  }
+  .splash-lbl { font-size: 0.75rem; font-weight: 800; color: var(--muted); letter-spacing: 0.3px; }
+  .splash-note { font-size: 0.74rem; color: var(--muted); line-height: 1.3; }
+
   @media (max-width: 640px) {
     .topbar { padding: 7px 9px; gap: 6px; }
     .brand { font-size: 0.9rem; }
@@ -368,10 +445,40 @@
     .species-badge { min-width: 70px; min-height: 70px; }
     .species-sym { font-size: 1.45rem; }
     .q-prompt { font-size: 0.98rem; }
+    .splash-card { padding: 17px 14px; gap: 11px; border-radius: 16px; }
+    .splash-title { font-size: 1.28rem; }
   }
 </style>
 </head>
-<body>
+<body class="splash-open">
+<div id="splash" class="splash-backdrop" role="dialog" aria-modal="true" aria-labelledby="splashTitle">
+  <div class="splash-card">
+    <div class="splash-emblem" aria-hidden="true">⚛</div>
+    <div>
+      <div id="splashTitle" class="splash-title">ORBITAL BLITZ</div>
+      <div class="splash-sub">Quantum Architect • WJEC AS &amp; A2</div>
+    </div>
+    <p class="splash-blurb">Master occupied orbitals, Hund's rule &amp; transition-metal ions across 60s Blitz, Quantum Forge, Boss Gauntlet &amp; Daily Seed.</p>
+    <div class="splash-form">
+      <div class="splash-lbl">PLAYER CALLSIGN <span style="font-weight:600;">(do not use your real name)</span></div>
+      <div class="id-name-row">
+        <input id="inpSplashName" class="field" maxlength="16" placeholder="Nickname (3–16 chars)" autocomplete="off">
+        <button type="button" class="icon-btn" id="btnSplashRand" title="Generate random safe nickname">🎲</button>
+      </div>
+      <div class="id-class-row">
+        <label class="class-toggle" for="chkSplashClass">
+          <input type="checkbox" id="chkSplashClass">
+          <span>Class Code</span>
+        </label>
+        <input id="inpSplashClass" class="field class-mask-field" maxlength="8" placeholder="e.g. 12U1" autocomplete="off" disabled>
+      </div>
+      <div class="splash-note">Optional class filter uses format like <strong>12U1</strong> (2–8 letters/numbers). Safety filters keep scoreboards clean.</div>
+      <div id="splashIdentityMsg" class="id-msg hidden"></div>
+    </div>
+    <button type="button" class="btn btn-emerald" id="btnSplashStart" style="width:100%;min-height:48px;font-size:1rem;">⚛ ENTER QUANTUM LAB</button>
+    <div class="splash-note">Enters fullscreen automatically when supported • Adjust audio or tier anytime in ⚙ Settings</div>
+  </div>
+</div>
 <canvas id="fxCanvas"></canvas>
 <div id="floatLayer"></div>
 
@@ -387,9 +494,19 @@
   <!-- HOME SCREEN -->
   <section id="screenHome" class="screen">
     <div class="card profile-card">
-      <div class="id-pair">
-        <input id="inpName" class="field" size="12" maxlength="16" placeholder="Your Name (not your real one)" autocomplete="off">
-        <input id="inpClass" class="field" style="text-transform:uppercase;" size="6" maxlength="8" placeholder="CLASS" autocomplete="off">
+      <div class="id-stack">
+        <div class="id-name-row">
+          <input id="inpName" class="field" maxlength="16" placeholder="Nickname (not your real name)" autocomplete="off">
+          <button type="button" class="icon-btn" id="btnHomeRand" title="Random safe nickname">🎲</button>
+        </div>
+        <div class="id-class-row">
+          <label class="class-toggle" for="chkClass">
+            <input type="checkbox" id="chkClass">
+            <span>Class</span>
+          </label>
+          <input id="inpClass" class="field class-mask-field" maxlength="8" placeholder="e.g. 12U1" autocomplete="off" disabled>
+        </div>
+        <div id="homeIdentityMsg" class="id-msg hidden"></div>
       </div>
       <div class="progress-wrap">
         <div style="display:flex;justify-content:space-between;font-size:0.79rem;font-weight:800;">
@@ -489,6 +606,18 @@
       </div>
     </div>
 
+    <!-- Guided Exam Spotlight Coach Banner (Spotlight Drill Mode Only) -->
+    <div id="drillBanner" class="card drill-banner hidden">
+      <div style="font-size:1.5rem;line-height:1;">🎯</div>
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <strong id="drillTitle" style="font-size:0.9rem;color:var(--emerald);">GUIDED EXAM TRAP WALKTHROUGH</strong>
+          <span id="drillPhasePill" class="drill-step-pill">STEP 1 / 10 • GUIDED</span>
+        </div>
+        <div id="drillCoachText" style="font-size:0.83rem;color:#d8ecff;line-height:1.38;"></div>
+      </div>
+    </div>
+
     <div id="questionCard" class="card q-header">
       <div class="species-badge" id="qBadgeBox">
         <div id="qBadge" class="species-sym">N</div>
@@ -525,6 +654,22 @@
       <div id="sumScore" style="font-size:2.2rem;font-weight:900;color:var(--emerald);">0 PTS</div>
       <div id="sumMetrics" style="font-size:0.95rem;color:#d6e7ff;"></div>
       <div id="sumGlobal" style="font-size:0.9rem;font-weight:800;color:var(--gold);min-height:1.2em;"></div>
+      <div id="sumRetryWrap" class="splash-form hidden" style="width:100%;max-width:440px;">
+        <div class="splash-lbl">UPDATE NICKNAME / CLASS TO POST ONLINE</div>
+        <div class="id-name-row">
+          <input id="inpSumName" class="field" maxlength="16" placeholder="Nickname (3–16 chars)" autocomplete="off">
+          <button type="button" class="icon-btn" id="btnSumRand" title="Random safe nickname">🎲</button>
+        </div>
+        <div class="id-class-row">
+          <label class="class-toggle" for="chkSumClass">
+            <input type="checkbox" id="chkSumClass">
+            <span>Class</span>
+          </label>
+          <input id="inpSumClass" class="field class-mask-field" maxlength="8" placeholder="e.g. 12U1" autocomplete="off" disabled>
+        </div>
+        <div id="sumRetryMsg" class="id-msg hidden"></div>
+        <button type="button" class="btn btn-sm btn-emerald" id="btnSumRetry">🌍 Submit to Global Scoreboard</button>
+      </div>
       <pre id="sumShare" style="width:100%;text-align:left;white-space:pre-wrap;background:#081020;border:1px solid #264270;border-radius:10px;padding:11px;font-size:0.84rem;color:#dbeafe;margin:0;"></pre>
       <div style="display:flex;flex-wrap:wrap;gap:9px;justify-content:center;width:100%;">
         <button class="btn btn-emerald" id="btnCopyShare">📋 Copy Result Card</button>
@@ -612,6 +757,7 @@
       <button class="btn btn-sm btn-slate lb-tab" data-mode="DAILY">Daily Seed</button>
       <button class="btn btn-sm btn-slate lb-tab" data-mode="GAUNTLET">Forge / Gauntlet</button>
       <button class="btn btn-sm btn-slate" id="btnLbScope">Scope: All Classes</button>
+      <button class="btn btn-sm btn-slate" id="btnLbRefresh" title="Refresh scoreboard">↻ Refresh</button>
     </div>
     <div id="lbRows" style="display:flex;flex-direction:column;gap:7px;"></div>
     <div id="lbStatus" style="color:var(--muted);font-size:0.8rem;"></div>
@@ -1076,7 +1222,9 @@ const ChemDB = (() => {
       if (counts["1s"] === 2 || counts["2s"] === 2) faults.push("PAULI");
       if (sp.charge === 0 && (sp.atomic_number === 24 || sp.atomic_number === 29)) faults.push("DBLOCK");
       if (sp.charge > 0 && sp.atomic_number >= 21 && sp.atomic_number <= 30 && counts["3d"] >= 2) faults.push("CATION_4S");
-      let scenario = (faults.length && rng.next() < 0.8) ? faults[rng.int(faults.length)] : "VALID";
+      let scenario = (options.forceFault && faults.includes(options.forceFault))
+        ? options.forceFault
+        : ((faults.length && rng.next() < 0.8) ? faults[rng.int(faults.length)] : "VALID");
       let correct = "Valid ground-state configuration (all rules obeyed)";
       let explain = `All quantum rules (Aufbau, Pauli, Hund's Rule) are obeyed for ${sp.display_symbol} (${sp.config_shell_order}).`;
       if (scenario === "HUND_2P" || scenario === "HUND_3P") {
@@ -1172,30 +1320,98 @@ const ChemDB = (() => {
     };
   }
 
+  function buildSpotlightPlan(tier, rng) {
+    if (tier === "A2") {
+      const guided = [
+        { species: "Co2+", arch: "BUILD_THE_ATOM", phase: "GUIDED TRAP 1/4 • 4s LOSS RULE", title: "Construct Co²⁺ (Z = 27, 25e⁻) by Emptying 4s First", coach: "Neutral Co is [Ar] 3d⁷ 4s². Forming Co²⁺ removes the two 4s electrons BEFORE 3d → build [Ar] 3d⁷ (leave 4s empty!) and count occupied boxes." },
+        { species: "Co2+", arch: "RULE_VIOLATION_DETECTIVE", forceFault: "CATION_4S", phase: "GUIDED TRAP 2/4 • THE [Ar] 3d⁵ 4s² MISTAKE", title: "Spot the 4s-vs-3d Ionisation Error", coach: "The #1 A2 exam trap is removing electrons from 3d instead of 4s. Inspect this faulty Co²⁺ diagram and identify the violation!" },
+        { species: "Co2+", arch: "UNPAIRED_ELECTRONS", phase: "GUIDED TRAP 3/4 • 3d⁷ SPIN PAIRING", title: "Count Unpaired 3d Electrons in Co²⁺ ([Ar] 3d⁷)", coach: "In 3d⁷, 5 electrons spread singly across all five 3d orbitals, then 2 pair up → 2 paired 3d boxes + 3 unpaired electrons (14 occupied orbitals total)." },
+        { species: "Sc3+", arch: "OCCUPIED_ORBITALS", phase: "GUIDED TRAP 4/4 • d-BLOCK vs TRANSITION METAL", title: "Sc³⁺ ([Ar] 3d⁰) & Empty 3d Subshells", coach: "Sc (Z = 21, [Ar] 3d¹ 4s²) loses both 4s² and 3d¹ to form Sc³⁺ ([Ar] 3d⁰) → only the 9 [Ar] core orbitals are occupied (not a transition metal!)." }
+      ];
+      const pool = shuffleRng([
+        { species: "Fe2+", arch: "OCCUPIED_ORBITALS", title: "Variation: Iron(II) Ion, Fe²⁺ (Z = 26, [Ar] 3d⁶)", coach: "Fe ([Ar] 3d⁶ 4s²) loses 4s² → [Ar] 3d⁶. All five 3d boxes have ≥1 electron: 9 ([Ar]) + 5 (3d) = 14 occupied orbitals." },
+        { species: "Fe3+", arch: "UNPAIRED_ELECTRONS", title: "Variation: Iron(III) Ion, Fe³⁺ (Z = 26, [Ar] 3d⁵)", coach: "Fe³⁺ loses 4s² and one paired 3d electron → half-filled [Ar] 3d⁵ with 5 unpaired electrons and 14 occupied orbitals." },
+        { species: "Cr3+", arch: "OCCUPIED_ORBITALS", title: "Variation: Chromium(III) Ion, Cr³⁺ (Z = 24, [Ar] 3d³)", coach: "Watch out! Cr ([Ar] 3d⁵ 4s¹) loses 4s¹ + two 3d electrons → [Ar] 3d³. Only THREE 3d boxes are occupied: 9 + 3 = 12 occupied orbitals!" },
+        { species: "Ti2+", arch: "OCCUPIED_ORBITALS", title: "Variation: Titanium(II) Ion, Ti²⁺ (Z = 22, [Ar] 3d²)", coach: "Ti ([Ar] 3d² 4s²) loses 4s² → [Ar] 3d². Only TWO 3d orbitals are occupied: 9 ([Ar]) + 2 (3d) = 11 occupied orbitals!" },
+        { species: "Cu2+", arch: "UNPAIRED_ELECTRONS", title: "Variation: Copper(II) Ion, Cu²⁺ (Z = 29, [Ar] 3d⁹)", coach: "Cu ([Ar] 3d¹⁰ 4s¹) loses 4s¹ and one 3d electron → [Ar] 3d⁹ (14 occupied orbitals, 1 unpaired electron enabling blue d–d colour!)." },
+        { species: "Zn2+", arch: "OCCUPIED_ORBITALS", title: "Variation: Zinc Ion, Zn²⁺ (Z = 30, [Ar] 3d¹⁰)", coach: "Zn ([Ar] 3d¹⁰ 4s²) loses 4s² → [Ar] 3d¹⁰: 9 ([Ar]) + 5 (full 3d) = 14 fully paired occupied orbitals (0 unpaired, colourless)." },
+        { species: "V3+", arch: "OCCUPIED_ORBITALS", title: "Variation: Vanadium(III) Ion, V³⁺ (Z = 23, [Ar] 3d²)", coach: "V ([Ar] 3d³ 4s²) loses 4s² and one 3d electron → [Ar] 3d²: 9 ([Ar]) + 2 (3d) = 11 occupied orbitals." },
+        { species: "Mn2+", arch: "FULLY_OCCUPIED_ORBITALS", title: "Variation: Fully Paired Orbitals in Mn²⁺ ([Ar] 3d⁵)", coach: "In Mn²⁺ ([Ar] 3d⁵), the five 3d orbitals are only half-filled (↑), so only the 9 [Ar] core orbitals are FULLY occupied (↑↓)!" },
+        { species: "Ti3+", arch: "OCCUPIED_ORBITALS", title: "Variation: Titanium(III) Ion, Ti³⁺ (Z = 22, [Ar] 3d¹)", coach: "Ti³⁺ has just 1 electron in 3d ([Ar] 3d¹) → 9 ([Ar]) + 1 (3d) = 10 occupied orbitals." }
+      ], rng).slice(0, 6).map((v, i) => ({ ...v, phase: `EXAM VARIATION ${i + 1}/6 • SPEED DRILL` }));
+      return [...guided, ...pool];
+    }
+
+    const guidedAS = [
+      { species: "N", arch: "BUILD_THE_ATOM", phase: "GUIDED TRAP 1/4 • HANDS-ON BUILD", title: "Construct Nitrogen (Z = 7) & Count Occupied Boxes", coach: "Fill 1s² and 2s², then place the three 2p electrons SINGLY into 2pₓ, 2pᵧ, 2p_z (Hund's Rule). Every box with ≥1 electron counts as an occupied orbital!" },
+      { species: "N", arch: "RULE_VIOLATION_DETECTIVE", forceFault: "HUND_2P", phase: "GUIDED TRAP 2/4 • THE #1 EXAM MISTAKE", title: "Why Students Lose the Mark (Answering 4 Instead of 5)", coach: "Students who pair 2p electrons too early ([↑↓][↑][ ]) count only 4 occupied orbitals. Spot the Hund's Rule violation in this faulty Nitrogen diagram!" },
+      { species: "N", arch: "SUBSHELL_VS_ORBITAL", phase: "GUIDED TRAP 3/4 • WORDING PRECISION", title: "Subshells (3) vs Individual Orbitals (5)", coach: "Don't confuse subshells with orbitals! Nitrogen occupies 3 subshells (1s, 2s, 2p), but the 2p subshell splits into 3 separate orbitals → 1 + 1 + 3 = 5 orbitals." },
+      { species: "N", arch: "FULLY_OCCUPIED_ORBITALS", phase: "GUIDED TRAP 4/4 • TOTAL vs FULLY PAIRED", title: "Occupied Orbitals (5) vs Fully Occupied Orbitals (2)", coach: "Read the exam question carefully: 'occupied orbitals' means ≥1 electron (5 in N), whereas 'fully occupied orbitals' means spin-paired ↑↓ only (1s² and 2s² = 2)." }
+    ];
+    const poolAS = shuffleRng([
+      { species: "C", arch: "OCCUPIED_ORBITALS", title: "Variation: Carbon (Z = 6, 1s² 2s² 2p²)", coach: "Carbon has only 2 electrons in 2p (2pₓ¹ 2pᵧ¹), leaving one 2p box empty → 1 + 1 + 2 = 4 occupied orbitals." },
+      { species: "O", arch: "OCCUPIED_ORBITALS", title: "Variation: Oxygen (Z = 8, 1s² 2s² 2p⁴)", coach: "Once 2p has 3 or more electrons (N, O, F, Ne), all three 2p boxes are occupied → 1 + 1 + 3 = 5 occupied orbitals!" },
+      { species: "P", arch: "OCCUPIED_ORBITALS", title: "Variation: Phosphorus (Z = 15, Period 3 Twin of N)", coach: "Phosphorus sits directly below Nitrogen ([Ne] 3s² 3p³). Count [Ne] (5 boxes) + 3s (1) + three half-filled 3p boxes (3) = 9 occupied orbitals!" },
+      { species: "Si", arch: "OCCUPIED_ORBITALS", title: "Variation: Silicon (Z = 14, [Ne] 3s² 3p²)", coach: "Silicon has two 3p electrons spread singly across two 3p boxes → 5 (core) + 1 (3s) + 2 (3p) = 8 occupied orbitals." },
+      { species: "S", arch: "UNPAIRED_ELECTRONS", title: "Variation: Unpaired Electrons in Sulfur (Z = 16, [Ne] 3s² 3p⁴)", coach: "In 3p⁴, three electrons occupy 3pₓ, 3pᵧ, 3p_z singly and the 4th pairs up → 1 paired 3p box and 2 unpaired electrons." },
+      { species: "N3-", arch: "OCCUPIED_ORBITALS", title: "Variation: Nitride Ion (N³⁻, 10e⁻)", coach: "Adding 3 electrons to N (2p³ → 2p⁶) pairs up all three 2p boxes without opening a new subshell → still 5 occupied orbitals (0 unpaired)!" },
+      { species: "B", arch: "OCCUPIED_ORBITALS", title: "Variation: Boron (Z = 5, 1s² 2s² 2p¹)", coach: "Boron places just 1 electron into 2pₓ, leaving 2pᵧ and 2p_z empty → 1 + 1 + 1 = 3 occupied orbitals." },
+      { species: "Cr", arch: "OCCUPIED_ORBITALS", title: "Variation: Chromium Exception (Z = 24, [Ar] 3d⁵ 4s¹)", coach: "Cr promotes a 4s electron to half-fill all five 3d orbitals: [Ar] (9) + 4s¹ (1) + 3d⁵ (5) = 15 occupied orbitals!" },
+      { species: "Cl", arch: "FULLY_OCCUPIED_ORBITALS", title: "Variation: Fully Paired Orbitals in Chlorine (Z = 17)", coach: "Chlorine (1s² 2s² 2p⁶ 3s² 3p⁵) has 9 occupied orbitals in total, of which 8 are fully paired (↑↓) and 1 is half-filled (↑)." },
+      { species: "F", arch: "OCCUPIED_ORBITALS", title: "Variation: Fluorine (Z = 9, 1s² 2s² 2p⁵)", coach: "Fluorine has 5 electrons in 2p (two paired boxes, one half-filled box) → all 3 boxes in 2p are occupied (1 + 1 + 3 = 5)." }
+    ], rng).slice(0, 6).map((v, i) => ({ ...v, phase: `EXAM VARIATION ${i + 1}/6 • SPEED DRILL` }));
+    return [...guidedAS, ...poolAS];
+  }
+
   return {
     SUBSHELL_ORDER, SUB_LABELS, ELEMENTS, IONS, BOSSES, catalog, allIds,
     createRng, createEmptyBoxes, buildBoxesFromCounts, computeMetrics,
-    formatConfig, validateUserBoxes, generateQuestion, buildIntOptions, boxElectronCount, getTierPool
+    formatConfig, validateUserBoxes, generateQuestion, buildSpotlightPlan, buildIntOptions, boxElectronCount, getTierPool
   };
 })();
 
 // =============================================================================
-// 2. LYRIA OGG BGM + WEB AUDIO SFX ENGINE (Independent BGM & SFX Volumes)
+// 2. GAPLESS WEB AUDIO BUFFER BGM + SFX ENGINE (Independent BGM & SFX Volumes)
 // =============================================================================
 const SoundFX = (() => {
-  let ctx = null, sfxGain = null, unlocked = false;
+  let ctx = null, sfxGain = null, bgmGain = null, unlocked = false;
   let bgmVol = 0.45, sfxVol = 0.85;
-  let bgmTrack = "calm", feverBoost = false;
+  let bgmTrack = "calm", activeSource = null, activeTrackPlaying = "";
+  let useHtmlFallback = false;
 
-  const bgmElements = {
-    calm: new Audio("bgm_calm.ogg"),
-    action: new Audio("bgm_action.ogg")
-  };
-  Object.values(bgmElements).forEach(el => {
-    el.loop = true;
-    el.preload = "auto";
-    el.volume = bgmVol;
-  });
+  const rawAudioBytes = {};
+  const decodedBuffers = {};
+  const loadPromises = {};
+  const bgmElements = {};
+
+  function getHtmlElement(track) {
+    if (!bgmElements[track]) {
+      const el = new Audio(`bgm_${track}.ogg`);
+      el.loop = true;
+      el.preload = "auto";
+      bgmElements[track] = el;
+    }
+    return bgmElements[track];
+  }
+
+  function preloadBytes(track) {
+    if (rawAudioBytes[track]) return Promise.resolve(rawAudioBytes[track]);
+    if (!loadPromises[`raw_${track}`]) {
+      loadPromises[`raw_${track}`] = fetch(`bgm_${track}.ogg`)
+        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.arrayBuffer(); })
+        .then(buf => { rawAudioBytes[track] = buf; return buf; })
+        .catch(() => null);
+    }
+    return loadPromises[`raw_${track}`];
+  }
+
+  // Eagerly fetch OGG music bytes so buffer decode starts immediately on first gesture
+  if (typeof fetch === "function" && window.location.protocol !== "file:") {
+    preloadBytes("calm");
+    preloadBytes("action");
+  } else {
+    useHtmlFallback = true;
+  }
 
   function ensureCtx() {
     if (!ctx && (window.AudioContext || window.webkitAudioContext)) {
@@ -1203,26 +1419,90 @@ const SoundFX = (() => {
       sfxGain = ctx.createGain();
       sfxGain.gain.value = sfxVol * 0.36;
       sfxGain.connect(ctx.destination);
+
+      bgmGain = ctx.createGain();
+      bgmGain.gain.value = bgmVol;
+      bgmGain.connect(ctx.destination);
     }
     if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
   }
 
-  function syncBgmPlayback() {
-    const activeEl = bgmElements[bgmTrack] || bgmElements.calm;
-    const otherEl = bgmTrack === "action" ? bgmElements.calm : bgmElements.action;
-    if (!otherEl.paused) {
-      otherEl.pause();
-      otherEl.currentTime = 0;
+  function getDecodedBuffer(track) {
+    if (decodedBuffers[track]) return Promise.resolve(decodedBuffers[track]);
+    if (!ctx) return Promise.resolve(null);
+    if (!loadPromises[`dec_${track}`]) {
+      loadPromises[`dec_${track}`] = preloadBytes(track).then(raw => {
+        if (!raw || !ctx) throw new Error("no audio bytes");
+        return ctx.decodeAudioData(raw.slice(0));
+      }).then(audioBuf => {
+        decodedBuffers[track] = audioBuf;
+        return audioBuf;
+      }).catch(() => {
+        useHtmlFallback = true;
+        return null;
+      });
     }
+    return loadPromises[`dec_${track}`];
+  }
+
+  function stopBufferSource() {
+    if (activeSource) {
+      try { activeSource.stop(0); } catch (_) {}
+      try { activeSource.disconnect(); } catch (_) {}
+      activeSource = null;
+    }
+    activeTrackPlaying = "";
+  }
+
+  function syncHtmlFallback() {
+    const activeEl = getHtmlElement(bgmTrack);
+    const otherName = bgmTrack === "action" ? "calm" : "action";
+    const otherEl = bgmElements[otherName];
+    if (otherEl && !otherEl.paused) { otherEl.pause(); otherEl.currentTime = 0; }
+    activeEl.playbackRate = 1.0;
     activeEl.volume = bgmVol;
     activeEl.muted = bgmVol <= 0.01;
-    activeEl.playbackRate = (bgmTrack === "action" && feverBoost) ? 1.05 : 1.0;
-    if (unlocked && bgmVol > 0.01 && activeEl.paused) {
-      activeEl.play().catch(() => {});
-    } else if (bgmVol <= 0.01 && !activeEl.paused) {
-      activeEl.pause();
-    }
+    if (unlocked && bgmVol > 0.01 && activeEl.paused) activeEl.play().catch(() => {});
+    else if (bgmVol <= 0.01 && !activeEl.paused) activeEl.pause();
   }
+
+  function syncBgmPlayback() {
+    if (useHtmlFallback) { syncHtmlFallback(); return; }
+    if (bgmGain && ctx) {
+      const target = unlocked && bgmVol > 0.01 ? bgmVol : 0;
+      bgmGain.gain.setTargetAtTime(target, ctx.currentTime, 0.04);
+    }
+    if (!unlocked || !ctx || bgmVol <= 0.01) {
+      if (bgmVol <= 0.01 && activeSource) stopBufferSource();
+      return;
+    }
+    if (activeTrackPlaying === bgmTrack && activeSource) return;
+
+    const targetTrack = bgmTrack;
+    getDecodedBuffer(targetTrack).then(audioBuf => {
+      if (useHtmlFallback) { syncHtmlFallback(); return; }
+      if (!audioBuf || !ctx || !unlocked || bgmVol <= 0.01 || bgmTrack !== targetTrack) return;
+      if (activeTrackPlaying === targetTrack && activeSource) return;
+
+      stopBufferSource();
+      const src = ctx.createBufferSource();
+      src.buffer = audioBuf;
+      src.loop = true;
+      src.loopStart = 0;
+      src.loopEnd = audioBuf.duration;
+      src.playbackRate.value = 1.0;
+      src.connect(bgmGain);
+      src.start(0);
+      activeSource = src;
+      activeTrackPlaying = targetTrack;
+    });
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && unlocked && ctx && ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
+  });
 
   function unlock() {
     unlocked = true;
@@ -1254,8 +1534,7 @@ const SoundFX = (() => {
       if (sfxGain && ctx) sfxGain.gain.setTargetAtTime(sfxVol * 0.36, ctx.currentTime, 0.04);
       syncBgmPlayback();
     },
-    setTrack(track, fever = false) {
-      feverBoost = fever;
+    setTrack(track, _fever = false) {
       bgmTrack = track === "action" ? "action" : "calm";
       syncBgmPlayback();
     },
@@ -1323,20 +1602,97 @@ const FxEngine = (() => {
 })();
 
 // =============================================================================
-// 4. STATE & PERSISTENCE (Compatible with Alchemix Arcade Global Scoreboards)
+// 4. IDENTITY FILTER, STATE & ALCHEMIX GLOBAL SCOREBOARD BRIDGE
 // =============================================================================
 const STORAGE_KEY = "orbital_blitz_save_v2";
 const LEGACY_KEY = "orbital_blitz_save_v1";
 const ECONFIGS_GAME_ID = "econfigs";
+
 function todayKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  if (window.ArcadeScores && typeof window.ArcadeScores.todayUTC === "function") {
+    return window.ArcadeScores.todayUTC();
+  }
+  return new Date().toISOString().slice(0, 10);
 }
 function dailySeedNum(tier) {
-  const d = new Date();
-  const base = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const [y, m, d] = todayKey().split("-").map(Number);
+  const base = y * 10000 + m * 100 + d;
   return tier === "A2" ? base + 31337 : base;
 }
+
+const NameFilter = (() => {
+  const ENC = "eyJzIjpbImZ1Y2siLCJmdWsiLCJmY2siLCJzaGl0IiwiY3VudCIsIm5pZ2dlciIsIm5pZ2dhIiwiZmFnZ290IiwiZmFnb3QiLCJiaXRjaCIsImJhc3RhcmQiLCJ3YW5rIiwiYm9sbG9jayIsImJlbGxlbmQiLCJzbHV0Iiwid2hvcmUiLCJyZXRhcmQiLCJwYWVkbyIsInBlZG9waGlsZSIsInBhZWRvcGhpbGUiLCJqaXp6IiwicHVzc3kiLCJkaWNraGVhZCIsImNvY2tzdWNrZXIiLCJtb3RoZXJmdWNrIiwiYXJzZWhvbGUiLCJhc3Nob2xlIiwidG9zc2VyIiwidHdhdCIsInJhcGlzdCIsInBvcm4iLCJoaXRsZXIiLCJuYXppIiwidHJhbm55Iiwic3Bhc3RpYyIsInN1aWNpZGUiLCJraWxseW91cnNlbGYiLCJraWxsdXJzZWxmIiwiY3Vtc2hvdCIsImJsb3dqb2IiLCJoYW5kam9iIiwiZGlsZG8iLCJ2YWdpbmEiLCJwZW5pcyIsInRlc3RpY2xlIiwiY2xpdG9yaXMiLCJvcmdhc20iLCJtYXN0dXJiYXQiLCJtb2xlc3QiLCJnZW5vY2lkZSIsImNvY2FpbmUiLCJ3ZXRiYWNrIiwia2lrZSIsImdlc3RhcG8iLCJqaWhhZCIsInRlcnJvcmlzdCIsImJ1a2tha2UiLCJmZWxjaCIsInF1ZWVmIiwic2thbmsiLCJkb3VjaGUiLCJ3YW5rZXIiLCJtaW5nZXIiLCJub25jZSJdLCJ3IjpbImFzcyIsImFyc2UiLCJ0aXQiLCJ0aXRzIiwidGl0dHkiLCJib29iIiwiYm9vYnMiLCJjdW0iLCJzZXgiLCJzZXh5IiwiYW5hbCIsInJhcGUiLCJyYXBlZCIsImRpY2siLCJjb2NrIiwicHJpY2siLCJrbm9iIiwiZmFubnkiLCJjcmFwIiwiZGFtbiIsInBlZG8iLCJmYWciLCJmYWdzIiwiZHlrZSIsInNwaWMiLCJjaGluayIsImdvb2siLCJ3b2ciLCJtb25nIiwic3BheiIsImt5cyIsImtrayIsImhvZSIsImhvZXMiLCJwdWJlIiwicHViZXMiLCJudWRlIiwibnVkZXMiLCJuYWtlZCIsInBvb3AiLCJwaXNzIiwidHVyZCIsImJ1dHQiLCJiYWxscyIsImtpbGwiLCJkaWUiLCJkZWFkIiwiZ2F5IiwibGVzYm8iLCJob21vIiwibmVncm8iLCJneXBvIiwicGlrZXkiLCJ0YXJkIiwic2xhZyIsIm5vYiIsInNjcm90ZSIsImJ1bSIsIndpbGx5IiwibWV0aCIsImlzaXMiLCJjb29uIiwicGFraSIsImhlcm9pbiIsInNoYWciLCJraWsiLCJhZGRyZXNzIiwic3lzdGVtIl0sImMiOlsic25hcGNoYXQiLCJzbmFwIiwiaW5zdGEiLCJpbnN0YWdyYW0iLCJ0aWt0b2siLCJkaXNjb3JkIiwid2hhdHNhcHAiLCJ0ZWxlZ3JhbSIsInlvdXR1YmUiLCJ0d2l0Y2giLCJmYWNlYm9vayIsInBob25lIiwibW9iaWxlIiwiZW1haWwiLCJnbWFpbCIsImhvdG1haWwiLCJvdXRsb29rIiwicG9zdGNvZGUiLCJhZG1pbiIsIm1vZGVyYXRvciIsIm9mZmljaWFsIiwidGVhY2hlciIsImhlYWR0ZWFjaGVyIiwic3RhZmYiLCJzdXBwb3J0Il19";
+  const LEET = { "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b", "9": "g", "@": "a", "$": "s", "!": "i" };
+  let CACHE = null;
+  function lists() {
+    if (!CACHE) CACHE = JSON.parse(atob(ENC));
+    return CACHE;
+  }
+  function deLeet(str) {
+    return String(str || "").toLowerCase().replace(/[01345789@$!]/g, ch => LEET[ch] || ch);
+  }
+  function hasBlockedText(input) {
+    const lower = String(input || "").toLowerCase();
+    const { s, w, c } = lists();
+    const rawTokens = lower.split(/[^a-z0-9@$!]+/).filter(Boolean);
+    const alphaTokens = lower.split(/[^a-z]+/).filter(Boolean);
+    const leetChunks = lower.split(/[^a-z01345789@$!]+/).filter(Boolean).map(t => deLeet(t).replace(/[^a-z]/g, "")).filter(Boolean);
+    const joinedRaw = lower.replace(/[^a-z]/g, "");
+    const joinedLeet = deLeet(lower).replace(/[^a-z]/g, "");
+    const allTokens = new Set([...rawTokens, ...alphaTokens, ...leetChunks]);
+
+    for (const term of s) {
+      if (joinedRaw.includes(term) || joinedLeet.includes(term)) return true;
+      for (const tok of allTokens) { if (tok.includes(term)) return true; }
+    }
+    for (const term of w) {
+      if (allTokens.has(term)) return true;
+    }
+    for (const term of c) {
+      if (joinedRaw.includes(term) || joinedLeet.includes(term) || allTokens.has(term)) return true;
+    }
+    return false;
+  }
+  function checkName(raw) {
+    const clean = String(raw || "").trim().replace(/\s+/g, " ");
+    if (clean.length < 3 || clean.length > 16) {
+      return { ok: false, reason: "length", msg: "Nicknames must be 3–16 characters." };
+    }
+    if (!/^[A-Za-z0-9 _.-]+$/.test(clean) || (clean.match(/[A-Za-z]/g) || []).length < 2) {
+      return { ok: false, reason: "charset", msg: "Use 3–16 letters, numbers, spaces, . _ - (at least 2 letters)." };
+    }
+    if (/\d{4,}/.test(clean) || /(?:https?:|www\.|\.com\b|\.co\.uk\b|\.uk\b|\.org\b|\.net\b)/i.test(clean) || hasBlockedText(clean)) {
+      return { ok: false, reason: "name", msg: "That nickname isn’t available. Please choose another." };
+    }
+    return { ok: true, name: clean };
+  }
+  function formatClassMask(raw) {
+    return String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+  }
+  function checkClassTag(raw) {
+    const tag = formatClassMask(raw);
+    if (!tag) {
+      return { ok: false, reason: "tag", tag: "", msg: "Enter a class code like 12U1, or uncheck Class Code." };
+    }
+    if (!/^[A-Z0-9]{2,8}$/.test(tag) || !/[A-Z]/.test(tag) || /\d{4,}/.test(tag)) {
+      return { ok: false, reason: "tag", tag, msg: "That class code isn’t available. Use a code like 12U1 (2–8 letters/numbers)." };
+    }
+    if (hasBlockedText(tag) || hasBlockedText(`Class ${tag}`)) {
+      return { ok: false, reason: "tag", tag, msg: "That class code isn’t available. Use a code like 12U1 (2–8 letters/numbers)." };
+    }
+    return { ok: true, tag };
+  }
+  const PREFIXES = ["Bohr", "Pauli", "Hund", "Aufbau", "Spin", "Orbit", "Photon", "Quantum", "Curie", "Dalton", "Tesla", "Faraday"];
+  const SUFFIXES = ["Fox", "Nova", "Spark", "Pulse", "Atom", "Ion", "Comet", "Quark", "Drift", "Wave", "Flux", "Lynx"];
+  function randomAlias() {
+    const p = PREFIXES[Math.floor(Math.random() * PREFIXES.length)];
+    const s = SUFFIXES[Math.floor(Math.random() * SUFFIXES.length)];
+    const n = 10 + Math.floor(Math.random() * 89);
+    return `${p}${s}${n}`.slice(0, 16);
+  }
+  return { checkName, formatClassMask, checkClassTag, randomAlias };
+})();
+
 const RANK_TITLES = ["1s² Cadet", "2p Apprentice", "Hund's Tactician", "Aufbau Navigator", "3d Specialist", "Quantum Architect", "Nobel Laureate"];
 const BADGE_DEFS = [
   { id: "N_MASTER", label: "Nitrogen Ninja (5×)", check: s => s.nitrogen_mastered >= 5 },
@@ -1348,8 +1704,9 @@ const BADGE_DEFS = [
 ];
 
 let state = {
-  player_name: "Chemist12",
-  class_code: "CHEM12",
+  player_name: "",
+  use_class: false,
+  class_code: "",
   syllabus_tier: "AS",
   bgm_vol: 45,
   sfx_vol: 85,
@@ -1370,10 +1727,21 @@ try {
   if (saved) {
     state = { ...state, ...saved, leaderboards: { ...state.leaderboards, ...(saved.leaderboards || {}) } };
     for (const k of Object.keys(state.leaderboards)) state.leaderboards[k] = (state.leaderboards[k] || []).filter(r => !r.rival);
+    if (saved.use_class === undefined) {
+      const legacyTag = NameFilter.formatClassMask(saved.class_code || "");
+      state.use_class = Boolean(legacyTag && legacyTag !== "CHEM12");
+      if (!state.use_class) state.class_code = "";
+    }
+    if (state.player_name === "Chemist12" && !state.xp) state.player_name = "";
     delete state.api_url;
   }
 } catch (_) {}
 function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {} }
+function getActiveClassTag() {
+  if (!state.use_class) return "";
+  const chk = NameFilter.checkClassTag(state.class_code);
+  return chk.ok ? chk.tag : "";
+}
 function getLevel() { return Math.max(1, 1 + Math.floor(Math.sqrt(state.xp / 120))); }
 function getRankTitle() { return RANK_TITLES[Math.min(getLevel() - 1, RANK_TITLES.length - 1)]; }
 
@@ -1506,6 +1874,7 @@ const LAB_CATEGORIES = {
 
 let selectedBossNum = 1;
 let activeMode = "BLITZ";
+let spotlightPlan = [];
 let rng = ChemDB.createRng();
 let score = 0, combo = 0, maxCombo = 0, qIdx = 0, qTotal = 10;
 let hearts = 3, bossHp = 100, shieldReady = false;
@@ -1542,8 +1911,10 @@ function refreshHomeUI() {
   const acc = state.total_answered ? Math.round((100 * state.total_correct) / state.total_answered) : 0;
   $("lblStats").textContent = `${acc}% Acc • Best ${state.best_streak}×`;
   $("xpFill").style.width = `${pct}%`;
-  $("inpName").value = state.player_name;
-  $("inpClass").value = state.class_code;
+  $("inpName").value = state.player_name || "";
+  $("chkClass").checked = Boolean(state.use_class);
+  $("inpClass").value = NameFilter.formatClassMask(state.class_code || "");
+  $("inpClass").disabled = !state.use_class;
   $("dailyStreakTag").textContent = `STREAK ${state.daily_streak || 0}`;
 
   // Badges
@@ -1560,7 +1931,7 @@ function refreshHomeUI() {
     $("spotTag").style.color = "#c4b5fd";
     $("spotTitle").textContent = "\"State the configuration & occupied orbitals of Co²⁺ (Z=27).\"";
     $("spotSub").innerHTML = "Co is [Ar] 3d⁷ 4s². Forming Co²⁺ removes <strong>4s² BEFORE 3d</strong> → [Ar] 3d⁷ (<strong>14 occupied orbitals</strong>, 3 unpaired)—NOT 3d⁵ 4s²!";
-    $("btnSpotlight").textContent = "Drill Co²⁺ Trap →";
+    $("btnSpotlight").textContent = "🎯 Guided Drill & Variations →";
     $("btnSpotlight").className = "btn btn-violet";
     $("gauntletDesc").textContent = "Battle 5 WJEC A2 bosses: 4s-loss traps, Sc/Zn definitions, colour splitting & octet expansion!";
   } else {
@@ -1569,7 +1940,7 @@ function refreshHomeUI() {
     $("spotTag").style.color = "var(--emerald)";
     $("spotTitle").textContent = "\"State the total number of occupied orbitals in a nitrogen atom.\"";
     $("spotSub").innerHTML = "Nitrogen (1s² 2s² 2p³) spreads 3 electrons singly across 2pₓ, 2pᵧ, 2p_z by Hund's Rule → 1 + 1 + 3 = <strong>5 occupied orbitals</strong>!";
-    $("btnSpotlight").textContent = "Drill Nitrogen Trap →";
+    $("btnSpotlight").textContent = "🎯 Guided Drill & Variations →";
     $("btnSpotlight").className = "btn btn-emerald";
     $("gauntletDesc").textContent = "Battle 5 WJEC AS bosses: Hund's Rule, IE drops, Cr/Cu anomalies & Z=1–36 mastery!";
   }
@@ -1628,8 +1999,10 @@ function startMode(mode, prioritySpecies = "") {
   $("hudShield").classList.add("hidden");
   $("blitzBarWrap").classList.toggle("hidden", mode !== "BLITZ");
   $("feverWrap").classList.toggle("hidden", mode !== "BLITZ");
-  $("dailyPips").classList.toggle("hidden", mode !== "DAILY");
+  $("dailyPips").classList.toggle("hidden", mode !== "DAILY" && mode !== "SPOTLIGHT");
   $("bossBanner").classList.toggle("hidden", mode !== "GAUNTLET");
+  $("drillBanner").classList.toggle("hidden", mode !== "SPOTLIGHT");
+  $("drillBanner").classList.toggle("a2", tier === "A2");
 
   if (mode === "BLITZ") {
     rng = ChemDB.createRng(); qTotal = 999; blitzTime = 60.0;
@@ -1657,6 +2030,12 @@ function startMode(mode, prioritySpecies = "") {
     $("bossAvatar").textContent = boss.icon;
     $("bossName").textContent = boss.name;
     $("bossSub").textContent = boss.title;
+  } else if (mode === "SPOTLIGHT") {
+    rng = ChemDB.createRng();
+    spotlightPlan = ChemDB.buildSpotlightPlan(tier, rng);
+    qTotal = spotlightPlan.length;
+    SoundFX.setTrack("calm", false);
+    $("hudMode").textContent = `🎯 EXAM DRILL (${tier})`;
   } else {
     rng = ChemDB.createRng(dailySeedNum(tier)); qTotal = 10;
     SoundFX.setTrack("calm", false);
@@ -1687,9 +2066,9 @@ function updateHudPills() {
     $("bossHpFill").style.width = `${Math.max(0, bossHp)}%`;
     $("bossHpText").textContent = `${Math.max(0, bossHp)} / 100 HP`;
   }
-  if (activeMode === "DAILY") {
+  if (activeMode === "DAILY" || activeMode === "SPOTLIGHT") {
     let html = "";
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < qTotal; i++) {
       let cls = "pip";
       if (i < resultsHistory.length) cls += resultsHistory[i] ? " ok" : " bad";
       else if (i === resultsHistory.length) cls += " cur";
@@ -1706,6 +2085,19 @@ function loadNextQuestion(prioritySpecies = "") {
   qStartTime = performance.now();
 
   const tier = state.syllabus_tier || "AS";
+  if (activeMode === "SPOTLIGHT") {
+    const step = spotlightPlan[Math.min(qIdx - 1, spotlightPlan.length - 1)];
+    $("drillTitle").textContent = step.title;
+    $("drillPhasePill").textContent = `STEP ${qIdx} / ${qTotal} • ${step.phase}`;
+    $("drillCoachText").textContent = step.coach;
+    currentQ = ChemDB.generateQuestion(tier, rng, {
+      forceArch: step.arch,
+      forceSpecies: step.species,
+      forceFault: step.forceFault || ""
+    });
+    renderQuestion();
+    return;
+  }
   let forceArch = "";
   if (prioritySpecies) forceArch = "OCCUPIED_ORBITALS";
   else if (activeMode === "FORGE") forceArch = "BUILD_THE_ATOM";
@@ -1877,6 +2269,20 @@ function resolveQuestion(isRight, explanation, chosen) {
   }
 }
 
+let lastSessionRunId = "";
+let lastSummaryContext = null;
+
+function newRunId() {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+  return "run-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+}
+
+function buildShareCardText(ctx, playerName, classTag) {
+  const label = classTag ? `[${classTag}] ${playerName}` : playerName;
+  const modeTitle = ctx.boardMode === "DAILY" ? `Daily Seed (${todayKey()})` : ctx.modeName;
+  return `⚛️ ORBITAL BLITZ (${ctx.tier}) • ${modeTitle}\n${label} | Score: ${ctx.score} | Acc: ${ctx.accuracy}% | Max Combo: ${ctx.max_combo}× | #QB-${String(ctx.verify).padStart(4, "0")}\n${ctx.squares}`;
+}
+
 function finishSession() {
   if (blitzTimerId) { clearInterval(blitzTimerId); blitzTimerId = null; }
   if (autoAdvTimer) { clearTimeout(autoAdvTimer); autoAdvTimer = null; }
@@ -1899,51 +2305,191 @@ function finishSession() {
   }
 
   const boardMode = activeMode === "FORGE" ? "GAUNTLET" : activeMode;
+  const validName = NameFilter.checkName(state.player_name);
+  const tag = getActiveClassTag();
+  const displayName = validName.ok ? validName.name : ((state.player_name || "").trim() || "Player");
+  lastSessionRunId = newRunId();
+
   const entry = {
-    name: (state.player_name || "Chemist12").trim(),
-    class_code: (state.class_code || "CHEM12").trim().toUpperCase(),
+    name: displayName,
+    class_code: tag,
     score, accuracy: acc, max_combo: maxCombo, date: todayKey(), is_player: true
   };
-  const board = state.leaderboards[boardMode] || [];
-  board.push(entry);
-  board.sort((a, b) => (b.score - a.score) || (b.accuracy - a.accuracy));
-  state.leaderboards[boardMode] = board.slice(0, 30);
+  if (activeMode !== "SPOTLIGHT") {
+    const board = state.leaderboards[boardMode] || [];
+    board.push(entry);
+    board.sort((a, b) => (b.score - a.score) || (b.accuracy - a.accuracy));
+    state.leaderboards[boardMode] = board.slice(0, 30);
+  }
   saveState();
-
-  postGlobalScore(boardMode, entry);
 
   let headline = `${$("hudMode").textContent} COMPLETE!`;
   if (activeMode === "GAUNTLET") headline = bossHp <= 0 ? `🏆 BOSS DEFEATED! (${tier})` : `💀 DEFEATED BY BOSS (${tier})`;
   if (activeMode === "FORGE") headline = hearts > 0 ? `🔧 FORGE COMPLETE! (${"★".repeat(Math.min(3, hearts))})` : "🔧 FORGE OUT OF HEARTS";
+  if (activeMode === "SPOTLIGHT") headline = `🎯 ${tier} EXAM SPOTLIGHT DRILL COMPLETE!`;
+
+  const squares = resultsHistory.map(r => r ? "🟩" : "🟥").join("");
+  const verify = (score * 31 + okN * 17 + maxCombo * 7) % 9973;
+  lastSummaryContext = {
+    boardMode, modeName: activeMode, tier, score, accuracy: acc, max_combo: maxCombo,
+    runId: lastSessionRunId, squares, verify
+  };
 
   $("sumTitle").textContent = headline;
   $("sumScore").textContent = `${score} PTS`;
   $("sumMetrics").textContent = `Correct: ${okN}/${totalN} (${acc}%) • Max Combo: ${maxCombo}× • Rank: ${getRankTitle()}`;
-  const squares = resultsHistory.map(r => r ? "🟩" : "🟥").join("");
-  const verify = (score * 31 + okN * 17 + maxCombo * 7) % 9973;
-  $("sumShare").textContent = `⚛️ ORBITAL BLITZ (${tier}) • ${boardMode === "DAILY" ? `Daily Seed (${todayKey()})` : activeMode}\n[${entry.class_code}] ${entry.name} | Score: ${score} | Acc: ${acc}% | Max Combo: ${maxCombo}× | #QB-${String(verify).padStart(4, "0")}\n${squares}`;
+  $("sumShare").textContent = buildShareCardText(lastSummaryContext, displayName, tag);
   $("btnCopyShare").textContent = "📋 Copy Result Card";
+
+  syncSummaryRetryInputs();
+  if (activeMode === "SPOTLIGHT") {
+    $("sumGlobal").textContent = "🎯 Spotlight Drill complete! Your XP & mastery stats have been saved.";
+    $("sumRetryWrap").classList.add("hidden");
+  } else {
+    postGlobalScore(boardMode, entry, lastSessionRunId);
+  }
   showScreen("screenSummary");
 }
 
-// Alchemix Arcade Global Scoreboard Integration
-const cleanClass = (c) => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+// Alchemix Arcade Global Scoreboard Integration + Local Dev Proxy Fallback
+const cleanClass = (c) => NameFilter.formatClassMask(c);
 const globalBoardFor = (mode) => (mode === "DAILY" ? `DAILY-${todayKey()}` : mode);
+const pendingSubmitted = [];
 
-function postGlobalScore(boardMode, entry) {
+const ScoreBridge = (() => {
+  const isLocalHost = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(window.location.hostname || "")
+    || /^192\.168\.\d+\.\d+$/.test(window.location.hostname || "");
+  const isHttp = window.location.protocol === "http:" || window.location.protocol === "https:";
+
+  async function localTop(opts) {
+    const q = new URLSearchParams({ board: opts.board || "main", limit: String(opts.limit || 30) });
+    if (opts.tag) q.set("tag", opts.tag);
+    const res = await fetch(`/api/games/${encodeURIComponent(ECONFIGS_GAME_ID)}/scores?${q.toString()}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`local HTTP ${res.status}`);
+    const body = await res.json();
+    return Array.isArray(body.scores) ? body.scores : [];
+  }
+
+  async function localSubmit(payload) {
+    const res = await fetch(`/api/games/${encodeURIComponent(ECONFIGS_GAME_ID)}/scores`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok && body.ok) return { ok: true, rank: body.rank, entry: body.entry };
+    return { ok: false, error: body.error || (res.status >= 500 ? "offline" : "invalid") };
+  }
+
+  async function top(opts) {
+    if (isLocalHost && isHttp) {
+      try { return await localTop(opts); } catch (_) {}
+    }
+    if (window.ArcadeScores) {
+      try { return await window.ArcadeScores.top(ECONFIGS_GAME_ID, opts); }
+      catch (err) {
+        if (isHttp) {
+          try { return await localTop(opts); } catch (_) {}
+        }
+        throw err;
+      }
+    }
+    if (isHttp) return await localTop(opts);
+    throw new Error("no client");
+  }
+
+  async function submit(payload) {
+    if (isLocalHost && isHttp) {
+      try { return await localSubmit(payload); } catch (_) {}
+    }
+    if (window.ArcadeScores) {
+      const res = await window.ArcadeScores.submit(ECONFIGS_GAME_ID, payload);
+      if (res && !res.ok && res.error === "offline" && isHttp) {
+        try { return await localSubmit(payload); } catch (_) {}
+      }
+      return res;
+    }
+    if (isHttp) {
+      try { return await localSubmit(payload); } catch (_) {}
+    }
+    return { ok: false, error: "offline" };
+  }
+
+  function formatError(err) {
+    if (window.ArcadeScores && typeof window.ArcadeScores.message === "function") {
+      return window.ArcadeScores.message(err);
+    }
+    if (err === "name") return "That nickname isn’t available. Please choose another.";
+    if (err === "tag") return "That class code isn’t available. Please choose another.";
+    if (err === "offline") return "Global scoreboard offline — saved on this device.";
+    return "This score couldn’t be submitted.";
+  }
+
+  return { top, submit, formatError };
+})();
+
+function syncSummaryRetryInputs() {
+  if ($("inpSumName")) $("inpSumName").value = state.player_name || "";
+  if ($("chkSumClass")) $("chkSumClass").checked = Boolean(state.use_class);
+  if ($("inpSumClass")) {
+    $("inpSumClass").value = cleanClass(state.class_code || "");
+    $("inpSumClass").disabled = !state.use_class;
+  }
+  if ($("sumRetryMsg")) {
+    $("sumRetryMsg").textContent = "";
+    $("sumRetryMsg").classList.add("hidden");
+  }
+}
+
+function postGlobalScore(boardMode, entry, runId = newRunId()) {
   const out = $("sumGlobal");
-  if (!window.ArcadeScores || entry.score < 1) { if (out) out.textContent = ""; return; }
-  const tag = cleanClass(entry.class_code);
+  const retryWrap = $("sumRetryWrap");
+  if (entry.score < 1) {
+    if (out) out.textContent = "Score > 0 pts to qualify for the global scoreboard.";
+    if (retryWrap) retryWrap.classList.add("hidden");
+    return;
+  }
+  const nameRes = NameFilter.checkName(state.player_name);
+  if (!nameRes.ok) {
+    if (out) out.textContent = "⚠️ Add a valid nickname below to post online.";
+    if (retryWrap) retryWrap.classList.remove("hidden");
+    return;
+  }
+  let tag = undefined;
+  if (state.use_class) {
+    const tagRes = NameFilter.checkClassTag(state.class_code);
+    if (!tagRes.ok) {
+      if (out) out.textContent = "⚠️ Fix your class code (e.g. 12U1) or uncheck Class below.";
+      if (retryWrap) retryWrap.classList.remove("hidden");
+      return;
+    }
+    tag = tagRes.tag;
+  }
+
+  const boardKey = globalBoardFor(boardMode);
   if (out) out.textContent = "🌍 Posting to the global scoreboard…";
-  ArcadeScores.submit(ECONFIGS_GAME_ID, {
-    name: entry.name, score: entry.score, board: globalBoardFor(boardMode),
-    tag: tag.length >= 2 ? tag : undefined,
+  ScoreBridge.submit({
+    runId,
+    name: nameRes.name,
+    score: entry.score,
+    board: boardKey,
+    tag,
     meta: { accuracy: entry.accuracy, max_combo: entry.max_combo }
   }).then(res => {
-    if (!out) return;
-    out.textContent = res.ok
-      ? `🌍 Global rank #${res.rank}${tag.length >= 2 ? ` • class ${tag}` : ""}`
-      : `⚠️ ${ArcadeScores.message(res.error)}${res.error === "name" || res.error === "tag" ? " (change it on the home screen)" : ""}`;
+    if (res.ok) {
+      if (retryWrap) retryWrap.classList.add("hidden");
+      if (out) out.textContent = `🌍 Global rank #${res.rank}${tag ? ` • class ${tag}` : ""}`;
+      if (res.entry) {
+        pendingSubmitted.push({ board: boardKey, entry: res.entry, ts: Date.now() });
+      }
+      if (!$("lbModal").classList.contains("hidden")) renderLeaderboard();
+    } else {
+      const msg = ScoreBridge.formatError(res.error);
+      if (out) out.textContent = `⚠️ ${msg}`;
+      if (retryWrap && (res.error === "name" || res.error === "tag" || res.error === "length" || res.error === "charset" || res.error === "offline")) {
+        retryWrap.classList.remove("hidden");
+      }
+    }
   });
 }
 
@@ -1952,32 +2498,60 @@ async function renderLeaderboard() {
   document.querySelectorAll(".lb-tab").forEach(b => {
     b.className = `btn btn-sm ${b.dataset.mode === lbTab ? "btn-cyan" : "btn-slate"} lb-tab`;
   });
-  const box = $("lbRows"), status = $("lbStatus"), myClass = cleanClass(state.class_code);
+  const box = $("lbRows"), status = $("lbStatus"), myClass = getActiveClassTag();
+  if (lbClassOnly && !myClass) {
+    lbClassOnly = false;
+    $("btnLbScope").textContent = "Scope: All Classes";
+  } else {
+    $("btnLbScope").textContent = lbClassOnly ? `Scope: Class ${myClass}` : "Scope: All Classes";
+  }
+
   const reqId = ++lbRequest;
+  const boardKey = globalBoardFor(lbTab);
   box.innerHTML = `<div style="color:var(--muted);">Loading global scores…</div>`;
   let rows, online = true;
   try {
-    if (!window.ArcadeScores) throw new Error("no client");
-    const data = await ArcadeScores.top(ECONFIGS_GAME_ID, { board: globalBoardFor(lbTab), tag: lbClassOnly && myClass.length >= 2 ? myClass : undefined, limit: 30 });
-    rows = data.map(r => ({ name: r.name, class_code: r.tag || "—", score: r.score, accuracy: r.meta?.accuracy ?? "–", max_combo: r.meta?.max_combo ?? "–" }));
+    const data = await ScoreBridge.top({
+      board: boardKey,
+      tag: lbClassOnly && myClass ? myClass : undefined,
+      limit: 30
+    });
+    const freshPending = pendingSubmitted.filter(p =>
+      p.board === boardKey && (Date.now() - p.ts) < 60000 && (!lbClassOnly || !myClass || (p.entry.tag || "") === myClass)
+    );
+    const mergedRaw = [...data];
+    freshPending.forEach(p => {
+      const e = p.entry;
+      const seen = mergedRaw.some(r => (e.id && r.id === e.id) || (r.name === e.name && r.score === e.score && (r.tag || "") === (e.tag || "")));
+      if (!seen) mergedRaw.push(e);
+    });
+    mergedRaw.sort((a, b) => (b.score - a.score));
+    rows = mergedRaw.slice(0, 30).map(r => ({
+      name: r.name,
+      class_code: r.tag || "",
+      score: r.score,
+      accuracy: r.meta?.accuracy ?? "–",
+      max_combo: r.meta?.max_combo ?? "–",
+      is_player: Boolean(state.player_name && r.name === state.player_name.trim())
+    }));
   } catch (_) {
     online = false;
     rows = (state.leaderboards[lbTab] || []).filter(r => {
       if (lbTab === "DAILY" && r.date !== todayKey()) return false;
-      if (lbClassOnly && cleanClass(r.class_code) !== myClass) return false;
+      if (lbClassOnly && myClass && cleanClass(r.class_code) !== myClass) return false;
       return true;
     });
   }
   if (reqId !== lbRequest) return;
   if (status) status.textContent = online
-    ? `🌍 Global ${lbTab === "DAILY" ? `daily board for ${todayKey()}` : "board"}${lbClassOnly ? ` • class ${myClass || "—"}` : ""}`
+    ? `🌍 Global ${lbTab === "DAILY" ? `daily board for ${todayKey()} (UTC)` : "board"}${lbClassOnly && myClass ? ` • class ${myClass}` : ""}`
     : "📴 Global scoreboard offline — showing scores saved on this device.";
   box.innerHTML = rows.length ? "" : `<div style="color:var(--muted);">No entries yet for this filter — play a round to claim #1!</div>`;
   rows.forEach((r, idx) => {
     const div = document.createElement("div");
     div.className = `lb-row ${r.is_player ? "me" : ""}`;
     const rk = document.createElement("strong"); rk.style.width = "34px"; rk.style.color = idx < 3 ? "var(--gold)" : "#a8c1e3"; rk.textContent = `#${idx + 1}`;
-    const nm = document.createElement("span"); nm.style.flex = "1"; nm.style.fontWeight = "700"; nm.textContent = `${r.name} [${r.class_code}]`;
+    const nm = document.createElement("span"); nm.style.flex = "1"; nm.style.fontWeight = "700"; nm.textContent = r.class_code ? `${r.name} [${r.class_code}]` : r.name;
     const meta = document.createElement("span"); meta.style.color = "var(--muted)"; meta.style.fontSize = "0.82rem"; meta.textContent = `${r.accuracy}% | ${r.max_combo}×`;
     const sc = document.createElement("strong"); sc.style.color = "var(--emerald)"; sc.textContent = `${r.score} pts`;
     div.append(rk, nm, meta, sc);
@@ -2048,10 +2622,164 @@ function renderLab() {
   });
   $("kpSubmit").addEventListener("click", () => { if (kpValue) handleChoice(kpValue); });
 
-  $("inpName").addEventListener("input", e => { state.player_name = e.target.value; saveState(); });
-  $("inpClass").addEventListener("input", e => { state.class_code = e.target.value.toUpperCase(); saveState(); });
+  function syncIdentityInputs(source) {
+    const clsVal = NameFilter.formatClassMask(state.class_code || "");
+    state.class_code = clsVal;
+    const pairs = [
+      ["splash", $("inpSplashName"), $("chkSplashClass"), $("inpSplashClass")],
+      ["home", $("inpName"), $("chkClass"), $("inpClass")],
+      ["sum", $("inpSumName"), $("chkSumClass"), $("inpSumClass")]
+    ];
+    for (const [key, nEl, cChk, cEl] of pairs) {
+      if (!nEl || !cChk || !cEl) continue;
+      if (source !== `${key}_name`) nEl.value = state.player_name || "";
+      cChk.checked = Boolean(state.use_class);
+      if (source !== `${key}_class`) cEl.value = clsVal;
+      cEl.disabled = !state.use_class;
+    }
+  }
 
-  $("btnSpotlight").addEventListener("click", () => startMode("GAUNTLET", state.syllabus_tier === "A2" ? "Co2+" : "N"));
+  function showIdentityMsg(msgEl, msg, isError = true) {
+    if (!msgEl) return;
+    if (!msg) { msgEl.textContent = ""; msgEl.classList.add("hidden"); return; }
+    msgEl.textContent = msg;
+    msgEl.className = `id-msg ${isError ? "" : "ok"}`;
+    msgEl.classList.remove("hidden");
+  }
+
+  function validateIdentityFields(nameEl, chkEl, clsEl, msgEl, requireNonEmptyName) {
+    const rawName = (nameEl?.value || "").trim();
+    if (!rawName && !requireNonEmptyName) {
+      if (chkEl?.checked && (clsEl?.value || "").trim()) {
+        const tagCheck = NameFilter.checkClassTag(clsEl.value);
+        if (!tagCheck.ok) { showIdentityMsg(msgEl, tagCheck.msg, true); return false; }
+      }
+      showIdentityMsg(msgEl, "");
+      return true;
+    }
+    const nameCheck = NameFilter.checkName(rawName);
+    if (!nameCheck.ok) { showIdentityMsg(msgEl, nameCheck.msg, true); return false; }
+    if (chkEl?.checked) {
+      const tagCheck = NameFilter.checkClassTag(clsEl?.value || "");
+      if (!tagCheck.ok) { showIdentityMsg(msgEl, tagCheck.msg, true); return false; }
+    }
+    showIdentityMsg(msgEl, "");
+    return true;
+  }
+
+  function wireIdentityGroup(key, nameEl, randBtn, chkEl, clsEl, msgEl) {
+    nameEl.addEventListener("input", () => {
+      state.player_name = nameEl.value;
+      saveState();
+      syncIdentityInputs(`${key}_name`);
+      validateIdentityFields(nameEl, chkEl, clsEl, msgEl, false);
+    });
+    randBtn.addEventListener("click", () => {
+      state.player_name = NameFilter.randomAlias();
+      saveState();
+      syncIdentityInputs("");
+      showIdentityMsg(msgEl, "");
+    });
+    chkEl.addEventListener("change", () => {
+      state.use_class = chkEl.checked;
+      saveState();
+      syncIdentityInputs("");
+      if (state.use_class && !clsEl.value.trim()) clsEl.focus();
+      validateIdentityFields(nameEl, chkEl, clsEl, msgEl, false);
+    });
+    clsEl.addEventListener("input", () => {
+      const masked = NameFilter.formatClassMask(clsEl.value);
+      clsEl.value = masked;
+      state.class_code = masked;
+      saveState();
+      syncIdentityInputs(`${key}_class`);
+      validateIdentityFields(nameEl, chkEl, clsEl, msgEl, false);
+    });
+  }
+
+  wireIdentityGroup("splash", $("inpSplashName"), $("btnSplashRand"), $("chkSplashClass"), $("inpSplashClass"), $("splashIdentityMsg"));
+  wireIdentityGroup("home", $("inpName"), $("btnHomeRand"), $("chkClass"), $("inpClass"), $("homeIdentityMsg"));
+  wireIdentityGroup("sum", $("inpSumName"), $("btnSumRand"), $("chkSumClass"), $("inpSumClass"), $("sumRetryMsg"));
+  syncIdentityInputs("");
+
+  function enterFromSplash() {
+    const nameRes = NameFilter.checkName($("inpSplashName").value);
+    if (!nameRes.ok) {
+      showIdentityMsg($("splashIdentityMsg"), nameRes.msg, true);
+      const card = $("splash").querySelector(".splash-card");
+      card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+      $("inpSplashName").focus();
+      return;
+    }
+    state.player_name = nameRes.name;
+    state.use_class = Boolean($("chkSplashClass").checked);
+    if (state.use_class) {
+      const tagRes = NameFilter.checkClassTag($("inpSplashClass").value);
+      if (!tagRes.ok) {
+        showIdentityMsg($("splashIdentityMsg"), tagRes.msg, true);
+        const card = $("splash").querySelector(".splash-card");
+        card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+        $("inpSplashClass").focus();
+        return;
+      }
+      state.class_code = tagRes.tag;
+    }
+    showIdentityMsg($("splashIdentityMsg"), "");
+    saveState();
+    syncIdentityInputs("");
+
+    const docEl = document.documentElement;
+    const reqFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+    if (reqFs && !document.fullscreenElement && !document.webkitFullscreenElement) {
+      Promise.resolve(reqFs.call(docEl)).catch(() => {});
+    }
+    SoundFX.unlock();
+    SoundFX.setTrack("calm");
+    document.body.classList.remove("splash-open");
+    $("splash").classList.add("hidden");
+    refreshHomeUI();
+  }
+
+  $("btnSplashStart").addEventListener("click", enterFromSplash);
+  $("inpSplashName").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); enterFromSplash(); } });
+  $("inpSplashClass").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); enterFromSplash(); } });
+
+  $("btnSumRetry").addEventListener("click", () => {
+    const nameRes = NameFilter.checkName($("inpSumName").value);
+    if (!nameRes.ok) {
+      showIdentityMsg($("sumRetryMsg"), nameRes.msg, true);
+      $("inpSumName").focus();
+      return;
+    }
+    state.player_name = nameRes.name;
+    state.use_class = Boolean($("chkSumClass").checked);
+    let tag = "";
+    if (state.use_class) {
+      const tagRes = NameFilter.checkClassTag($("inpSumClass").value);
+      if (!tagRes.ok) {
+        showIdentityMsg($("sumRetryMsg"), tagRes.msg, true);
+        $("inpSumClass").focus();
+        return;
+      }
+      tag = tagRes.tag;
+      state.class_code = tag;
+    }
+    showIdentityMsg($("sumRetryMsg"), "");
+    saveState();
+    syncIdentityInputs("");
+    if (lastSummaryContext) {
+      $("sumShare").textContent = buildShareCardText(lastSummaryContext, nameRes.name, tag);
+      postGlobalScore(lastSummaryContext.boardMode, {
+        name: nameRes.name,
+        class_code: tag,
+        score: lastSummaryContext.score,
+        accuracy: lastSummaryContext.accuracy,
+        max_combo: lastSummaryContext.max_combo
+      }, lastSummaryContext.runId);
+    }
+  });
+
+  $("btnSpotlight").addEventListener("click", () => startMode("SPOTLIGHT"));
   $("btnModeBlitz").addEventListener("click", () => startMode("BLITZ"));
   $("btnModeForge").addEventListener("click", () => startMode("FORGE"));
   $("btnModeGauntlet").addEventListener("click", () => startMode("GAUNTLET"));
@@ -2167,15 +2895,23 @@ function renderLab() {
   $("btnSumLb").addEventListener("click", openLb);
   $("btnCloseLb").addEventListener("click", () => $("lbModal").classList.add("hidden"));
   document.querySelectorAll(".lb-tab").forEach(b => b.addEventListener("click", () => { lbTab = b.dataset.mode; renderLeaderboard(); }));
+  $("btnLbRefresh").addEventListener("click", () => renderLeaderboard());
   $("btnLbScope").addEventListener("click", () => {
+    const activeTag = getActiveClassTag();
+    if (!activeTag) {
+      lbClassOnly = false;
+      $("btnLbScope").textContent = "Scope: All Classes";
+      $("lbStatus").textContent = "Check Class Code (e.g. 12U1) on Home to filter by class.";
+      return;
+    }
     lbClassOnly = !lbClassOnly;
-    $("btnLbScope").textContent = lbClassOnly ? `Scope: Class ${state.class_code || "CHEM12"}` : "Scope: All Classes";
+    $("btnLbScope").textContent = lbClassOnly ? `Scope: Class ${activeTag}` : "Scope: All Classes";
     renderLeaderboard();
   });
 
   // Keyboard shortcuts
   window.addEventListener("keydown", e => {
-    if ($("screenPlay").classList.contains("hidden") || !$("lbModal").classList.contains("hidden") || !$("settingsModal").classList.contains("hidden")) return;
+    if (!$("splash").classList.contains("hidden") || $("screenPlay").classList.contains("hidden") || !$("lbModal").classList.contains("hidden") || !$("settingsModal").classList.contains("hidden")) return;
     if (qLocked && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); $("btnNextQ").click(); return; }
     if (!qLocked && !$("choicesGrid").classList.contains("hidden") && ["1","2","3","4"].includes(e.key)) {
       const btn = $("choicesGrid").children[Number(e.key) - 1];
@@ -2186,6 +2922,10 @@ function renderLab() {
       else if (e.key === "Enter" && kpValue) handleChoice(kpValue);
     }
   });
+
+  if ("serviceWorker" in navigator && !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname || "")) {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  }
 
   refreshHomeUI();
   showScreen("screenHome");
