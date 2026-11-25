@@ -246,8 +246,8 @@
 					const state = { done: false, ok: false, rank: 0, error: "", message: "" };
 					bridge._submitState = state;
 					const cleanScore = Math.floor(Number(score) || 0);
-					const cleanAnte = Math.max(1, Math.min(20, Math.floor(Number(ante) || 1)));
-					const cleanMode = mode === "CHALLENGE" ? "CHALLENGE" : "STANDARD";
+					const cleanAnte = Math.max(1, Math.min(99, Math.floor(Number(ante) || 1)));
+					const cleanMode = (mode === "CHALLENGE" || mode === "ENDLESS") ? mode : "STANDARD";
 					const meta = { ante: cleanAnte, mode: cleanMode };
 					const localEntry = {
 						id: "local-" + Date.now(),
@@ -308,7 +308,7 @@
 
 	<script src="index.js"></script>
 	<script>
-		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3417704,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3435792,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 		const engine = new Engine(GODOT_CONFIG);
 
 		// Fullscreen bridge. Browsers only allow fullscreen *during* a key press or tap,

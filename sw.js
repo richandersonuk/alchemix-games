@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alchemix-arcade-v19';
+const CACHE_NAME = 'alchemix-arcade-v20';
 
 const PRECACHE_ASSETS = [
   '/',
