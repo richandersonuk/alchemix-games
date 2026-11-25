@@ -172,6 +172,7 @@
 
 			function saveLocalEntry(entry) {
 				const list = loadLocal();
+				if (entry && entry.id && list.some(function (e) { return e && e.id === entry.id; })) return list;
 				list.push(entry);
 				list.sort(function (a, b) { return (Number(b.score) || 0) - (Number(a.score) || 0); });
 				if (list.length > MAX_LOCAL) list.length = MAX_LOCAL;
@@ -242,7 +243,7 @@
 					return JSON.stringify(bridge._fetchState);
 				},
 
-				startSubmit: function (name, score, board, ante, mode) {
+				startSubmit: function (name, score, board, ante, mode, runId) {
 					const state = { done: false, ok: false, rank: 0, error: "", message: "" };
 					bridge._submitState = state;
 					const cleanScore = Math.floor(Number(score) || 0);
@@ -250,7 +251,7 @@
 					const cleanMode = (mode === "CHALLENGE" || mode === "ENDLESS") ? mode : "STANDARD";
 					const meta = { ante: cleanAnte, mode: cleanMode };
 					const localEntry = {
-						id: "local-" + Date.now(),
+						id: "local-" + (runId || Date.now()),
 						name: String(name),
 						score: cleanScore,
 						meta: meta,
@@ -267,6 +268,7 @@
 					}
 
 					window.ArcadeScores.submit(GAME_ID, {
+						runId: runId || undefined,
 						name: String(name),
 						score: cleanScore,
 						board: board || "main",
@@ -274,7 +276,7 @@
 					}).then(function (res) {
 						state.done = true;
 						if (res && res.ok) {
-							saveLocalEntry(res.entry || localEntry);
+							saveLocalEntry(localEntry);
 							state.ok = true;
 							state.rank = Number(res.rank) || 0;
 							state.message = state.rank > 0 ? ("Global rank #" + state.rank) : "Score submitted!";
@@ -308,7 +310,7 @@
 
 	<script src="index.js"></script>
 	<script>
-		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3446352,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3465808,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 		const engine = new Engine(GODOT_CONFIG);
 
 		// Fullscreen bridge. Browsers only allow fullscreen *during* a key press or tap,
