@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f2744"/>
+      <stop offset="1" stop-color="#050b16"/>
+    </linearGradient>
+    <linearGradient id="liq" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- flask -->
+  <path d="M25 9h14v3h-2v13l11 20a5 5 0 0 1-4.4 7.4H20.4A5 5 0 0 1 16 45l11-20V12h-2z" fill="#0b1a30" stroke="#bae6fd" stroke-width="2.4" stroke-linejoin="round"/>
+  <!-- liquid -->
+  <path d="M21.2 38h21.6l5.2 9.4a3 3 0 0 1-2.6 4.6H18.6a3 3 0 0 1-2.6-4.6z" fill="url(#liq)"/>
+  <!-- precipitate -->
+  <path d="M20 49.5q12 3 24 0v1.2a2 2 0 0 1-2 2H22a2 2 0 0 1-2-2z" fill="#f8fafc"/>
+  <circle cx="28" cy="43" r="2.2" fill="#e0f2fe"/>
+  <circle cx="36" cy="41" r="1.7" fill="#e0f2fe"/>
+  <circle cx="33" cy="46" r="1.4" fill="#e0f2fe"/>
+  <!-- pipe drop -->
+  <circle cx="32" cy="3.8" r="0" fill="#fff"/>
+  <path d="M50 8v7" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+  <path d="M50 18c-2 2.8-3 4.2-3 5.8a3 3 0 0 0 6 0c0-1.600-1-3-3-5.800z" fill="#34d399"/>
+</svg>

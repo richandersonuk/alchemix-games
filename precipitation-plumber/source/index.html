@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Precipitation Plumber: The Qualitative Maze</title>
+    <meta name="theme-color" content="#050b16" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Splash screen -->
+    <div id="splash">
+      <div id="splash-bubbles"></div>
+      <div class="splash-card">
+        <svg class="splash-logo" viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <linearGradient id="sl-liq" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#38bdf8" />
+              <stop offset="1" stop-color="#2563eb" />
+            </linearGradient>
+          </defs>
+          <path d="M25 9h14v3h-2v13l11 20a5 5 0 0 1-4.4 7.4H20.4A5 5 0 0 1 16 45l11-20V12h-2z" fill="#0b1a30" stroke="#bae6fd" stroke-width="2.2" stroke-linejoin="round" />
+          <path d="M21.2 38h21.6l5.2 9.4a3 3 0 0 1-2.6 4.6H18.6a3 3 0 0 1-2.6-4.6z" fill="url(#sl-liq)" />
+          <path d="M20 49.5q12 3 24 0v1.2a2 2 0 0 1-2 2H22a2 2 0 0 1-2-2z" fill="#f8fafc" />
+          <circle cx="28" cy="43" r="2.2" fill="#e0f2fe" />
+          <circle cx="36" cy="41" r="1.7" fill="#e0f2fe" />
+          <circle cx="33" cy="46" r="1.4" fill="#e0f2fe" />
+          <path d="M50 8v7" stroke="#10b981" stroke-width="3" stroke-linecap="round" />
+          <path d="M50 18c-2 2.8-3 4.2-3 5.8a3 3 0 0 0 6 0c0-1.6-1-3-3-5.8z" fill="#34d399" />
+        </svg>
+        <div>
+          <h1 class="splash-title">Precipitation Plumber</h1>
+          <div class="splash-subtitle">The Qualitative Maze</div>
+        </div>
+        <p class="splash-tagline">
+          Route a mixed solution through pipes, reagent injectors and filter beds. Separate the ions
+          and pass the practical with 90% purity or better.
+        </p>
+        <div class="splash-tiers">
+          <span class="tier-chip gcse">WJEC GCSE</span>
+          <span class="tier-chip as">WJEC AS</span>
+          <span class="tier-chip a2">WJEC A2</span>
+        </div>
+        <div class="splash-actions">
+          <button id="splash-play" class="splash-btn primary">Play</button>
+          <button id="splash-settings" class="splash-btn">Settings</button>
+          <a id="splash-arcade" class="splash-btn" href="../">Back to arcade</a>
+        </div>
+        <div id="splash-progress" class="splash-progress"></div>
+      </div>
+    </div>
+
+    <div id="app">
+      <header class="lab-header">
+        <div class="brand-group">
+          <button id="btn-settings" class="ctrl-btn" title="Settings (Esc)">⚙ Settings</button>
+          <div class="game-title">Precipitation Plumber</div>
+        </div>
+
+        <div class="header-center">
+          <select id="level-selector" class="level-select" aria-label="Select level"></select>
+          <button id="btn-manual" class="ctrl-btn" title="Open the qualitative analysis data sheet">Data sheet</button>
+          <button id="btn-hint" class="ctrl-btn" title="Show a hint for this level">Hint</button>
+        </div>
+
+        <div class="header-controls">
+          <button id="btn-start-flow" class="ctrl-btn primary-flow">▶ Release solution</button>
+          <button id="btn-speed" class="ctrl-btn" title="Toggle flow speed">1× speed</button>
+          <button id="btn-reset-flow" class="ctrl-btn warn-reset" title="Stop the flow and clean the glassware (keeps your pipes)">↺ Reset flow</button>
+          <button id="btn-clear-grid" class="ctrl-btn danger-clear" title="Remove all placed tiles">Clear grid</button>
+        </div>
+      </header>
+
+      <main class="workbench">
+        <aside id="palette-hud" class="sidebar-left"></aside>
+
+        <section class="canvas-stage">
+          <div class="level-banner">
+            <div class="banner-main">
+              <div class="banner-title-row">
+                <span id="banner-title" class="level-banner-title"></span>
+                <span id="banner-tier" class="tier-chip"></span>
+              </div>
+              <div id="banner-brief" class="level-banner-brief"></div>
+              <div id="banner-spec" class="level-banner-spec"></div>
+            </div>
+            <div id="sim-status-pill" class="spec-pill">Build mode</div>
+          </div>
+
+          <div id="canvas-wrap" class="canvas-wrap">
+            <canvas id="game-canvas" width="960" height="640"></canvas>
+          </div>
+
+          <div class="controls-hint-bar">
+            <span><span class="kbd-tag">Click</span> place or rotate</span>
+            <span><span class="kbd-tag">Right-click</span> or <span class="kbd-tag">R</span> rotate</span>
+            <span><span class="kbd-tag">Shift+click</span> or <span class="kbd-tag">Del</span> remove</span>
+            <span><span class="kbd-tag">Space</span> start or reset flow</span>
+          </div>
+        </section>
+
+        <aside id="inspection-hud" class="sidebar-right"></aside>
+      </main>
+    </div>
+
+    <div id="level-modal" class="modal-backdrop hidden"></div>
+    <div id="manual-modal" class="modal-backdrop hidden"></div>
+    <div id="settings-modal" class="modal-backdrop hidden" style="z-index: 300;"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

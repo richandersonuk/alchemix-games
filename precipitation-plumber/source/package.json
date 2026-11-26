@@ -1,0 +1,17 @@
+{
+  "name": "precipitation-plumber",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Precipitation Plumber: The Qualitative Maze — KS3 & GCSE Qualitative Chemistry Fluid Routing Puzzle",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

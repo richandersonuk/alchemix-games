@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
+  <defs>
+    <!-- Deep lab-navy shell with cyan/emerald edge highlights -->
+    <linearGradient id="pp-shell" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f223d" />
+      <stop offset="55%" stop-color="#081326" />
+      <stop offset="100%" stop-color="#040912" />
+    </linearGradient>
+    <linearGradient id="pp-shell-edge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="pp-label" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050b16" />
+      <stop offset="55%" stop-color="#0a1930" />
+      <stop offset="100%" stop-color="#121428" />
+    </linearGradient>
+    <linearGradient id="pp-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="pp-tail" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.72" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.16" />
+    </linearGradient>
+    <filter id="pp-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Ambient Drop Shadow -->
+  <rect x="28" y="14" width="164" height="174" rx="10" fill="#020408" opacity="0.82" />
+
+  <!-- Bottom PCB Connector Housing -->
+  <rect x="44" y="176" width="132" height="28" rx="4" fill="#071121" stroke="#38bdf8" stroke-width="2" />
+  <rect x="50" y="180" width="120" height="22" rx="2" fill="#072236" stroke="#10b981" stroke-width="1" />
+
+  <!-- Gold Edge Connector Pins -->
+  <g fill="url(#pp-gold)">
+    <rect x="55" y="182" width="6" height="19" rx="1" />
+    <rect x="65" y="182" width="6" height="19" rx="1" />
+    <rect x="75" y="182" width="6" height="19" rx="1" />
+    <rect x="85" y="182" width="6" height="19" rx="1" />
+    <rect x="95" y="182" width="6" height="19" rx="1" />
+    <rect x="105" y="182" width="6" height="19" rx="1" />
+    <rect x="115" y="182" width="6" height="19" rx="1" />
+    <rect x="125" y="182" width="6" height="19" rx="1" />
+    <rect x="135" y="182" width="6" height="19" rx="1" />
+    <rect x="145" y="182" width="6" height="19" rx="1" />
+    <rect x="155" y="182" width="6" height="19" rx="1" />
+    <rect x="163" y="182" width="4" height="19" rx="1" />
+  </g>
+
+  <!-- Main Cartridge Body with Left Notch -->
+  <path d="M 38 14 H 180 A 8 8 0 0 1 188 22 V 174 A 6 6 0 0 1 182 180 H 38 A 6 6 0 0 1 32 174 V 32 L 44 20 V 14 Z"
+        fill="url(#pp-shell)" stroke="url(#pp-shell-edge)" stroke-width="2.5" />
+
+  <!-- Top Grip Spine Ribs -->
+  <rect x="52" y="18" width="124" height="18" rx="3" fill="#060f1e" stroke="#0369a1" stroke-width="1" />
+  <g stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round">
+    <line x1="60" y1="22" x2="168" y2="22" />
+    <line x1="60" y1="27" x2="168" y2="27" />
+    <line x1="60" y1="32" x2="168" y2="32" />
+  </g>
+
+  <!-- Side Grip Grooves -->
+  <g fill="#050b16" stroke="#0369a1" stroke-width="0.8">
+    <rect x="33" y="52" width="7" height="5" rx="1" />
+    <rect x="33" y="62" width="7" height="5" rx="1" />
+    <rect x="33" y="72" width="7" height="5" rx="1" />
+    <rect x="33" y="82" width="7" height="5" rx="1" />
+    <rect x="180" y="52" width="7" height="5" rx="1" />
+    <rect x="180" y="62" width="7" height="5" rx="1" />
+    <rect x="180" y="72" width="7" height="5" rx="1" />
+    <rect x="180" y="82" width="7" height="5" rx="1" />
+  </g>
+
+  <!-- Security Screws -->
+  <g fill="#475569" stroke="#cbd5e1" stroke-width="1">
+    <circle cx="43" cy="166" r="4.5" />
+    <line x1="40.5" y1="166" x2="45.5" y2="166" stroke="#0f172a" stroke-width="1.4" />
+    <circle cx="177" cy="166" r="4.5" />
+    <line x1="174.5" y1="166" x2="179.5" y2="166" stroke="#0f172a" stroke-width="1.4" />
+  </g>
+
+  <!-- Recessed Center Label Well + Sticker -->
+  <rect x="46" y="42" width="128" height="114" rx="6" fill="#030710" stroke="#38bdf8" stroke-width="1.5" />
+  <rect x="49" y="45" width="122" height="108" rx="4" fill="url(#pp-label)" stroke="#10b981" stroke-width="1.3" />
+
+  <!-- Top Sticker Header Band -->
+  <path d="M 50 49 A 3 3 0 0 1 53 46 H 167 A 3 3 0 0 1 170 49 V 61 H 50 Z" fill="#38bdf8" />
+  <text x="110" y="56.5" text-anchor="middle" fill="#050d1a" font-family="monospace" font-weight="900" font-size="6.8" letter-spacing="0.4">PRECIPITATION PLUMBER</text>
+
+
+  <!-- Corner badges -->
+  <g transform="translate(53, 65)">
+    <rect x="0" y="0" width="32" height="14" rx="3" fill="#062925" stroke="#34d399" stroke-width="1" />
+    <text x="16" y="9.8" text-anchor="middle" fill="#6ee7b7" font-family="monospace" font-weight="900" font-size="6.8">OH⁻</text>
+  </g>
+  <g transform="translate(135, 65)">
+    <rect x="0" y="0" width="32" height="14" rx="3" fill="#27142b" stroke="#c084fc" stroke-width="1" />
+    <text x="16" y="9.8" text-anchor="middle" fill="#e9d5ff" font-family="monospace" font-weight="900" font-size="7">Ag⁺</text>
+  </g>
+
+  <!-- Glass pipes in and out -->
+  <g stroke-linecap="round" fill="none">
+    <path d="M 54 120 H 98" stroke="#94a3b8" stroke-width="9" opacity="0.7" />
+    <path d="M 54 120 H 98" stroke="#0a1930" stroke-width="5.5" />
+    <path d="M 54 120 H 80" stroke="#38bdf8" stroke-width="3" filter="url(#pp-glow)" />
+    <path d="M 122 120 H 166" stroke="#94a3b8" stroke-width="9" opacity="0.7" />
+    <path d="M 122 120 H 166" stroke="#0a1930" stroke-width="5.5" />
+    <path d="M 142 120 H 166" stroke="#fde047" stroke-width="3" filter="url(#pp-glow)" />
+  </g>
+
+  <!-- Conical flask with precipitate -->
+  <g transform="translate(78, 74)">
+    <path d="M25 9h14v3h-2v13l11 20a5 5 0 0 1-4.4 7.4H20.4A5 5 0 0 1 16 45l11-20V12h-2z" fill="#0b1a30" stroke="#bae6fd" stroke-width="2.2" stroke-linejoin="round" />
+    <path d="M21.2 38h21.6l5.2 9.4a3 3 0 0 1-2.6 4.6H18.6a3 3 0 0 1-2.6-4.6z" fill="#2563eb" filter="url(#pp-glow)" />
+    <path d="M20 49.5q12 3 24 0v1.2a2 2 0 0 1-2 2H22a2 2 0 0 1-2-2z" fill="#f8fafc" />
+    <circle cx="28" cy="43" r="2.2" fill="#e0f2fe" />
+    <circle cx="36" cy="41" r="1.7" fill="#e0f2fe" />
+    <circle cx="33" cy="46" r="1.4" fill="#e0f2fe" />
+    <path d="M32 -2c-2 2.8-3 4.2-3 5.8a3 3 0 0 0 6 0c0-1.6-1-3-3-5.8z" fill="#34d399" filter="url(#pp-glow)" />
+  </g>
+
+  <!-- Flame test dot -->
+  <circle cx="166" cy="104" r="3" fill="#c084fc" filter="url(#pp-glow)" />
+  <circle cx="54" cy="104" r="3" fill="#38bdf8" filter="url(#pp-glow)" />
+
+  <!-- Bottom ROM Serial Badge on Sticker -->
+  <rect x="55" y="144" width="110" height="7" rx="2" fill="#040b0e" stroke="#38bdf8" stroke-width="0.8" />
+  <text x="110" y="149.6" text-anchor="middle" fill="#67e8f9" font-family="monospace" font-weight="bold" font-size="5.6" letter-spacing="0.7">ALX-12 • QUALITATIVE MAZE</text>
+
+  <!-- Molded Downward Insertion Triangle -->
+  <polygon points="103,163 117,163 110,172" fill="#0369a1" stroke="#38bdf8" stroke-width="1" />
+</svg>
