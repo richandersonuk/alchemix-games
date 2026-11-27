@@ -29,7 +29,8 @@ export class SolventFront {
     this.wavePhase += dt * 4.2;
     const progress = normHToRelDist(this.h, this.config);
     const lucasWashburnFactor = fastFinish ? 3.8 : Math.max(0.68, 1.06 - 0.34 * progress);
-    const combinedSpeed = Math.max(levelBaseSpeed, this.solvent.capillarySpeed * 0.92);
+    const solventMultiplier = this.solvent.capillarySpeed / 0.036;
+    const combinedSpeed = levelBaseSpeed * solventMultiplier;
     this.h = Math.min(
       this.config.solventLimitNorm,
       this.h + combinedSpeed * lucasWashburnFactor * dt,

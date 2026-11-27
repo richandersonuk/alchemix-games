@@ -20,7 +20,7 @@ export class UVToggle {
       <div class="thumb-controls-stack">
         <button id="btn-burst-thumb" class="thumb-fab burst-fab" type="button" title="Capillary Burst (or Swipe Up)">
           <span class="fab-icon">⚡</span>
-          <span id="burst-fab-label" class="fab-label">BURST</span>
+          <span id="burst-fab-label" class="fab-label">BURST ↑</span>
         </button>
         <button id="btn-uv-thumb" class="thumb-fab uv-fab" type="button" title="Locating Agent Pulse (or Double-Tap)">
           <span id="uv-fab-icon" class="fab-icon">UV</span>
@@ -29,14 +29,11 @@ export class UVToggle {
       </div>
     `;
 
-    const uvBtn = document.getElementById('btn-uv-thumb');
-    const burstBtn = document.getElementById('btn-burst-thumb');
-
-    uvBtn?.addEventListener('click', (e) => {
+    document.getElementById('btn-uv-thumb')?.addEventListener('click', (e) => {
       e.stopPropagation();
       this.onToggleLocating();
     });
-    burstBtn?.addEventListener('click', (e) => {
+    document.getElementById('btn-burst-thumb')?.addEventListener('click', (e) => {
       e.stopPropagation();
       this.onBurst();
     });
@@ -49,9 +46,7 @@ export class UVToggle {
     const burstBtn = document.getElementById('btn-burst-thumb') as HTMLButtonElement | null;
     const burstLabel = document.getElementById('burst-fab-label');
 
-    const hiddenControls = engine.phase === 'setup' || engine.phase === 'summary';
-    this.rootEl.classList.toggle('hidden', hiddenControls);
-    if (hiddenControls) return;
+    if (engine.phase === 'setup' || engine.phase === 'summary') return;
 
     const isNinhydrin = engine.level.locatingAgent === 'ninhydrin';
     if (uvIcon) uvIcon.textContent = isNinhydrin ? 'NIN' : 'UV';

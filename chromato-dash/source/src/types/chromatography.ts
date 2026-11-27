@@ -6,6 +6,12 @@ export type LocatingMethod = 'none' | 'uv' | 'ninhydrin';
 
 export type GameMode = 'standard' | 'solvent-shifter' | 'contamination-hazard';
 
+export type LevelTier =
+  | 'KS3 / GCSE Foundation'
+  | 'GCSE Higher'
+  | 'GCSE Triple'
+  | 'AS / Master Challenge';
+
 export interface SolventSpec {
   id: SolventId;
   name: string;
@@ -101,7 +107,7 @@ export interface LevelData {
   caseNumber: number;
   title: string;
   sampleSource: string;
-  tier: 'KS3 / GCSE Foundation' | 'GCSE Higher' | 'GCSE Triple / AS Prep';
+  tier: LevelTier;
   specTag: string;
   mode: GameMode;
   stationaryPhase: StationaryPhaseType;
@@ -110,7 +116,7 @@ export interface LevelData {
   defaultSolvent: SolventId;
   availableSolvents: SolventId[];
   locatingAgent: LocatingMethod;
-  /** Duration of solvent run in seconds (~14-24s paced for arcade feel) */
+  /** Base solvent front rise speed (plate height units / sec) */
   baseFrontSpeed: number;
   allowInstantPour: boolean;
   briefing: string;

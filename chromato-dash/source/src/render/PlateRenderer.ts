@@ -24,12 +24,13 @@ export class PlateRenderer {
     limitNorm = 0.90,
     reservoirMaxSafeNorm = 0.095,
   ): PlateRect {
-    const x = 56;
-    const rightPad = 14;
-    const y = 72;
-    const bottomPad = 94;
+    // 68px dedicated left gutter cleanly separates static Rf/mm ticks from live pointers
+    const x = 68;
+    const rightPad = 10;
+    const y = 10;
+    const bottomPad = 24;
     const w = Math.max(160, cssWidth - x - rightPad);
-    const h = Math.max(240, cssHeight - y - bottomPad);
+    const h = Math.max(180, cssHeight - y - bottomPad);
 
     const hToY = (normH: number): number => y + h * (1 - normH);
 
@@ -109,25 +110,28 @@ export class PlateRenderer {
 
     ctx.clearRect(0, 0, cssWidth, cssHeight);
 
-    // Subtle chromatography tank chamber frame
     ctx.save();
     ctx.fillStyle = '#091122';
     ctx.fillRect(0, 0, cssWidth, cssHeight);
 
-    const tankPad = 6;
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
-    ctx.lineWidth = 2;
+    // Draw Left Ruler Gutter (Column A = Static Rf + mm labels, Column B = Live Pointers)
+    this.drawLeftRuler(ctx, rect, engine);
+
+    // Chromatography tank frame around plate
+    const tankPad = 4;
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+    ctx.lineWidth = 1.6;
     this.roundRect(
       ctx,
       rect.x - tankPad,
-      rect.y - 6,
+      rect.y - 4,
       rect.w + tankPad * 2,
-      rect.h + 18,
-      10,
+      rect.h + 22,
+      9,
     );
     ctx.stroke();
 
-    // TLC / Paper Stationary Phase Backing
+    // TLC / Paper Plate Clipping Region
     ctx.save();
     this.roundRect(ctx, rect.x, rect.y, rect.w, rect.h, 6);
     ctx.clip();
@@ -142,7 +146,6 @@ export class PlateRenderer {
     ctx.fillStyle = pattern ?? '#f8fafc';
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
 
-    // Locating illumination overlay (UV 254 nm or Ninhydrin mist)
     const activeLocating = engine.getActiveLocatingType();
     if (activeLocating === 'uv') {
       ctx.fillStyle =
@@ -155,32 +158,27 @@ export class PlateRenderer {
       ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     }
 
-    // Wetted solvent region rising from bottom of plate up to meniscus
+    // Wetted solvent region rising from plate bottom to meniscus
     this.drawWettedSolventRegion(ctx, rect, engine);
 
-    // Setup-phase safe fill target band vs red submerged warning zone
+    // Setup-phase green safe pour band (4-9%) vs red baseline zone
     if (engine.phase === 'setup') {
       const safeBottomY = rect.y + rect.h * (1 - 0.035);
       const safeTopY = rect.y + rect.h * (1 - 0.092);
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.20)';
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.22)';
       ctx.fillRect(rect.x, safeTopY, rect.w, safeBottomY - safeTopY);
 
       ctx.fillStyle = 'rgba(239, 68, 68, 0.16)';
-      ctx.fillRect(
-        rect.x,
-        rect.baselineY - 12,
-        rect.w,
-        12,
-      );
+      ctx.fillRect(rect.x, rect.baselineY - 10, rect.w, 10);
 
-      ctx.font = '700 10px system-ui, sans-serif';
-      ctx.fillStyle = '#047857';
+      ctx.font = '800 9px system-ui, sans-serif';
+      ctx.fillStyle = '#065f46';
       ctx.textAlign = 'right';
-      ctx.fillText('SAFE POUR BAND', rect.x + rect.w - 8, safeTopY + 12);
+      ctx.fillText('SAFE POUR BAND (4–9%)', rect.x + rect.w - 8, (safeTopY + safeBottomY) / 2 + 3);
     }
 
     // Solvent Front Limit (90% line)
-    ctx.strokeStyle = 'rgba(244, 63, 94, 0.72)';
+    ctx.strokeStyle = 'rgba(225, 29, 72, 0.78)';
     ctx.lineWidth = 1.6;
     ctx.setLineDash([6, 4]);
     ctx.beginPath();
@@ -189,8 +187,8 @@ export class PlateRenderer {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.font = '700 10px system-ui, sans-serif';
-    ctx.fillStyle = 'rgba(190, 18, 60, 0.85)';
+    ctx.font = '800 9px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(190, 18, 60, 0.88)';
     ctx.textAlign = 'left';
     ctx.fillText('SOLVENT LIMIT (Rf = 1.00)', rect.x + 8, rect.limitY - 5);
 
@@ -202,10 +200,10 @@ export class PlateRenderer {
     ctx.lineTo(rect.x + rect.w, rect.baselineY);
     ctx.stroke();
 
-    ctx.font = '700 10px system-ui, sans-serif';
+    ctx.font = '800 9px system-ui, sans-serif';
     ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'right';
-    ctx.fillText('2B PENCIL BASELINE (10%)', rect.x + rect.w - 8, rect.baselineY + 12);
+    ctx.textAlign = 'left';
+    ctx.fillText('2B PENCIL BASELINE (10%)', rect.x + 8, rect.baselineY - 5);
 
     // Target Rf Detector Gates
     this.drawTargetZones(ctx, rect, engine);
@@ -219,7 +217,6 @@ export class PlateRenderer {
     // Solvent Front Meniscus Wave Line
     this.drawSolventMeniscus(ctx, rect, engine);
 
-    // UV Flash Border Vignette when locating pulse is active
     if (activeLocating !== 'none') {
       ctx.strokeStyle =
         activeLocating === 'uv'
@@ -237,11 +234,80 @@ export class PlateRenderer {
     this.roundRect(ctx, rect.x, rect.y, rect.w, rect.h, 6);
     ctx.stroke();
 
-    // Beaker Reservoir Overlay at Bottom of Plate
+    // Beaker Reservoir in bottom trough (completely visible below plate bottom & spots)
     this.drawBeakerReservoir(ctx, rect, engine);
 
     ctx.restore();
     return rect;
+  }
+
+  private drawLeftRuler(
+    ctx: CanvasRenderingContext2D,
+    rect: PlateRect,
+    engine: PhysicsEngine,
+  ): void {
+    const spanPx = rect.baselineY - rect.limitY;
+    const ticks = [0, 0.25, 0.5, 0.75, 1.0];
+
+    // Vertical axis rail at x = 44
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(44, rect.limitY);
+    ctx.lineTo(44, rect.baselineY);
+    ctx.stroke();
+
+    for (const rf of ticks) {
+      const yPx = rect.baselineY - rf * spanPx;
+      const mm = Math.round(rf * engine.level.plateLengthMm);
+
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.65)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(39, yPx);
+      ctx.lineTo(46, yPx);
+      ctx.stroke();
+
+      // Column A (x <= 37): Static Rf stacked neatly above mm
+      ctx.textAlign = 'right';
+      ctx.font = '800 10px ui-monospace, SFMono-Regular, monospace';
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillText(rf.toFixed(2), 36, yPx - 1);
+
+      ctx.font = '600 8px ui-monospace, SFMono-Regular, monospace';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(`${mm}mm`, 36, yPx + 8);
+    }
+
+    // Column B (x = 47..65): Live pointers physically separated from Column A text
+    if (engine.phase !== 'setup') {
+      const frontRf = Math.max(0, Math.min(1, normHToRelDist(engine.solventFront.h, engine.config)));
+      const frontY = rect.baselineY - frontRf * spanPx;
+
+      // Cyan Solvent Front pointer triangle at x = 48..57
+      ctx.fillStyle = engine.solventFront.solvent.meniscusHex;
+      ctx.beginPath();
+      ctx.moveTo(47, frontY);
+      ctx.lineTo(56, frontY - 5);
+      ctx.lineTo(56, frontY + 5);
+      ctx.closePath();
+      ctx.fill();
+
+      const active = engine.getActiveSpot();
+      if (active) {
+        const spotRf = Math.max(0, Math.min(1, normHToRelDist(active.h, engine.config)));
+        const spotY = rect.baselineY - spotRf * spanPx;
+
+        // Dashed guide + live colored circular marker at x = 59
+        ctx.fillStyle = active.spec.colorHex;
+        ctx.beginPath();
+        ctx.arc(60, spotY, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+    }
   }
 
   private drawWettedSolventRegion(
@@ -291,16 +357,18 @@ export class PlateRenderer {
     ctx.lineWidth = 2.6;
     ctx.stroke();
 
-    const frontY = rect.y + rect.h * (1 - engine.solventFront.h);
-    const frontRf = normHToRelDist(engine.solventFront.h, engine.config);
-    ctx.fillStyle = '#0369a1';
-    ctx.font = '800 10px ui-monospace, SFMono-Regular, monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(
-      `FRONT ${(frontRf * engine.level.plateLengthMm).toFixed(0)}mm`,
-      rect.x + 8,
-      Math.max(rect.y + 14, frontY - 6),
-    );
+    if (engine.phase !== 'setup') {
+      const frontY = rect.y + rect.h * (1 - engine.solventFront.h);
+      const frontRf = normHToRelDist(engine.solventFront.h, engine.config);
+      ctx.fillStyle = '#0369a1';
+      ctx.font = '800 9px ui-monospace, SFMono-Regular, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(
+        `FRONT ${(frontRf * engine.level.plateLengthMm).toFixed(0)}mm`,
+        rect.x + 8,
+        Math.max(rect.y + 12, frontY - 6),
+      );
+    }
     ctx.restore();
   }
 
@@ -318,7 +386,7 @@ export class PlateRenderer {
       const bandH = Math.max(8, bottomY - topY);
 
       const isActiveTarget = activeSpot?.spec.id === zone.spec.pigmentId;
-      const pulse = isActiveTarget ? 0.14 + Math.sin(zone.pulsePhase) * 0.06 : 0.1;
+      const pulse = isActiveTarget ? 0.16 + Math.sin(zone.pulsePhase) * 0.06 : 0.1;
 
       if (zone.lockState === 'hit') {
         ctx.fillStyle = 'rgba(16, 185, 129, 0.24)';
@@ -330,7 +398,7 @@ export class PlateRenderer {
         ctx.fillStyle = this.hexToRgba(zone.spec.colorHex, pulse);
         ctx.strokeStyle = this.hexToRgba(
           zone.spec.colorHex,
-          isActiveTarget ? 0.88 : 0.52,
+          isActiveTarget ? 0.9 : 0.55,
         );
       }
 
@@ -344,7 +412,6 @@ export class PlateRenderer {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Target Detector Tag on Right Edge
       const tagText =
         zone.lockState === 'hit'
           ? `✓ ${zone.spec.label} ${zone.spec.targetRf.toFixed(2)}`
@@ -352,10 +419,10 @@ export class PlateRenderer {
             ? `✕ ${zone.spec.label}`
             : `${zone.spec.label} ${zone.spec.targetRf.toFixed(2)}`;
 
-      ctx.font = '700 10px system-ui, sans-serif';
-      const tw = ctx.measureText(tagText).width + 12;
-      const tx = rect.x + rect.w - tw - 6;
-      const ty = centerY - 9;
+      ctx.font = '700 9px system-ui, sans-serif';
+      const tw = ctx.measureText(tagText).width + 10;
+      const tx = rect.x + rect.w - tw - 5;
+      const ty = centerY - 8;
 
       ctx.fillStyle =
         zone.lockState === 'hit'
@@ -363,14 +430,14 @@ export class PlateRenderer {
           : zone.lockState === 'miss'
             ? 'rgba(220, 38, 38, 0.9)'
             : isActiveTarget
-              ? 'rgba(15, 23, 42, 0.88)'
-              : 'rgba(15, 23, 42, 0.68)';
-      this.roundRect(ctx, tx, ty, tw, 18, 5);
+              ? 'rgba(15, 23, 42, 0.9)'
+              : 'rgba(15, 23, 42, 0.72)';
+      this.roundRect(ctx, tx, ty, tw, 16, 5);
       ctx.fill();
 
       ctx.fillStyle = '#f8fafc';
       ctx.textAlign = 'center';
-      ctx.fillText(tagText, tx + tw / 2, centerY + 3.5);
+      ctx.fillText(tagText, tx + tw / 2, centerY + 3);
     }
   }
 
@@ -450,13 +517,12 @@ export class PlateRenderer {
       const py = rect.y + rect.h * (1 - spot.h);
       const isActive = spot === activeSpot && engine.phase === 'running';
 
-      // Initial origin pencil spot marker on baseline
+      // Initial origin pencil spot dot on baseline
       ctx.fillStyle = 'rgba(71, 85, 105, 0.45)';
       ctx.beginPath();
-      ctx.arc(rect.x + spot.spec.startU * rect.w, rect.baselineY, 3, 0, Math.PI * 2);
+      ctx.arc(rect.x + spot.spec.startU * rect.w, rect.baselineY, 2.8, 0, Math.PI * 2);
       ctx.fill();
 
-      // Particle tail trail
       for (const p of spot.particles) {
         const tx = rect.x + p.u * rect.w;
         const ty = rect.y + rect.h * (1 - p.h);
@@ -469,21 +535,19 @@ export class PlateRenderer {
         ctx.fill();
       }
 
-      // Main pigment droplet + silica bleed halo
-      const baseRadius = 11 * spot.bleedRadius;
+      const baseRadius = 10 * spot.bleedRadius;
       ctx.save();
-      ctx.globalAlpha = Math.max(0.12, spot.visibilityAlpha);
+      ctx.globalAlpha = Math.max(0.14, spot.visibilityAlpha);
 
-      const grad = ctx.createRadialGradient(px, py, 2, px, py, baseRadius * 1.45);
+      const grad = ctx.createRadialGradient(px, py, 2, px, py, baseRadius * 1.4);
       grad.addColorStop(0, spot.spec.colorHex);
       grad.addColorStop(0.65, spot.spec.glowHex);
       grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(px, py, baseRadius * 1.45, 0, Math.PI * 2);
+      ctx.arc(px, py, baseRadius * 1.4, 0, Math.PI * 2);
       ctx.fill();
 
-      // Quenched UV silhouette or saturated dye core
       const isUVQuench =
         activeLocating === 'uv' &&
         engine.level.stationaryPhase === 'tlc_f254' &&
@@ -513,12 +577,10 @@ export class PlateRenderer {
       ctx.stroke();
       ctx.restore();
 
-      // Active thumb steering reticle around active spot
       if (isActive) {
         const ringR = baseRadius + 4 + Math.sin(spot.pulsePhase) * 2;
         ctx.save();
-        ctx.strokeStyle =
-          engine.thumbHolding ? '#0284c7' : '#0f172a';
+        ctx.strokeStyle = engine.thumbHolding ? '#0284c7' : '#0f172a';
         ctx.lineWidth = 2;
         ctx.setLineDash([4, 3]);
         ctx.beginPath();
@@ -527,15 +589,14 @@ export class PlateRenderer {
         ctx.restore();
       }
 
-      // Spot Label Pill
       const hiddenHint =
         spot.spec.requiresLocating !== 'none' &&
         spot.visibilityAlpha < 0.35;
       const badge = hiddenHint ? '?' : spot.spec.shortCode;
-      ctx.font = '800 10px system-ui, sans-serif';
+      ctx.font = '800 9px system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#0f172a';
-      ctx.fillText(badge, px, py - baseRadius - 5);
+      ctx.fillText(badge, px, py - baseRadius - 6);
     }
   }
 
@@ -547,27 +608,25 @@ export class PlateRenderer {
     const resLevel =
       engine.phase === 'setup' ? engine.reservoirH : Math.min(0.082, engine.reservoirH);
     const resTopY = rect.y + rect.h * (1 - resLevel);
-    const beakerBottomY = rect.y + rect.h + 12;
+    const beakerBottomY = rect.y + rect.h + 16;
 
     ctx.save();
-    ctx.fillStyle =
-      engine.failedSubmersion
-        ? 'rgba(239, 68, 68, 0.38)'
-        : engine.solventFront.solvent.tintHex;
-    ctx.fillRect(rect.x - 6, resTopY, rect.w + 12, beakerBottomY - resTopY);
+    ctx.fillStyle = engine.failedSubmersion
+      ? 'rgba(239, 68, 68, 0.42)'
+      : engine.solventFront.solvent.tintHex;
+    ctx.fillRect(rect.x - 4, resTopY, rect.w + 8, beakerBottomY - resTopY);
 
-    ctx.strokeStyle =
-      engine.failedSubmersion
-        ? '#ef4444'
-        : engine.solventFront.solvent.meniscusHex;
+    ctx.strokeStyle = engine.failedSubmersion
+      ? '#ef4444'
+      : engine.solventFront.solvent.meniscusHex;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(rect.x - 6, resTopY);
-    ctx.lineTo(rect.x + rect.w + 6, resTopY);
+    ctx.moveTo(rect.x - 4, resTopY);
+    ctx.lineTo(rect.x + rect.w + 4, resTopY);
     ctx.stroke();
 
-    ctx.font = '700 10px system-ui, sans-serif';
-    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '800 9px system-ui, sans-serif';
+    ctx.fillStyle = '#e2e8f0';
     ctx.textAlign = 'center';
     ctx.fillText(
       `BEAKER RESERVOIR · ${engine.solventFront.solvent.shortName.toUpperCase()}`,

@@ -19,6 +19,7 @@ import { TargetZone } from '../entities/TargetZone';
 import { Obstacle } from '../entities/Obstacle';
 
 export type EngineEventType =
+  | 'pour'
   | 'hit'
   | 'miss'
   | 'hazard'
@@ -55,7 +56,7 @@ export class PhysicsEngine {
   public usedLocatingAgent = false;
   public failedSubmersion = false;
   public failureReason: string | null = null;
-  public statusBanner = 'Hold POUR SOLVENT into the green zone below the 10% pencil line.';
+  public statusBanner = 'Hold POUR SOLVENT into the green 4–9% zone below the 10% pencil line.';
 
   private bannerTimer = 0;
   private elapsedRunSec = 0;
@@ -116,10 +117,23 @@ export class PhysicsEngine {
     this.failedSubmersion = false;
     this.failureReason = null;
     this.elapsedRunSec = 0;
-    this.setBanner(
-      'Hold POUR SOLVENT into the green band (5–9%) — do NOT cover the 10% Pencil Line!',
-      4,
-    );
+
+    if (level.caseNumber === 1) {
+      this.setBanner(
+        'Step 1: Hold POUR SOLVENT into the green 4–9% band (stop below 10%) or tap Quick Safe Fill.',
+        6,
+      );
+    } else if (!level.allowInstantPour) {
+      this.setBanner(
+        'Exam Mode: Manually pour solvent into 4–9% — release before reaching 10%!',
+        4.5,
+      );
+    } else {
+      this.setBanner(
+        'Hold POUR SOLVENT into the 4–9% band — never cover the 10% Pencil Line!',
+        4,
+      );
+    }
   }
 
   public setBanner(msg: string, duration = 2.8): void {
@@ -129,7 +143,9 @@ export class PhysicsEngine {
 
   public startQuickSafePour(): void {
     if (this.phase !== 'setup') return;
+    if (!this.level.allowInstantPour) return;
     this.reservoirH = this.config.reservoirDefaultNorm;
+    this.listener?.('pour');
     this.beginCapillaryRun();
   }
 
@@ -144,10 +160,26 @@ export class PhysicsEngine {
     }
     this.solventFront.h = this.reservoirH;
     this.phase = 'running';
-    this.setBanner(
-      `Solvent rising! Hold plate to surf ${this.getActiveSpot()?.spec.name ?? 'dye'}.`,
-      3,
-    );
+    this.listener?.('pour');
+
+    const activeName = this.getActiveSpot()?.spec.name ?? 'dye';
+    if (this.level.caseNumber === 1) {
+      this.setBanner(
+        `Solvent climbing! Hold anywhere on the plate to surf ${activeName} into its target band, then release to lock.`,
+        4.5,
+      );
+    } else if (this.level.locatingAgent !== 'none') {
+      const toolName = this.level.locatingAgent === 'uv' ? 'UV 254nm' : 'NIN SPRAY';
+      this.setBanner(
+        `Colourless sample! Tap ${toolName} (or double-tap plate) to reveal spots.`,
+        3.5,
+      );
+    } else {
+      this.setBanner(
+        `Solvent rising! Hold plate to surf ${activeName} up to its target Rf.`,
+        3.2,
+      );
+    }
   }
 
   private triggerSubmersionFail(): void {
@@ -185,7 +217,7 @@ export class PhysicsEngine {
     if (this.burstCooldown > 0) return false;
     this.burstTimeLeft = 0.34;
     this.burstCooldown = 2.4;
-    this.setBanner('Capillary Burst!', 1.1);
+    this.setBanner('Capillary Burst active!', 1.2);
     this.listener?.('burst');
     return true;
   }
@@ -209,7 +241,7 @@ export class PhysicsEngine {
     const spot = this.spots[index];
     if (!spot || spot.isLocked()) return false;
     this.activeSpotIndex = index;
-    this.setBanner(`Selected: ${spot.spec.name}`, 1.4);
+    this.setBanner(`Selected: ${spot.spec.name} (Target Rf ${spot.spec.targetRf.toFixed(2)})`, 1.6);
     return true;
   }
 
@@ -249,7 +281,7 @@ export class PhysicsEngine {
 
     if (this.phase === 'setup') {
       if (this.pourHolding) {
-        this.reservoirH += 0.058 * clampedDt;
+        this.reservoirH += 0.052 * clampedDt;
         this.solventFront.h = this.reservoirH;
         if (this.reservoirH >= this.config.baselineNorm) {
           this.pourHolding = false;
@@ -267,7 +299,7 @@ export class PhysicsEngine {
     const allLocked = this.spots.every((s) => s.isLocked());
     if (allLocked && this.phase === 'running') {
       this.phase = 'finishing';
-      this.setBanner('All dyes positioned! Solvent front completing run...', 2.5);
+      this.setBanner('All dyes locked! Solvent front completing capillary run...', 2.5);
     }
 
     const frontSpeed = this.level.baseFrontSpeed;
@@ -303,18 +335,15 @@ export class PhysicsEngine {
       if (spot === activeSpot && this.phase === 'running') {
         this.updateActiveSpot(spot, zone, solubility, frontSpeed, clampedDt);
       } else {
-        // Gentle baseline wake separation for waiting spots so multi-dye inks look realistic
-        // Strictly capped well below their target gate so they never overshoot automatically
         const maxPassiveH = zone.minH - 0.06;
         if (solubility > 0.14 && spot.h < maxPassiveH) {
-          const creep = frontSpeed * 0.14 * solubility;
+          const creep = frontSpeed * 0.12 * solubility;
           spot.h = Math.min(maxPassiveH, spot.h + creep * clampedDt);
         }
         spot.vh = 0;
         spot.state = 'adsorbed';
       }
 
-      // Never exceed the rising meniscus at spot's horizontal position
       const meniscusObs = this.obstacles.find(
         (o) => o.spec.type === 'meniscus_wave',
       );
@@ -331,7 +360,6 @@ export class PhysicsEngine {
 
     if (this.solventFront.h >= this.config.solventLimitNorm - 1e-4) {
       this.solventFront.h = this.config.solventLimitNorm;
-      // Resolve any remaining unlocked spots at final Rf position
       for (let i = 0; i < this.spots.length; i++) {
         const s = this.spots[i];
         const z = this.zones[i];
@@ -364,8 +392,8 @@ export class PhysicsEngine {
         }
         obs.hitFlash = 1.0;
         if (obs.spec.type === 'dry_pocket') {
-          hazardDrag = Math.min(hazardDrag, 0.28);
-          this.setBanner('Dry Silica Pocket! Swipe ↑ for Capillary Burst!', 1.2);
+          hazardDrag = Math.min(hazardDrag, 0.3);
+          this.setBanner('Dry Silica Pocket! Swipe ↑ or tap BURST to break free!', 1.2);
         } else if (obs.spec.type === 'graphite_smudge') {
           hazardDrag = Math.min(hazardDrag, 0.45);
           hazardDeflectU = (spot.u >= obs.currentU ? 1 : -1) * 0.22;
@@ -376,7 +404,7 @@ export class PhysicsEngine {
             this.setBanner(`Contaminated by ${obs.spec.label}!`, 1.4);
           }
         } else if (obs.spec.type === 'meniscus_wave') {
-          hazardDeflectU = Math.sin(this.elapsedRunSec * 7) * 0.28;
+          hazardDeflectU = Math.sin(this.elapsedRunSec * 7) * 0.26;
         }
       }
     }
@@ -389,27 +417,34 @@ export class PhysicsEngine {
         spot.vh = Math.max(0, spot.vh - 2.0 * dt);
         if (this.level.availableSolvents.length > 1) {
           this.setBanner(
-            `${spot.spec.shortCode} insoluble in ${SOLVENTS[this.currentSolventId].shortName} — Switch Solvent!`,
+            `${spot.spec.shortCode} insoluble in ${SOLVENTS[this.currentSolventId].shortName} — tap Mobile Phase button!`,
             1.4,
           );
         }
       } else {
-        const surfMultiplier = 0.92 + 1.65 * solubility;
+        const surfMultiplier = 1.05 + 1.75 * solubility;
         const burstAdd = this.burstTimeLeft > 0 ? 0.16 : 0;
         const targetVh = (frontSpeed * surfMultiplier + burstAdd) * hazardDrag;
-        const accel = 4.6 + 2.2 * solubility;
+        const accel = 4.8 + 2.2 * solubility;
         spot.vh += (targetVh - spot.vh) * Math.min(1, accel * dt);
+
+        if (this.level.caseNumber === 1 && zone.containsHeight(spot.h)) {
+          this.setBanner(
+            `Inside ${spot.spec.shortCode} gate (${spot.spec.targetRf.toFixed(2)}) — release thumb now to adsorb!`,
+            0.9,
+          );
+        }
       }
 
       const naturalDrift =
-        Math.sin(this.elapsedRunSec * 3.1 + spot.h * 14) * 0.032;
+        Math.sin(this.elapsedRunSec * 3.1 + spot.h * 14) * 0.03;
       const steerVel = this.steerAxis * 0.36 + naturalDrift + hazardDeflectU;
       spot.vu = steerVel;
       spot.u = Math.max(0.13, Math.min(0.87, spot.u + spot.vu * dt));
       spot.h += Math.max(0, spot.vh) * dt;
     } else {
       spot.state = 'adsorbed';
-      const decelRate = 2.0 + 4.4 * spot.spec.stationaryAffinity;
+      const decelRate = 2.2 + 4.4 * spot.spec.stationaryAffinity;
       spot.vh = Math.max(0, spot.vh - spot.vh * Math.min(1, decelRate * dt));
       if (spot.vh < 0.004) {
         spot.vh = 0;
@@ -421,7 +456,7 @@ export class PhysicsEngine {
         const currentRf = normHToRelDist(spot.h, this.config);
         const hit = isRfHit(currentRf, spot.spec.targetRf, spot.spec.toleranceRf);
 
-        if (hit && spot.dwellSec >= 0.22) {
+        if (hit && spot.dwellSec >= 0.2) {
           spot.state = 'locked_hit';
           zone.lockState = 'hit';
           this.setBanner(
@@ -432,7 +467,7 @@ export class PhysicsEngine {
           this.advanceToNextSpot();
         } else if (
           currentRf > spot.spec.targetRf + spot.spec.toleranceRf &&
-          spot.dwellSec >= 0.32
+          spot.dwellSec >= 0.3
         ) {
           spot.state = 'locked_miss';
           zone.lockState = 'miss';
