@@ -9,7 +9,7 @@ import {
 import { DrainFixture, SourceFixture } from '../data/levels';
 import { FluidPacket } from './FluidPacket';
 
-export type TileCategory = 'empty' | 'source' | 'pipe' | 'injector' | 'filter' | 'drain';
+export type TileCategory = 'empty' | 'source' | 'pipe' | 'injector' | 'filter' | 'drain' | 'hazard';
 
 export const DIRECTIONS: Direction[] = ['N', 'E', 'S', 'W'];
 
@@ -81,6 +81,23 @@ export abstract class Tile {
 export class EmptyTile extends Tile {
   constructor(x: number, y: number) {
     super('empty', x, y, 0, false);
+  }
+
+  public getOpenPorts(): Direction[] {
+    return [];
+  }
+
+  public getExitPorts(): Direction[] {
+    return [];
+  }
+}
+
+export class HazardTile extends Tile {
+  public readonly label: string;
+
+  constructor(x: number, y: number, label = 'Bench Pillar') {
+    super('hazard', x, y, 0, true);
+    this.label = label;
   }
 
   public getOpenPorts(): Direction[] {
@@ -335,9 +352,12 @@ export class DrainTile extends Tile {
     return null;
   }
 
-  public isQuotaMet(): boolean {
+  public isQuotaMet(minPurity = 90): boolean {
+    if (this.kind === 'waste') {
+      return this.getTotalSolidContamination() <= 0.01;
+    }
     return (
-      this.getCollectedTargetAmount() + 0.01 >= this.requiredAmount && this.getPurity() >= 90
+      this.getCollectedTargetAmount() + 0.01 >= this.requiredAmount && this.getPurity() >= minPurity
     );
   }
 

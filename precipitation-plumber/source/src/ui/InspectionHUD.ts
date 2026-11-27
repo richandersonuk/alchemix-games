@@ -11,7 +11,7 @@ import { FilterTile } from '../entities/FilterTile';
 import { FluidPacket } from '../entities/FluidPacket';
 import { InjectorTile } from '../entities/InjectorTile';
 import { PipeTile } from '../entities/PipeTile';
-import { DrainTile, SourceTile, Tile } from '../entities/Tile';
+import { DrainTile, HazardTile, SourceTile, Tile } from '../entities/Tile';
 
 export class InspectionHUD {
   private container: HTMLElement;
@@ -44,13 +44,16 @@ export class InspectionHUD {
 
   public render(sim: FluidSimulator): void {
     const pptStatuses = sim.getPrecipitateQuotaStatus();
-    const drains = sim.grid.getDrains().filter((d) => d.kind !== 'waste');
+    const drains = sim.grid.getDrains();
+    const minPurity = sim.level.minPurity ?? 90;
+    const tilesUsed = sim.grid.countPlayerTiles();
+    const parTiles = sim.level.parTiles;
 
     const pptHtml = pptStatuses
       .map((st) => {
         const meta = PRECIPITATE_DATA[st.precipitate];
         const pct = Math.min(100, Math.round((st.collectedAmount / st.requiredAmount) * 100));
-        const contaminated = st.collectedAmount > 0.01 && st.purity < 90;
+        const contaminated = st.collectedAmount > 0.01 && st.purity < minPurity;
         const cls = st.met ? 'met' : contaminated ? 'contaminated' : '';
         const fillCol = contaminated ? '#f43f5e' : st.met ? '#10b981' : '#38bdf8';
 
@@ -76,11 +79,32 @@ export class InspectionHUD {
 
     const drainHtml = drains
       .map((drn) => {
+        if (drn.kind === 'waste') {
+          const solids = drn.getTotalSolidContamination();
+          const dirty = solids > 0.01;
+          const cleanPass = !dirty && drn.packetsReceived > 0;
+          const cls = cleanPass ? 'met' : dirty ? 'contaminated' : '';
+          return `
+            <div class="quota-row ${cls}">
+              <div class="quota-header">
+                <span><span class="color-dot" style="background:#94a3b8;"></span> ${drn.label}</span>
+                <span style="color:${dirty ? '#fda4af' : cleanPass ? '#6ee7b7' : '#cbd5e1'};">
+                  ${dirty ? 'Solids leaked ✗' : cleanPass ? 'Clean ✓' : 'Zero solids'}
+                </span>
+              </div>
+              <div class="quota-meta">
+                <span>Cell (${drn.x + 1}, ${drn.y + 1})</span>
+                <span>Filter solids before sink</span>
+              </div>
+            </div>
+          `;
+        }
+
         const collected = drn.getCollectedTargetAmount();
         const purity = drn.getPurity();
-        const met = drn.isQuotaMet();
+        const met = drn.isQuotaMet(minPurity);
         const contaminated =
-          (drn.packetsReceived > 0 && purity < 90) || drn.getTotalSolidContamination() > 0.01;
+          (drn.packetsReceived > 0 && purity < minPurity) || drn.getTotalSolidContamination() > 0.01;
         const pct = Math.min(100, Math.round((collected / drn.requiredAmount) * 100));
         const cls = met ? 'met' : contaminated ? 'contaminated' : '';
         const fillCol = contaminated ? '#f43f5e' : met ? '#10b981' : '#38bdf8';
@@ -118,7 +142,7 @@ export class InspectionHUD {
 
     const logsHtml =
       this.reactionLogs.length === 0
-        ? `<div style="font-size:0.875rem;color:var(--text-muted);">Release the contaminated solution to observe live GCSE mark-scheme observations and ionic equations.</div>`
+        ? `<div style="font-size:0.875rem;color:var(--text-muted);">Release the contaminated solution to observe live WJEC mark-scheme observations and ionic equations.</div>`
         : this.reactionLogs
             .slice(0, 8)
             .map(
@@ -135,9 +159,15 @@ export class InspectionHUD {
       <div>
         <div class="hud-section-title">
           <span>Target Recovery Quotas</span>
-          <span>≥90% PURITY</span>
+          <span>≥${minPurity}% PURITY</span>
         </div>
         <div class="info-card">
+          <div class="quota-meta" style="padding:0 2px;">
+            <span>Apparatus Placed</span>
+            <span style="color:${tilesUsed <= parTiles ? '#6ee7b7' : '#fde68a'};font-weight:700;">
+              ${tilesUsed} / ${parTiles} par
+            </span>
+          </div>
           ${pptHtml}
           ${drainHtml}
         </div>
@@ -190,6 +220,7 @@ export class InspectionHUD {
         <div style="font-size:0.844rem;color:var(--text-muted);line-height:1.35;">${rMeta.description}</div>
       `;
     } else if (tile instanceof FilterTile) {
+      const minPurity = sim.level.minPurity ?? 90;
       const solids = Array.from(tile.capturedSolids.entries());
       if (solids.length === 0) {
         details = `<div style="font-size:0.875rem;color:var(--text-muted);">Clean filter paper — waiting to trap solid precipitates while passing dissolved ions.</div>`;
@@ -199,10 +230,12 @@ export class InspectionHUD {
           .map(([p, amt]) => this.renderPrecipBadge(p, amt))
           .join(' ');
         details = `
-          <div style="font-size:0.875rem;">Filter Cake Purity: <strong style="color:${dom.purity >= 90 ? '#6ee7b7' : '#fda4af'};">${dom.purity}%</strong></div>
+          <div style="font-size:0.875rem;">Filter Cake Purity: <strong style="color:${dom.purity >= minPurity ? '#6ee7b7' : '#fda4af'};">${dom.purity}%</strong></div>
           <div style="display:flex;flex-wrap:wrap;gap:4px;">${chips}</div>
         `;
       }
+    } else if (tile instanceof HazardTile) {
+      details = `<div style="font-size:0.875rem;color:#fcd34d;">Fixed laboratory bench pillar — blocks pipe placement. Route around it.</div>`;
     } else if (tile instanceof DrainTile) {
       const reason = tile.getContaminationReason();
       const ions = Array.from(tile.collectedIons.entries())
@@ -246,9 +279,11 @@ export class InspectionHUD {
   private describeTileTitle(tile: Tile): string {
     if (tile instanceof SourceTile) return tile.label;
     if (tile instanceof DrainTile) return tile.label;
-    if (tile instanceof InjectorTile) return REAGENT_DATA[tile.reagent].formula;
-    if (tile instanceof FilterTile) return 'Buchner Filter Bed';
-    if (tile instanceof PipeTile) return `${tile.variant.toUpperCase()} PIPE`;
+    if (tile instanceof HazardTile) return tile.label;
+    const lockTag = tile.fixed ? ' (Locked)' : '';
+    if (tile instanceof InjectorTile) return `${REAGENT_DATA[tile.reagent].formula}${lockTag}`;
+    if (tile instanceof FilterTile) return `Buchner Filter Bed${lockTag}`;
+    if (tile instanceof PipeTile) return `${tile.variant.toUpperCase()} PIPE${lockTag}`;
     return 'Empty Slot';
   }
 

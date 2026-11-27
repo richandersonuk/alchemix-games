@@ -12,10 +12,13 @@ import { LevelCompleteModal } from './ui/LevelCompleteModal';
 import { PaletteHUD } from './ui/PaletteHUD';
 
 const SOLVED_STORAGE_KEY = 'alchemix_precipitation_plumber_solved_v1';
+const STARS_STORAGE_KEY = 'alchemix_precipitation_plumber_stars_v1';
 
 class PrecipitationPlumberGame {
   private currentLevelIdx = 0;
   private solvedIds: Set<number> = new Set();
+  private starsByLevel: Record<number, number> = {};
+  private hintUsedOnLevel = false;
 
   private grid: Grid;
   private chemistry: ChemistryEngine;
@@ -40,6 +43,7 @@ class PrecipitationPlumberGame {
   private resetBtn: HTMLButtonElement;
   private clearBtn: HTMLButtonElement;
   private bannerTierEl: HTMLElement;
+  private bannerChallengesEl: HTMLElement;
   private bannerSpecEl: HTMLElement;
   private bannerTitleEl: HTMLElement;
   private bannerBriefEl: HTMLElement;
@@ -60,6 +64,7 @@ class PrecipitationPlumberGame {
     this.resetBtn = document.getElementById('btn-reset-flow') as HTMLButtonElement;
     this.clearBtn = document.getElementById('btn-clear-grid') as HTMLButtonElement;
     this.bannerTierEl = document.getElementById('banner-tier') as HTMLElement;
+    this.bannerChallengesEl = document.getElementById('banner-challenges') as HTMLElement;
     this.bannerSpecEl = document.getElementById('banner-spec') as HTMLElement;
     this.canvasEl = canvas;
     this.bannerTitleEl = document.getElementById('banner-title') as HTMLElement;
@@ -104,6 +109,13 @@ class PrecipitationPlumberGame {
         const parsed = JSON.parse(raw) as number[];
         this.solvedIds = new Set(parsed);
       }
+      const rawStars = localStorage.getItem(STARS_STORAGE_KEY);
+      if (rawStars) {
+        this.starsByLevel = JSON.parse(rawStars) as Record<number, number>;
+      }
+      for (const id of this.solvedIds) {
+        if (!this.starsByLevel[id]) this.starsByLevel[id] = 1;
+      }
     } catch {
       // Ignore storage errors
     }
@@ -112,20 +124,28 @@ class PrecipitationPlumberGame {
   private saveSolvedState(): void {
     try {
       localStorage.setItem(SOLVED_STORAGE_KEY, JSON.stringify(Array.from(this.solvedIds)));
+      localStorage.setItem(STARS_STORAGE_KEY, JSON.stringify(this.starsByLevel));
     } catch {
       // Ignore storage errors
     }
   }
 
   private populateLevelDropdown(): void {
-    const tiers: LevelTier[] = ['GCSE Foundation', 'GCSE Higher', 'AS Level', 'A2 Level'];
+    const tiers: LevelTier[] = [
+      'GCSE Foundation',
+      'GCSE Higher',
+      'AS Level',
+      'A2 Level',
+      'Exam Challenge',
+    ];
     this.levelSelectEl.innerHTML = tiers
       .map((tier) => {
         const opts = LEVELS.map((lvl, idx) => ({ lvl, idx }))
           .filter(({ lvl }) => lvl.tier === tier)
           .map(({ lvl, idx }) => {
-            const check = this.solvedIds.has(lvl.id) ? '✓ ' : '';
-            return `<option value="${idx}" ${idx === this.currentLevelIdx ? 'selected' : ''}>${check}${lvl.code}: ${lvl.title}</option>`;
+            const st = this.starsByLevel[lvl.id] ?? 0;
+            const prefix = st > 0 ? `${'★'.repeat(st)} ` : '';
+            return `<option value="${idx}" ${idx === this.currentLevelIdx ? 'selected' : ''}>${prefix}${lvl.code}: ${lvl.title}</option>`;
           })
           .join('');
         return opts ? `<optgroup label="${tier}">${opts}</optgroup>` : '';
@@ -136,6 +156,7 @@ class PrecipitationPlumberGame {
   public loadLevel(index: number): void {
     this.currentLevelIdx = Math.max(0, Math.min(LEVELS.length - 1, index));
     const level = LEVELS[this.currentLevelIdx];
+    this.hintUsedOnLevel = false;
 
     this.modal.hide();
     this.grid = new Grid(level.cols, level.rows);
@@ -158,10 +179,34 @@ class PrecipitationPlumberGame {
     this.bannerBriefEl.textContent = level.brief;
     this.bannerTierEl.textContent = level.tier;
     this.bannerTierEl.className =
-      'tier-chip ' + (level.tier.startsWith('GCSE') ? 'gcse' : level.tier === 'AS Level' ? 'as' : 'a2');
+      'tier-chip ' +
+      (level.tier.startsWith('GCSE')
+        ? 'gcse'
+        : level.tier === 'AS Level'
+          ? 'as'
+          : level.tier === 'A2 Level'
+            ? 'a2'
+            : 'challenge');
+    const tags = [...(level.challengeTags ?? []), `Par ≤${level.parTiles} tiles`];
+    this.bannerChallengesEl.innerHTML = tags
+      .map((tag) => `<span class="challenge-chip">${tag}</span>`)
+      .join('');
     this.bannerSpecEl.textContent = `Specification: ${level.specRef}`;
     this.populateLevelDropdown();
     this.updateHeaderButtons();
+  }
+
+  private computeStarsEarned(): number {
+    const lvl = LEVELS[this.currentLevelIdx];
+    const tilesUsed = this.grid.countPlayerTiles();
+    const pptStatuses = this.sim.getPrecipitateQuotaStatus();
+    const drains = this.grid.getDrains().filter((d) => d.kind !== 'waste');
+    const allHighPurity =
+      pptStatuses.every((s) => s.purity >= 98) && drains.every((d) => d.getPurity() >= 98);
+    if (allHighPurity && tilesUsed <= lvl.parTiles) {
+      return this.hintUsedOnLevel ? 2 : 3;
+    }
+    return 1;
   }
 
   private handleSimStatusChange(status: SimStatus): void {
@@ -170,12 +215,18 @@ class PrecipitationPlumberGame {
 
     if (status === 'won') {
       const lvl = LEVELS[this.currentLevelIdx];
+      const stars = this.computeStarsEarned();
+      const tilesUsed = this.grid.countPlayerTiles();
       this.solvedIds.add(lvl.id);
+      this.starsByLevel[lvl.id] = Math.max(this.starsByLevel[lvl.id] ?? 0, stars);
       this.saveSolvedState();
       this.populateLevelDropdown();
 
       this.modal.showOutcome(this.sim, lvl, {
         hasNextLevel: this.currentLevelIdx < LEVELS.length - 1,
+        starsEarned: stars,
+        tilesUsed,
+        hintUsed: this.hintUsedOnLevel,
         onNextLevel: () => this.loadLevel(this.currentLevelIdx + 1),
         onRetryFlow: () => this.sim.reset(),
       });
@@ -297,6 +348,7 @@ class PrecipitationPlumberGame {
     });
 
     document.getElementById('btn-hint')?.addEventListener('click', () => {
+      this.hintUsedOnLevel = true;
       const lvl = LEVELS[this.currentLevelIdx];
       this.inspectionHUD.pushEvents([
         {
@@ -430,8 +482,9 @@ class PrecipitationPlumberGame {
   private refreshSplashProgress(): void {
     const total = LEVELS.length;
     const done = LEVELS.filter((l) => this.solvedIds.has(l.id)).length;
+    const totalStars = LEVELS.reduce((acc, l) => acc + (this.starsByLevel[l.id] ?? 0), 0);
     const el = document.getElementById('splash-progress');
-    if (el) el.textContent = `Labs passed: ${done} of ${total}`;
+    if (el) el.textContent = `Labs passed: ${done} of ${total} · ★ ${totalStars} / ${total * 3}`;
     const play = document.getElementById('splash-play');
     if (play) play.textContent = done > 0 ? 'Continue' : 'Play';
   }

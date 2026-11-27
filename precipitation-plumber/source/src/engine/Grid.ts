@@ -4,11 +4,14 @@ import {
   directionVector,
   DrainTile,
   EmptyTile,
+  HazardTile,
   oppositeDirection,
   SourceTile,
   Tile,
 } from '../entities/Tile';
 import { FilterTile } from '../entities/FilterTile';
+import { InjectorTile } from '../entities/InjectorTile';
+import { PipeTile } from '../entities/PipeTile';
 
 export class Grid {
   public readonly cols: number;
@@ -46,6 +49,40 @@ export class Grid {
         this.cells[drn.y][drn.x] = new DrainTile(drn);
       }
     }
+
+    for (const obs of level.obstacles ?? []) {
+      if (this.inBounds(obs.x, obs.y)) {
+        this.cells[obs.y][obs.x] = new HazardTile(obs.x, obs.y, obs.label ?? 'Bench Pillar');
+      }
+    }
+
+    for (const lock of level.lockedTiles ?? []) {
+      if (!this.inBounds(lock.x, lock.y)) continue;
+      if (lock.kind === 'pipe') {
+        this.cells[lock.y][lock.x] = new PipeTile(lock.variant, lock.x, lock.y, lock.rotation, true);
+      } else if (lock.kind === 'injector') {
+        this.cells[lock.y][lock.x] = new InjectorTile(
+          lock.reagent,
+          lock.x,
+          lock.y,
+          lock.rotation,
+          true
+        );
+      } else if (lock.kind === 'filter') {
+        this.cells[lock.y][lock.x] = new FilterTile(lock.x, lock.y, lock.rotation, true);
+      }
+    }
+  }
+
+  public countPlayerTiles(): number {
+    let count = 0;
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
+        const t = this.cells[y][x];
+        if (!t.fixed && t.category !== 'empty') count += 1;
+      }
+    }
+    return count;
   }
 
   public inBounds(x: number, y: number): boolean {

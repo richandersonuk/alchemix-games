@@ -70,47 +70,92 @@ export class ChemistryEngine {
         }
       }
 
-      // Aluminium amphoteric logic: dropwise -> Al(OH)3(s); excess -> [Al(OH)4]-(aq)
-      const alIonAmt = consumeIon('Al3+');
-      if (alIonAmt > 0) {
-        if (naohStrength >= 2) {
-          addIon('[Al(OH)4]-', alIonAmt);
-          events.push({
-            summary: `Excess NaOH: Al³⁺ formed amphoteric Al(OH)₃ and immediately redissolved into clear [Al(OH)₄]⁻(aq)!`,
-            equation: 'Al³⁺(aq) + 4OH⁻(aq) → [Al(OH)₄]⁻(aq)',
-            severity: 'reaction',
-          });
-        } else {
-          addPrecipitate('Al(OH)3', alIonAmt);
-          events.push({
-            summary: `White precipitate Al(OH)₃(s) formed (dropwise NaOH).`,
-            equation: PRECIPITATE_DATA['Al(OH)3'].equation,
-            severity: 'reaction',
-          });
-        }
-      }
+      // Amphoteric hydroxides: Al3+ and Pb2+, plus Cr3+ redissolution in excess NaOH
+      const amphotericConfigs: Array<{
+        ion: IonId;
+        ppt: PrecipitateId;
+        complex: IonId;
+        label: string;
+        pptFormula: string;
+        complexFormula: string;
+        directEq: string;
+        redissolveEq: string;
+      }> = [
+        {
+          ion: 'Al3+',
+          ppt: 'Al(OH)3',
+          complex: '[Al(OH)4]-',
+          label: 'Al³⁺',
+          pptFormula: 'Al(OH)₃(s)',
+          complexFormula: '[Al(OH)₄]⁻(aq)',
+          directEq: 'Al³⁺(aq) + 4OH⁻(aq) → [Al(OH)₄]⁻(aq)',
+          redissolveEq: 'Al(OH)₃(s) + OH⁻(aq) → [Al(OH)₄]⁻(aq)',
+        },
+        {
+          ion: 'Pb2+',
+          ppt: 'Pb(OH)2',
+          complex: '[Pb(OH)4]2-',
+          label: 'Pb²⁺',
+          pptFormula: 'Pb(OH)₂(s)',
+          complexFormula: '[Pb(OH)₄]²⁻(aq)',
+          directEq: 'Pb²⁺(aq) + 4OH⁻(aq) → [Pb(OH)₄]²⁻(aq)',
+          redissolveEq: 'Pb(OH)₂(s) + 2OH⁻(aq) → [Pb(OH)₄]²⁻(aq)',
+        },
+        {
+          ion: 'Cr3+',
+          ppt: 'Cr(OH)3',
+          complex: '[Cr(OH)6]3-',
+          label: 'Cr³⁺',
+          pptFormula: 'Cr(OH)₃(s)',
+          complexFormula: '[Cr(OH)₆]³⁻(aq)',
+          directEq: 'Cr³⁺(aq) + 6OH⁻(aq) → [Cr(OH)₆]³⁻(aq)',
+          redissolveEq: 'Cr(OH)₃(s) + 3OH⁻(aq) → [Cr(OH)₆]³⁻(aq)',
+        },
+      ];
 
-      // Redissolve existing Al(OH)3(s) if now in excess NaOH!
-      if (naohStrength >= 2) {
-        const existingAlPpt = consumePrecipitate('Al(OH)3');
-        if (existingAlPpt > 0) {
-          addIon('[Al(OH)4]-', existingAlPpt);
-          events.push({
-            summary: `Amphoteric redissolution! White Al(OH)₃(s) dissolved in excess NaOH; any Mg(OH)₂(s) stays insoluble.`,
-            equation: 'Al(OH)₃(s) + OH⁻(aq) → [Al(OH)₄]⁻(aq)',
-            severity: 'reaction',
-          });
+      for (const cfg of amphotericConfigs) {
+        const ionAmt = consumeIon(cfg.ion);
+        if (ionAmt > 0) {
+          if (naohStrength >= 2) {
+            addIon(cfg.complex, ionAmt);
+            events.push({
+              summary: `Excess NaOH: ${cfg.label} formed ${cfg.pptFormula} and immediately redissolved into ${cfg.complexFormula}!`,
+              equation: cfg.directEq,
+              severity: 'reaction',
+            });
+          } else {
+            addPrecipitate(cfg.ppt, ionAmt);
+            events.push({
+              summary: `${PRECIPITATE_DATA[cfg.ppt].markSchemeColor}: ${cfg.pptFormula} formed (dropwise NaOH).`,
+              equation: PRECIPITATE_DATA[cfg.ppt].equation,
+              severity: 'reaction',
+            });
+          }
+        }
+
+        if (naohStrength >= 2) {
+          const existingPpt = consumePrecipitate(cfg.ppt);
+          if (existingPpt > 0) {
+            addIon(cfg.complex, existingPpt);
+            events.push({
+              summary: `Excess NaOH redissolution! ${cfg.pptFormula} dissolved into ${cfg.complexFormula}.`,
+              equation: cfg.redissolveEq,
+              severity: 'reaction',
+            });
+          }
         }
       }
     } else if (reagent === 'NH3_dilute' || reagent === 'NH3_conc') {
       // Introduces flame-clean NH4+(aq)
       addIon('NH4+', 1.2 * packet.volume);
 
-      // Precipitates Fe2+, Fe3+, Al3+, Mg2+ (NOT Ca2+!)
+      // Precipitates Fe2+, Fe3+, Al3+, Pb2+, Cr3+, Mg2+ (NOT Ca2+!)
       const nh3PrecipPairs: Array<[IonId, PrecipitateId]> = [
         ['Fe2+', 'Fe(OH)2'],
         ['Fe3+', 'Fe(OH)3'],
         ['Al3+', 'Al(OH)3'],
+        ['Pb2+', 'Pb(OH)2'],
+        ['Cr3+', 'Cr(OH)3'],
         ['Mg2+', 'Mg(OH)2'],
       ];
 
@@ -207,6 +252,15 @@ export class ChemistryEngine {
       }
     } else if (reagent === 'HCl') {
       // Introduces Cl-(aq)!
+      const pbAmt = consumeIon('Pb2+');
+      if (pbAmt > 0) {
+        addPrecipitate('PbCl2', pbAmt);
+        events.push({
+          summary: `White precipitate PbCl₂(s) formed with chloride ions.`,
+          equation: PRECIPITATE_DATA.PbCl2.equation,
+          severity: 'reaction',
+        });
+      }
       addIon('Cl-', 1.0 * packet.volume);
 
       const co3Amt = consumeIon('CO3_2-');
@@ -225,6 +279,8 @@ export class ChemistryEngine {
         ['Fe(OH)2', 'Fe2+'],
         ['Fe(OH)3', 'Fe3+'],
         ['Al(OH)3', 'Al3+'],
+        ['Pb(OH)2', 'Pb2+'],
+        ['Cr(OH)3', 'Cr3+'],
         ['Mg(OH)2', 'Mg2+'],
         ['Ca(OH)2', 'Ca2+'],
         ['BaCO3', 'Ba2+'],
@@ -296,6 +352,15 @@ export class ChemistryEngine {
       }
     } else if (reagent === 'BaCl2') {
       // Acidified BaCl2 (with dilute HCl)
+      const pbAmt = consumeIon('Pb2+');
+      if (pbAmt > 0) {
+        addPrecipitate('PbCl2', pbAmt);
+        events.push({
+          summary: `White precipitate PbCl₂(s) formed from Cl⁻ in acidified BaCl₂.`,
+          equation: PRECIPITATE_DATA.PbCl2.equation,
+          severity: 'reaction',
+        });
+      }
       addIon('Cl-', 1.2 * packet.volume);
 
       const co3Amt = consumeIon('CO3_2-');
@@ -320,6 +385,30 @@ export class ChemistryEngine {
         // Excess unreacted Ba2+ remains if injected into sulfate-free stream
         addIon('Ba2+', 0.8 * packet.volume);
       }
+    } else if (reagent === 'KI') {
+      addIon('K+', 1.2 * packet.volume);
+
+      const pbAmt = consumeIon('Pb2+');
+      if (pbAmt > 0) {
+        addPrecipitate('PbI2', pbAmt);
+        events.push({
+          summary: `Bright yellow precipitate PbI₂(s) formed ("Golden Rain" test)!`,
+          equation: PRECIPITATE_DATA.PbI2.equation,
+          severity: 'reaction',
+        });
+      } else {
+        const agAmt = consumeIon('Ag+');
+        if (agAmt > 0) {
+          addPrecipitate('AgI', agAmt);
+          events.push({
+            summary: `Yellow precipitate AgI(s) formed.`,
+            equation: PRECIPITATE_DATA.AgI.equation,
+            severity: 'reaction',
+          });
+        } else {
+          addIon('I-', 1.0 * packet.volume);
+        }
+      }
     }
 
     if (!packet.hasPrecipitates()) {
@@ -330,7 +419,7 @@ export class ChemistryEngine {
     return events;
   }
 
-  public applyFilter(packet: FluidPacket, filter: FilterTile): ReactionEvent[] {
+  public applyFilter(packet: FluidPacket, filter: FilterTile, minPurity = 90): ReactionEvent[] {
     const events: ReactionEvent[] = [];
     const retainedNames: string[] = [];
 
@@ -347,15 +436,15 @@ export class ChemistryEngine {
 
     if (retainedNames.length > 0) {
       const dom = filter.getDominantPrecipitate();
-      if (dom.purity < 90) {
+      if (dom.purity < minPurity) {
         events.push({
-          summary: `CO-PRECIPITATION WARNING: Filter Bed (${filter.x},${filter.y}) trapped mixed solids (${retainedNames.join(' + ')}) — purity ${dom.purity}% (<90%)!`,
+          summary: `CO-PRECIPITATION WARNING: Filter Bed (${filter.x + 1},${filter.y + 1}) trapped mixed solids (${retainedNames.join(' + ')}) — purity ${dom.purity}% (<${minPurity}%)!`,
           equation: 'Separate ions selectively before filtration',
           severity: 'error',
         });
       } else {
         events.push({
-          summary: `Filter Bed (${filter.x},${filter.y}) isolated pure ${retainedNames.join(', ')}; clear supernatant flows onward.`,
+          summary: `Filter Bed (${filter.x + 1},${filter.y + 1}) isolated pure ${retainedNames.join(', ')}; clear supernatant flows onward.`,
           equation: `${retainedNames[0]} retained (${dom.purity}% purity)`,
           severity: 'reaction',
         });

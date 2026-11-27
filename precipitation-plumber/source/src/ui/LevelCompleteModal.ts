@@ -6,6 +6,9 @@ export interface ModalActions {
   onNextLevel: () => void;
   onRetryFlow: () => void;
   hasNextLevel: boolean;
+  starsEarned?: number;
+  tilesUsed?: number;
+  hintUsed?: boolean;
 }
 
 export class LevelCompleteModal {
@@ -27,6 +30,7 @@ export class LevelCompleteModal {
     actions: ModalActions
   ): void {
     const won = sim.status === 'won';
+    const minPurity = level.minPurity ?? 90;
     const pptStatuses = sim.getPrecipitateQuotaStatus();
     const drains = sim.grid.getDrains().filter((d) => d.kind !== 'waste');
 
@@ -37,14 +41,14 @@ export class LevelCompleteModal {
           <tr>
             <td><strong>${meta.formula}</strong> (${meta.markSchemeColor.split('(')[0].trim()})</td>
             <td>${st.collectedAmount.toFixed(1)} / ${st.requiredAmount}</td>
-            <td style="color:${st.purity >= 90 && st.met ? '#6ee7b7' : '#fda4af'};font-weight:700;">
+            <td style="color:${st.purity >= minPurity && st.met ? '#6ee7b7' : '#fda4af'};font-weight:700;">
               ${st.purity}% ${st.met ? '✓ PASS' : '✗'}
             </td>
           </tr>
         `;
       }),
       ...drains.map((d) => {
-        const met = d.isQuotaMet();
+        const met = d.isQuotaMet(minPurity);
         const p = d.getPurity();
         return `
           <tr>
@@ -58,17 +62,31 @@ export class LevelCompleteModal {
       }),
     ].join('');
 
+    const stars = actions.starsEarned ?? 1;
+    const starDisplay = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+    const tilesUsed = actions.tilesUsed ?? sim.grid.countPlayerTiles();
+    const parHtml = won
+      ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:rgba(15,23,42,0.7);border:1px solid rgba(56,189,248,0.25);">
+           <span style="font-size:1.35rem;color:#fbbf24;letter-spacing:0.12em;">${starDisplay}</span>
+           <span style="font-size:0.88rem;color:#cbd5e1;">
+             Tiles: <strong style="color:${tilesUsed <= level.parTiles ? '#6ee7b7' : '#fde68a'};">${tilesUsed}</strong> / ${level.parTiles} par
+             · ${actions.hintUsed ? 'Hint used' : 'No hint'}
+           </span>
+         </div>`
+      : '';
+
     this.modalEl.innerHTML = `
       <div class="modal-panel">
         <div class="modal-title" style="color:${won ? '#34d399' : '#fb7185'};">
           ${won ? '🏆 QUALITATIVE SEPARATION VERIFIED!' : '⚠️ SEPARATION HAZARD DETECTED'}
         </div>
+        ${parHtml}
         <div style="font-size:1.000rem;color:#cbd5e1;line-height:1.5;">
           ${
             won
-              ? `Full GCSE practical marks awarded on <strong>${level.code}: ${level.title}</strong>! Every target ion and precipitate met the ≥90% purity threshold.`
+              ? `Practical marks awarded on <strong>${level.code}: ${level.title}</strong>! Every target ion and precipitate met the ≥${minPurity}% purity threshold.`
               : sim.failureReason ??
-                'One or more recovery vessels fell below the required yield or 90% purity standard.'
+                `One or more recovery vessels fell below the required yield or ${minPurity}% purity standard.`
           }
         </div>
 
@@ -153,7 +171,8 @@ export class LevelCompleteModal {
             <thead><tr><th>Statement</th><th>What to know</th></tr></thead>
             <tbody>
               <tr><td>3.3(a) amphoteric Al³⁺</td><td>White Al(OH)₃ forms with a little OH⁻ and redissolves in excess NaOH to form colourless [Al(OH)₄]⁻. Mg(OH)₂ does not.</td></tr>
-              <tr><td>3.4(j) Fe²⁺, Fe³⁺, Cu²⁺ with OH⁻</td><td>Small amounts and excess OH⁻ are required. The hydroxides of these ions are insoluble in excess NaOH.</td></tr>
+              <tr><td>3.3(a),(i) Pb²⁺(aq)</td><td>White Pb(OH)₂ redissolves in excess NaOH to [Pb(OH)₄]²⁻. With Cl⁻ → white PbCl₂(s); with I⁻ (KI) → bright yellow PbI₂(s).</td></tr>
+              <tr><td>3.4(j) Fe²⁺, Fe³⁺, Cu²⁺, Cr³⁺</td><td>Fe(OH)₂, Fe(OH)₃, Cu(OH)₂ stay insoluble in excess OH⁻; green Cr³⁺ forms grey-green Cr(OH)₃, dissolving in excess NaOH to emerald [Cr(OH)₆]³⁻.</td></tr>
               <tr><td>3.4(f) copper complexes</td><td>Pale blue [Cu(H₂O)₆]²⁺ becomes deep blue [Cu(NH₃)₄(H₂O)₂]²⁺ with excess ammonia.</td></tr>
             </tbody>
           </table>

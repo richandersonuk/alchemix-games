@@ -152,7 +152,8 @@ export class FluidSimulator {
           }
         } else if (tile instanceof FilterTile) {
           const hadSolids = pkt.hasPrecipitates();
-          const events = this.chemistry.applyFilter(pkt, tile);
+          const minPurity = this.level.minPurity ?? 90;
+          const events = this.chemistry.applyFilter(pkt, tile, minPurity);
           if (events.length > 0) {
             this.callbacks.onReactionEvents?.(events);
           }
@@ -162,17 +163,21 @@ export class FluidSimulator {
         } else if (tile instanceof PipeTile) {
           // Check unfiltered precipitate clogging standard pipes!
           if (pkt.hasPrecipitates()) {
+            const maxPipes = this.level.maxSlurryPipes ?? 2;
             pkt.slurrySteps += 1;
-            tile.sludgeLoad = Math.min(1, Math.max(tile.sludgeLoad, pkt.slurrySteps / 2.5));
+            tile.sludgeLoad = Math.min(
+              1,
+              Math.max(tile.sludgeLoad, pkt.slurrySteps / (maxPipes + 0.6))
+            );
 
-            if (pkt.slurrySteps >= 3) {
+            if (pkt.slurrySteps > maxPipes) {
               const domPpt = pkt.getDominantPrecipitate();
               const pptLabel = domPpt ? PRECIPITATE_DATA[domPpt].formula : 'precipitate';
               tile.ruptured = true;
               tile.clogPrecipitate = domPpt;
               this.spillLocation = { x: tile.x, y: tile.y, color: pkt.colorHex };
               this.triggerFailure(
-                `PIPE RUPTURE at (${tile.x + 1}, ${tile.y + 1}): Unfiltered ${pptLabel} settled and clogged a standard pipe! Place a Filter Bed (or redissolving reagent) within 2 pipe tiles of precipitation.`
+                `PIPE RUPTURE at (${tile.x + 1}, ${tile.y + 1}): Unfiltered ${pptLabel} settled and clogged a standard pipe! Place a Filter Bed (or redissolving reagent) within ${maxPipes} pipe tile${maxPipes === 1 ? '' : 's'} of precipitation.`
               );
               this.callbacks.onSoundEffect?.('rupture');
               return;
@@ -279,6 +284,7 @@ export class FluidSimulator {
   }> {
     const filters = this.grid.getFilters();
     const usedFilters = new Set<FilterTile>();
+    const minPurity = this.level.minPurity ?? 90;
 
     return this.level.precipitateQuotas.map((q) => {
       let bestFilter: FilterTile | null = null;
@@ -312,20 +318,22 @@ export class FluidSimulator {
         requiredAmount: q.requiredAmount,
         collectedAmount: amount,
         purity,
-        met: amount + 0.01 >= q.requiredAmount && purity >= 90,
+        met: amount + 0.01 >= q.requiredAmount && purity >= minPurity,
         filterCoord: { x: bestFilter.x, y: bestFilter.y },
       };
     });
   }
 
   private evaluateFinalOutcome(): void {
+    const minPurity = this.level.minPurity ?? 90;
+
     // 1. Check any co-contaminated filter beds first
     for (const f of this.grid.getFilters()) {
       const dom = f.getDominantPrecipitate();
-      if (dom.id && dom.purity < 90) {
+      if (dom.id && dom.purity < minPurity) {
         this.callbacks.onSoundEffect?.('fail');
         this.triggerFailure(
-          `CROSS-CONTAMINATION on Filter Bed (${f.x + 1}, ${f.y + 1}): Mixed precipitates captured together (${dom.purity}% purity; ≥90% required).`
+          `CROSS-CONTAMINATION on Filter Bed (${f.x + 1}, ${f.y + 1}): Mixed precipitates captured together (${dom.purity}% purity; ≥${minPurity}% required).`
         );
         return;
       }
@@ -341,9 +349,9 @@ export class FluidSimulator {
           this.triggerFailure(
             `MISSING ISOLATION: No ${formula} was recovered on a Filter Bed! Inject the appropriate reagent and filter the precipitate.`
           );
-        } else if (st.purity < 90) {
+        } else if (st.purity < minPurity) {
           this.triggerFailure(
-            `IMPURE PRECIPITATE: ${formula} purity was ${st.purity}% (≥90% required). Prevent co-precipitation or redissolve interfering solids first!`
+            `IMPURE PRECIPITATE: ${formula} purity was ${st.purity}% (≥${minPurity}% required). Prevent co-precipitation or redissolve interfering solids first!`
           );
         } else {
           this.triggerFailure(
@@ -354,19 +362,28 @@ export class FluidSimulator {
       }
     }
 
-    // 3. Check all fixed DrainTile quotas
+    // 3. Check all fixed DrainTile quotas (including waste sinks for solid contamination)
     for (const drn of this.grid.getDrains()) {
-      if (drn.kind === 'waste') continue;
+      if (drn.kind === 'waste') {
+        if (drn.getTotalSolidContamination() > 0.01) {
+          this.callbacks.onSoundEffect?.('fail');
+          this.triggerFailure(
+            `HAZARD VIOLATION at ${drn.label}: Unfiltered solid precipitate entered the Waste Sink! Place a Filter Bed before disposal.`
+          );
+          return;
+        }
+        continue;
+      }
       const reason = drn.getContaminationReason();
-      if (reason || drn.getPurity() < 90) {
+      if (reason || drn.getPurity() < minPurity) {
         this.callbacks.onSoundEffect?.('fail');
         this.triggerFailure(
           reason ??
-            `CROSS-CONTAMINATION at ${drn.label}: Purity ${drn.getPurity()}% is below the 90% GCSE recovery standard.`
+            `CROSS-CONTAMINATION at ${drn.label}: Purity ${drn.getPurity()}% is below the ${minPurity}% recovery standard.`
         );
         return;
       }
-      if (!drn.isQuotaMet()) {
+      if (!drn.isQuotaMet(minPurity)) {
         this.callbacks.onSoundEffect?.('fail');
         this.triggerFailure(
           `INCOMPLETE RECOVERY at ${drn.label}: Delivered ${drn.getCollectedTargetAmount().toFixed(1)} / ${drn.requiredAmount} required units.`

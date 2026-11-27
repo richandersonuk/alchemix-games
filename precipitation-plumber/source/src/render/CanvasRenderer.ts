@@ -12,6 +12,7 @@ import { PipeTile } from '../entities/PipeTile';
 import {
   directionVector,
   DrainTile,
+  HazardTile,
   SourceTile,
   Tile,
 } from '../entities/Tile';
@@ -187,7 +188,27 @@ export class CanvasRenderer {
     } else if (tile instanceof SourceTile) {
       this.drawSourceTile(tile, px, py);
     } else if (tile instanceof DrainTile) {
-      this.drawDrainTile(tile, px, py);
+      this.drawDrainTile(tile, px, py, sim.level.minPurity ?? 90);
+    } else if (tile instanceof HazardTile) {
+      this.drawHazardTile(tile, px, py);
+    }
+
+    if (
+      tile.fixed &&
+      (tile instanceof PipeTile || tile instanceof InjectorTile || tile instanceof FilterTile)
+    ) {
+      ctx.fillStyle = '#f59e0b';
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.2;
+      this.roundRect(px + this.cellSize - 22, py + 5, 16, 12, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = '700 9px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('LK', px + this.cellSize - 14, py + 11);
+      ctx.textBaseline = 'alphabetic';
     }
 
     // Draw port connection flanges
@@ -492,7 +513,48 @@ export class CanvasRenderer {
     this.wrapText(tile.label, cx, py + this.cellSize - 17, this.cellSize - 4, 13);
   }
 
-  private drawDrainTile(tile: DrainTile, px: number, py: number): void {
+  private drawHazardTile(tile: HazardTile, px: number, py: number): void {
+    const ctx = this.ctx;
+    const cx = px + this.cellSize / 2;
+    const cy = py + this.cellSize / 2;
+    const pad = 6;
+    const w = this.cellSize - pad * 2;
+    const h = this.cellSize - pad * 2;
+
+    ctx.fillStyle = '#111827';
+    ctx.strokeStyle = 'rgba(245, 158, 11, 0.55)';
+    ctx.lineWidth = 2;
+    this.roundRect(px + pad, py + pad, w, h, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // Caution diagonal stripes clipped inside pillar block
+    ctx.save();
+    this.roundRect(px + pad + 2, py + pad + 2, w - 4, h - 4, 6);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(245, 158, 11, 0.22)';
+    ctx.lineWidth = 7;
+    for (let d = -h; d < w + h; d += 18) {
+      ctx.beginPath();
+      ctx.moveTo(px + pad + d, py + pad);
+      ctx.lineTo(px + pad + d - h, py + pad + h);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    this.roundRect(cx - 26, cy - 11, 52, 22, 5);
+    ctx.fill();
+
+    ctx.fillStyle = '#fcd34d';
+    ctx.font = '700 10.5px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(tile.label === 'Bench Pillar' ? 'PILLAR' : tile.label.slice(0, 8).toUpperCase(), cx, cy);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  private drawDrainTile(tile: DrainTile, px: number, py: number, minPurity = 90): void {
     const ctx = this.ctx;
     const cx = px + this.cellSize / 2;
     const boxTop = py + 6;
@@ -502,10 +564,13 @@ export class CanvasRenderer {
     const edge = this.portEdgePoint(px, py, tile.inDir);
     this.drawGlassSegment(px + this.cellSize / 2, py + this.cellSize / 2, edge.x, edge.y);
 
-    const met = tile.isQuotaMet();
+    const met = tile.kind === 'waste'
+      ? tile.packetsReceived > 0 && tile.getTotalSolidContamination() <= 0.01
+      : tile.isQuotaMet(minPurity);
+    const hasWasteSolids = tile.kind === 'waste' && tile.getTotalSolidContamination() > 0.01;
 
     ctx.fillStyle = '#0d1b32';
-    ctx.strokeStyle = met ? '#10b981' : '#38bdf8';
+    ctx.strokeStyle = hasWasteSolids ? '#f43f5e' : met ? '#10b981' : '#38bdf8';
     ctx.lineWidth = 2.4;
     this.roundRect(px + 8, boxTop, this.cellSize - 16, boxH, 10);
     ctx.fill();
@@ -557,6 +622,20 @@ export class CanvasRenderer {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(cloudy > 0.2 ? 'CLOUDY' : 'clear', cx, cy + 3);
+      ctx.textBaseline = 'alphabetic';
+    } else if (tile.kind === 'waste') {
+      ctx.fillStyle = hasWasteSolids ? 'rgba(244, 63, 94, 0.28)' : 'rgba(15, 23, 42, 0.85)';
+      ctx.strokeStyle = hasWasteSolids ? '#f43f5e' : 'rgba(148, 163, 184, 0.55)';
+      ctx.lineWidth = 1.5;
+      this.roundRect(cx - 18, cy - 12, 36, 30, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = hasWasteSolids ? '#fda4af' : '#cbd5e1';
+      ctx.font = '700 10.5px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(hasWasteSolids ? 'SLUDGE' : 'SINK', cx, cy + 3);
       ctx.textBaseline = 'alphabetic';
     } else {
       const fillRatio = Math.min(

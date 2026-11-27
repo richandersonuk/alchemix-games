@@ -5,6 +5,8 @@ export type IonId =
   | 'Fe2+'
   | 'Fe3+'
   | 'Al3+'
+  | 'Pb2+'
+  | 'Cr3+'
   | 'Mg2+'
   | 'Ca2+'
   | 'Li+'
@@ -14,6 +16,8 @@ export type IonId =
   | 'Ba2+'
   | 'Ag+'
   | '[Al(OH)4]-'
+  | '[Pb(OH)4]2-'
+  | '[Cr(OH)6]3-'
   | '[Cu(NH3)4]2+'
   | '[Ag(NH3)2]+'
   | 'Cl-'
@@ -28,11 +32,15 @@ export type PrecipitateId =
   | 'Fe(OH)2'
   | 'Fe(OH)3'
   | 'Al(OH)3'
+  | 'Pb(OH)2'
+  | 'Cr(OH)3'
   | 'Mg(OH)2'
   | 'Ca(OH)2'
   | 'AgCl'
   | 'AgBr'
   | 'AgI'
+  | 'PbCl2'
+  | 'PbI2'
   | 'BaSO4'
   | 'BaCO3';
 
@@ -45,7 +53,8 @@ export type ReagentId =
   | 'NH3_conc'
   | 'AgNO3'
   | 'BaCl2'
-  | 'HCl';
+  | 'HCl'
+  | 'KI';
 
 export interface IonMetadata {
   id: IonId;
@@ -116,6 +125,20 @@ export const ION_DATA: Record<IonId, IonMetadata> = {
     name: 'Aluminium ion',
     chargeType: 'cation',
     aqueousColor: null,
+  },
+  'Pb2+': {
+    id: 'Pb2+',
+    formula: 'Pb²⁺(aq)',
+    name: 'Lead(II) ion',
+    chargeType: 'cation',
+    aqueousColor: null,
+  },
+  'Cr3+': {
+    id: 'Cr3+',
+    formula: 'Cr³⁺(aq)',
+    name: 'Chromium(III) ion',
+    chargeType: 'cation',
+    aqueousColor: '#34d399',
   },
   'Mg2+': {
     id: 'Mg2+',
@@ -210,6 +233,20 @@ export const ION_DATA: Record<IonId, IonMetadata> = {
     name: 'Tetrahydroxoaluminate(III)',
     chargeType: 'complex',
     aqueousColor: null,
+  },
+  '[Pb(OH)4]2-': {
+    id: '[Pb(OH)4]2-',
+    formula: '[Pb(OH)₄]²⁻(aq)',
+    name: 'Tetrahydroxoplumbate(II)',
+    chargeType: 'complex',
+    aqueousColor: null,
+  },
+  '[Cr(OH)6]3-': {
+    id: '[Cr(OH)6]3-',
+    formula: '[Cr(OH)₆]³⁻(aq)',
+    name: 'Hexahydroxochromate(III)',
+    chargeType: 'complex',
+    aqueousColor: '#059669',
   },
   '[Cu(NH3)4]2+': {
     id: '[Cu(NH3)4]2+',
@@ -309,6 +346,24 @@ export const PRECIPITATE_DATA: Record<PrecipitateId, PrecipitateMetadata> = {
     accentHex: '#cbd5e1',
     equation: 'Al³⁺(aq) + 3OH⁻(aq) → Al(OH)₃(s)',
   },
+  'Pb(OH)2': {
+    id: 'Pb(OH)2',
+    formula: 'Pb(OH)₂(s)',
+    name: 'Lead(II) hydroxide',
+    markSchemeColor: 'White precipitate (amphoteric — redissolves in excess NaOH)',
+    colorHex: '#f8fafc',
+    accentHex: '#cbd5e1',
+    equation: 'Pb²⁺(aq) + 2OH⁻(aq) → Pb(OH)₂(s)',
+  },
+  'Cr(OH)3': {
+    id: 'Cr(OH)3',
+    formula: 'Cr(OH)₃(s)',
+    name: 'Chromium(III) hydroxide',
+    markSchemeColor: 'Grey-green precipitate (redissolves in excess NaOH)',
+    colorHex: '#65a30d',
+    accentHex: '#bef264',
+    equation: 'Cr³⁺(aq) + 3OH⁻(aq) → Cr(OH)₃(s)',
+  },
   'Mg(OH)2': {
     id: 'Mg(OH)2',
     formula: 'Mg(OH)₂(s)',
@@ -353,6 +408,24 @@ export const PRECIPITATE_DATA: Record<PrecipitateId, PrecipitateMetadata> = {
     colorHex: '#facc15',
     accentHex: '#fef08a',
     equation: 'Ag⁺(aq) + I⁻(aq) → AgI(s)',
+  },
+  PbCl2: {
+    id: 'PbCl2',
+    formula: 'PbCl₂(s)',
+    name: 'Lead(II) chloride',
+    markSchemeColor: 'White precipitate',
+    colorHex: '#f1f5f9',
+    accentHex: '#cbd5e1',
+    equation: 'Pb²⁺(aq) + 2Cl⁻(aq) → PbCl₂(s)',
+  },
+  PbI2: {
+    id: 'PbI2',
+    formula: 'PbI₂(s)',
+    name: 'Lead(II) iodide',
+    markSchemeColor: 'Bright yellow precipitate',
+    colorHex: '#eab308',
+    accentHex: '#fef08a',
+    equation: 'Pb²⁺(aq) + 2I⁻(aq) → PbI₂(s)',
   },
   BaSO4: {
     id: 'BaSO4',
@@ -436,7 +509,16 @@ export const REAGENT_DATA: Record<ReagentId, ReagentMetadata> = {
     name: 'Dilute Hydrochloric Acid',
     bottleColor: '#fb7185',
     description:
-      'Reacts with CO₃²⁻ → CO₂(g)↑ effervescence (turns limewater cloudy). Warning: introduces Cl⁻ ions!',
+      'Reacts with CO₃²⁻ → CO₂(g)↑ effervescence (turns limewater cloudy), and precipitates Pb²⁺ as white PbCl₂(s). Warning: introduces Cl⁻ ions!',
+  },
+  KI: {
+    id: 'KI',
+    formula: 'KI(aq)',
+    shortLabel: 'KI',
+    name: 'Potassium Iodide',
+    bottleColor: '#eab308',
+    description:
+      'Precipitates Pb²⁺ as bright-yellow PbI₂(s) and Ag⁺ as yellow AgI(s). Introduces K⁺ and I⁻.',
   },
 };
 
