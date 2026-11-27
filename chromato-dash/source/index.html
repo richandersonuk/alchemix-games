@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0b1120" />
+    <title>Chromato-Dash: The Rf Escape | Alchemix Games</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  </head>
+  <body>
+    <div id="app-shell">
+      <header id="top-bar" aria-label="Game status bar">
+        <div class="top-left">
+          <a href="../index.html" class="icon-btn back-link" title="Back to Alchemix Arcade">◀ Arcade</a>
+          <button id="btn-cases" class="icon-btn" type="button" title="Select Forensic Case">Cases</button>
+        </div>
+        <div class="top-center">
+          <div id="case-title-pill" class="case-pill">Case 01</div>
+          <div id="spec-badge" class="spec-badge">WJEC · AQA · OCR</div>
+        </div>
+        <div class="top-right">
+          <button id="btn-mute" class="icon-btn" type="button" aria-label="Toggle sound" title="Toggle Sound">🔊</button>
+          <button id="btn-restart" class="icon-btn" type="button" aria-label="Restart case" title="Restart Case">↻</button>
+        </div>
+      </header>
+
+      <main id="stage-wrap">
+        <canvas id="plate-canvas" aria-label="Chromatography plate simulation"></canvas>
+
+        <!-- Left live Rf and mm ruler populated by MobileHUD -->
+        <aside id="rf-ruler" aria-label="Live Rf and millimeter ruler"></aside>
+
+        <!-- Top-in-stage HUD pills (Solvent progress, active dye queue, score) -->
+        <div id="hud-overlay"></div>
+
+        <!-- Beaker Pour Setup / Submersion Warning Strip -->
+        <div id="setup-panel" class="setup-panel hidden">
+          <div class="setup-readout">
+            <span class="setup-label">Reservoir Level</span>
+            <span id="reservoir-status" class="setup-value">0% (Empty)</span>
+          </div>
+          <p id="setup-hint" class="setup-hint">
+            Hold <strong>POUR SOLVENT</strong> into the green zone — never submerge the 10% Pencil Baseline!
+          </p>
+          <div class="setup-actions">
+            <button id="btn-pour-hold" class="btn-pour" type="button">HOLD TO POUR SOLVENT</button>
+            <button id="btn-auto-pour" class="btn-auto-pour" type="button">Quick Safe Fill</button>
+          </div>
+        </div>
+
+        <!-- Live Thumb Gesture Prompt -->
+        <div id="gesture-banner" class="gesture-banner">
+          Hold plate to surf Mobile Phase · Drag L/R to steer · Swipe ↑ for Capillary Burst
+        </div>
+
+        <!-- Bottom-right Thumb Controls: UV / Ninhydrin & Burst badge -->
+        <div id="uv-toggle-root"></div>
+
+        <!-- Bottom-left Solvent Shifter Pill (shown when level has >1 solvent) -->
+        <div id="solvent-shifter-root"></div>
+      </main>
+
+      <!-- Splash & Case Selector Overlay -->
+      <section id="splash-overlay" class="overlay-screen" aria-label="Chromato-Dash Start Menu">
+        <div class="splash-card">
+          <div class="splash-brand">
+            <span class="brand-chip">GCSE · KS3 CHEMISTRY</span>
+            <span class="brand-chip spec">WJEC · AQA · OCR</span>
+          </div>
+          <h1 class="splash-title">CHROMATO-DASH</h1>
+          <p class="splash-subtitle">The R<sub>f</sub> Escape — One-Thumb Separation Arcade</p>
+
+          <div class="formula-box">
+            <span class="formula-eq">R<sub>f</sub> = d<sub>spot</sub> / d<sub>solvent</sub></span>
+            <span class="formula-rule">Pencil baseline 10% · Tolerance ±0.03 R<sub>f</sub></span>
+          </div>
+
+          <div class="controls-legend">
+            <div><strong>Hold:</strong> Mobile Phase Surf</div>
+            <div><strong>Release:</strong> Adsorb &amp; Lock</div>
+            <div><strong>Drag ↔:</strong> Dodge Hazards</div>
+            <div><strong>2×Tap / UV:</strong> Locate Spots</div>
+          </div>
+
+          <div id="case-grid" class="case-grid" role="list" aria-label="Forensic Cases"></div>
+
+          <div class="splash-footer">
+            <button id="btn-play-featured" class="btn-primary" type="button">Start Next Case</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Post-Run Chromatogram & Calculation Modal -->
+      <section id="summary-modal" class="overlay-screen hidden" aria-label="Case Summary"></section>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
