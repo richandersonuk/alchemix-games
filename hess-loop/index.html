@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#060b16" />
+    <title>Hess's Loop: The Energy Switchboard | Alchemix Games</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./favicon.svg" />
+    <script type="module" crossorigin src="./assets/index-Bgkpe3Er.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-NUn-ylyW.css">
+  </head>
+  <body>
+    <div id="app-shell">
+      <!-- Zone 1: Compact Top Header (MobileHUD) -->
+      <header id="hud-header" aria-label="Switchboard navigation and target unknown"></header>
+
+      <!-- Zone 2: Live Arithmetic Equation Preview -->
+      <section id="equation-strip" aria-live="polite" aria-label="Live enthalpy equation preview"></section>
+
+      <!-- Zone 3: Portrait Interactive Switchboard Canvas -->
+      <main id="switchboard-stage">
+        <canvas
+          id="switchboard-canvas"
+          aria-label="Hess's Law thermochemical cycle switchboard"
+        ></canvas>
+        <div id="board-toast" class="board-toast hidden" role="status" aria-live="polite"></div>
+      </main>
+
+      <!-- Zone 4: Contextual Vector Inspector / Gesture Coaching Strip -->
+      <section id="vector-control-strip" aria-label="Selected vector controls"></section>
+
+      <!-- Zone 5: Fixed Thumb-Zone Energise Circuit CTA -->
+      <footer id="bottom-cta-bar"></footer>
+
+      <!-- Hero Splash Screen -->
+      <section id="splash-overlay" class="overlay-screen" aria-label="Hess's Loop Splash Screen">
+        <div class="splash-card">
+          <div class="splash-top-chips">
+            <span class="brand-chip">A-LEVEL ENERGETICS</span>
+            <span class="brand-chip spec">WJEC · AQA · OCR</span>
+          </div>
+
+          <div class="splash-emblem-wrap">
+            <svg class="splash-logo" viewBox="0 0 84 84" aria-hidden="true">
+              <rect x="6" y="6" width="72" height="72" rx="16" fill="#0b1326" stroke="#22d3ee" stroke-width="2" />
+              <line x1="20" y1="26" x2="64" y2="26" stroke="#fbbf24" stroke-width="3" stroke-dasharray="5 3" stroke-linecap="round" />
+              <polygon points="64,26 56,22 56,30" fill="#fbbf24" />
+              <line x1="20" y1="26" x2="42" y2="62" stroke="#22d3ee" stroke-width="3" stroke-linecap="round" />
+              <polygon points="42,62 34,56 41,52" fill="#22d3ee" />
+              <line x1="42" y1="62" x2="64" y2="26" stroke="#f472b6" stroke-width="3" stroke-linecap="round" />
+              <polygon points="64,26 56,31 63,35" fill="#f472b6" />
+              <circle cx="20" cy="26" r="5" fill="#0f172a" stroke="#38bdf8" stroke-width="2" />
+              <circle cx="64" cy="26" r="5" fill="#0f172a" stroke="#34d399" stroke-width="2" />
+              <circle cx="42" cy="62" r="5" fill="#0f172a" stroke="#f59e0b" stroke-width="2" />
+              <text x="42" y="42" text-anchor="middle" fill="#e2e8f0" font-family="ui-monospace, monospace" font-size="11" font-weight="700">ΣΔH=0</text>
+            </svg>
+          </div>
+
+          <h1 class="splash-title">HESS'S LOOP</h1>
+          <p class="splash-subtitle">The Energy Switchboard — Vector Cycle Puzzle</p>
+
+          <p class="splash-tagline">
+            Wire intermediate thermochemical states, flip opposing arrowheads to invert signs, scale molar coefficients, and close the loop under 298 K, 100 kPa standard states.
+          </p>
+
+          <div class="formula-box">
+            <span class="formula-eq">ΔH₁ = ΔH₂ + ΔH₃</span>
+            <span class="formula-rule">12 A-Level Cycles · Mark-Scheme Validated</span>
+          </div>
+
+          <div id="splash-progress" class="splash-progress">0 / 12 Cycles Solved · ★ 0 / 36</div>
+
+          <div class="splash-actions">
+            <button id="btn-splash-play" class="btn-primary btn-hero" type="button">▶ Start Switchboard</button>
+            <div class="splash-row-2">
+              <button id="btn-splash-cases" class="btn-secondary" type="button">📋 Select Cycle (12)</button>
+              <button id="btn-splash-guide" class="btn-secondary" type="button">📖 Data &amp; Rules</button>
+            </div>
+            <a class="btn-hub-link" href="../index.html">◀ Arcade Hub</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cycle Selector Modal -->
+      <section id="levels-modal" class="overlay-screen hidden" aria-label="Thermochemical Cycle Selector"></section>
+
+      <!-- Reference Data Booklet & Rules Modal -->
+      <section id="databook-modal" class="overlay-screen hidden" aria-label="Reference Data Booklet and Controls"></section>
+
+      <!-- Examiners' Report / Fault Diagnostics Modal -->
+      <section id="markscheme-modal" class="overlay-screen hidden" aria-label="Mark Scheme Report"></section>
+    </div>
+
+  </body>
+</html>
