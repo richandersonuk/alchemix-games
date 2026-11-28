@@ -38,7 +38,7 @@ export class MarkSchemeModal {
         <div class="modal-card" role="dialog" aria-modal="true" aria-label="Examiners' Mark Scheme Report">
           <div class="modal-header">
             <div>
-              <div class="modal-kicker">${scenario.code} · ${scenario.examBoards.join(' / ')} MARK SCHEME</div>
+              <div class="modal-kicker">${scenario.code} · ${escapeHtml(scenario.examSource)} · MARK SCHEME</div>
               <h2 class="modal-heading">${escapeHtml(scenario.title)}</h2>
             </div>
             <span class="level-card-stars" style="font-size:16px">${starStr}</span>

@@ -5,6 +5,7 @@ import { prettifyChemText } from './MobileHUD.ts';
 export interface BottomCTACallbacks {
   onFlipSelected: () => void;
   onSetMultiplier: (multiplier: number) => void;
+  onSetTargetDivisor: (divisor: number) => void;
   onDeleteSelected: () => void;
   onEnergise: () => void;
   onHint: () => void;
@@ -28,21 +29,50 @@ export class BottomCTA {
   render(
     selectedVector: VectorArrow | null,
     circuitState: CircuitState,
-    loopReady: boolean
+    loopReady: boolean,
+    targetDivisor = 1,
+    requiredTargetMoles = 1,
+    isTargetDivisorFault = false
   ): void {
-    this.renderInspector(selectedVector);
+    this.renderInspector(selectedVector, targetDivisor, requiredTargetMoles, isTargetDivisorFault);
     this.renderCTA(circuitState, loopReady);
   }
 
-  private renderInspector(selected: VectorArrow | null): void {
+  private renderInspector(
+    selected: VectorArrow | null,
+    targetDivisor: number,
+    requiredTargetMoles: number,
+    isTargetDivisorFault: boolean
+  ): void {
+    const divisorBarHtml =
+      requiredTargetMoles > 1
+        ? `
+          <div class="target-div-bar ${isTargetDivisorFault ? 'fault' : ''}">
+            <span class="target-div-label">Target per-mole divisor (${requiredTargetMoles} mol in cycle):</span>
+            <div class="target-div-btns">
+              ${[1, 2, 3, 4]
+                .map(
+                  (d) =>
+                    `<button class="target-div-btn ${targetDivisor === d ? 'active' : ''}" data-div="${d}" type="button">÷${d}</button>`
+                )
+                .join('')}
+            </div>
+          </div>
+        `
+        : '';
+
     if (!selected) {
       this.inspectorRoot.innerHTML = `
-        <div class="coach-chips">
-          <span class="coach-chip"><strong>Drag</strong> node → node</span>
-          <span class="coach-chip"><strong>Tap</strong> arrow to flip</span>
-          <span class="coach-chip"><strong>2×Tap</strong> scale ×N</span>
+        <div class="inspector-wrap">
+          ${divisorBarHtml}
+          <div class="coach-chips">
+            <span class="coach-chip"><strong>Drag</strong> node → node</span>
+            <span class="coach-chip"><strong>Tap</strong> arrow to flip</span>
+            <span class="coach-chip"><strong>2×Tap</strong> scale ×N</span>
+          </div>
         </div>
       `;
+      this.bindDivisorButtons();
       return;
     }
 
@@ -53,6 +83,7 @@ export class BottomCTA {
 
     this.inspectorRoot.innerHTML = `
       <div class="inspector-wrap">
+        ${divisorBarHtml}
         <div class="inspector-top">
           <span class="inspector-name">${escapeHtml(prettySymbol)} · ${dirTag}</span>
           <span class="inspector-val ${dirClass}">${eff} kJ mol⁻¹</span>
@@ -80,6 +111,7 @@ export class BottomCTA {
       </div>
     `;
 
+    this.bindDivisorButtons();
     this.inspectorRoot.querySelector('#btn-vec-flip')?.addEventListener('click', () => this.callbacks.onFlipSelected());
     this.inspectorRoot.querySelector('#btn-vec-cut')?.addEventListener('click', () => this.callbacks.onDeleteSelected());
     this.inspectorRoot.querySelectorAll<HTMLButtonElement>('[data-mult]').forEach((btn) => {
@@ -92,6 +124,15 @@ export class BottomCTA {
     slider?.addEventListener('input', () => {
       const m = Number(slider.value);
       if (Number.isFinite(m)) this.callbacks.onSetMultiplier(m);
+    });
+  }
+
+  private bindDivisorButtons(): void {
+    this.inspectorRoot.querySelectorAll<HTMLButtonElement>('[data-div]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const d = Number(btn.dataset.div);
+        if (Number.isFinite(d)) this.callbacks.onSetTargetDivisor(d);
+      });
     });
   }
 

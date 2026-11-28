@@ -1,6 +1,6 @@
 export type StateSymbol = 's' | 'l' | 'g' | 'aq';
 
-export type CycleCategory = 'formation' | 'combustion' | 'hydration' | 'multistep';
+export type CycleCategory = 'calorimetry' | 'formation' | 'bond' | 'solution' | 'bornhaber';
 
 export type ExamBoard = 'WJEC' | 'AQA' | 'OCR';
 
@@ -64,9 +64,11 @@ export interface CycleScenario {
   title: string;
   category: CycleCategory;
   examBoards: ExamBoard[];
+  examSource: string;
   targetLabel: string;
   targetEquation: string;
   targetDeltaH: number;
+  targetMoles?: number;
   sourceNodeId: string;
   targetNodeId: string;
   nodes: StateNodeData[];
@@ -97,6 +99,7 @@ export interface CircuitFault {
   detail: string;
   offendingVectorId?: string;
   offendingNodeId?: string;
+  isTargetDivisorFault?: boolean;
 }
 
 export interface MarkSchemeStep {
@@ -108,6 +111,8 @@ export interface MarkSchemeStep {
 export interface EvaluationResult {
   valid: boolean;
   calculatedDeltaH: number | null;
+  routeTotalDeltaH?: number;
+  targetDivisorUsed?: number;
   netLoopDeltaH: number | null;
   thermalSign: ThermalSign;
   orderedRoute: VectorArrow[];

@@ -31,6 +31,8 @@ class HessLoopApp {
   private solvedDeltaH: number | null = null;
   private lastSuccessResult: EvaluationResult | null = null;
   private attemptsOnCurrent = 0;
+  private targetDivisor = 1;
+  private isTargetDivisorFault = false;
 
   private canvas: HTMLCanvasElement;
   private renderer: SwitchboardRenderer;
@@ -131,6 +133,7 @@ class HessLoopApp {
     this.bottomCTA = new BottomCTA(inspectorStrip, ctaBar, {
       onFlipSelected: () => this.flipSelectedVector(),
       onSetMultiplier: (mult) => this.setSelectedMultiplier(mult),
+      onSetTargetDivisor: (div) => this.setTargetDivisor(div),
       onDeleteSelected: () => this.deleteSelectedVector(),
       onEnergise: () => this.handleEnergiseClick(),
       onHint: () => {
@@ -242,6 +245,8 @@ class HessLoopApp {
     this.solvedDeltaH = null;
     this.lastSuccessResult = null;
     this.attemptsOnCurrent = 0;
+    this.targetDivisor = 1;
+    this.isTargetDivisorFault = false;
 
     if (found.prewiredIds) {
       for (const templateId of found.prewiredIds) {
@@ -274,11 +279,18 @@ class HessLoopApp {
   private refreshUI(): void {
     const rawArrows = this.vectors.map((v) => v.data);
     this.hud.renderHeader(this.scenario);
-    this.equationPreview.render(this.scenario, rawArrows);
+    this.equationPreview.render(this.scenario, rawArrows, this.targetDivisor);
 
-    const preview = buildEquationPreview(this.scenario, rawArrows);
+    const preview = buildEquationPreview(this.scenario, rawArrows, this.targetDivisor);
     const selected = this.vectors.find((v) => v.data.id === this.selectedVectorId)?.data ?? null;
-    this.bottomCTA.render(selected, this.circuitState, preview.status === 'ready');
+    this.bottomCTA.render(
+      selected,
+      this.circuitState,
+      preview.status === 'ready',
+      this.targetDivisor,
+      this.scenario.targetMoles ?? 1,
+      this.isTargetDivisorFault
+    );
   }
 
   private bindCanvasEvents(): void {
@@ -313,6 +325,21 @@ class HessLoopApp {
         hoveredNodeId: null,
       };
       this.clearSolvedOrFaultState();
+      return;
+    }
+
+    if (this.renderer.hitTestTargetBusbar(pt.x, pt.y)) {
+      if ((this.scenario.targetMoles ?? 1) > 1) {
+        const next = (this.targetDivisor % 4) + 1;
+        this.setTargetDivisor(next);
+      } else {
+        this.audio.playClick();
+        this.showToast(
+          `Unknown busbar (${this.scenario.targetLabel}): wire around via the intermediate nodes!`,
+          'info',
+          2600
+        );
+      }
       return;
     }
 
@@ -475,7 +502,16 @@ class HessLoopApp {
     this.refreshUI();
   }
 
+  private setTargetDivisor(divisor: number): void {
+    this.clearSolvedOrFaultState();
+    this.targetDivisor = divisor;
+    this.audio.playStoichTick(divisor);
+    vibrate(12);
+    this.refreshUI();
+  }
+
   private clearSolvedOrFaultState(): void {
+    this.isTargetDivisorFault = false;
     if (this.circuitState !== 'idle') {
       this.circuitState = 'idle';
       this.offendingVectorId = null;
@@ -500,7 +536,12 @@ class HessLoopApp {
 
     this.attemptsOnCurrent += 1;
     const rawArrows = this.vectors.map((v) => v.data);
-    const result = evaluateCircuit(this.scenario, rawArrows, this.attemptsOnCurrent);
+    const result = evaluateCircuit(
+      this.scenario,
+      rawArrows,
+      this.attemptsOnCurrent,
+      this.targetDivisor
+    );
 
     if (result.valid && result.calculatedDeltaH !== null) {
       const isExo = result.thermalSign === 'exothermic';
@@ -508,6 +549,7 @@ class HessLoopApp {
       this.solvedDeltaH = result.calculatedDeltaH;
       this.offendingVectorId = null;
       this.offendingNodeId = null;
+      this.isTargetDivisorFault = false;
       this.lastSuccessResult = result;
 
       this.audio.playEnergise(isExo);
@@ -532,6 +574,7 @@ class HessLoopApp {
     this.circuitState = 'fault';
     this.offendingVectorId = result.fault?.offendingVectorId ?? null;
     this.offendingNodeId = result.fault?.offendingNodeId ?? null;
+    this.isTargetDivisorFault = Boolean(result.fault?.isTargetDivisorFault);
     if (this.offendingVectorId) {
       this.selectedVectorId = this.offendingVectorId;
     }
@@ -573,6 +616,8 @@ class HessLoopApp {
         dragProbe: this.dragProbe,
         timeMs: nowMs,
         solvedDeltaH: this.solvedDeltaH,
+        targetDivisor: this.targetDivisor,
+        isTargetDivisorFault: this.isTargetDivisorFault,
       });
       window.requestAnimationFrame(tick);
     };

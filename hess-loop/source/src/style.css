@@ -959,3 +959,65 @@ body {
   font-weight: 700;
   color: var(--accent-amber);
 }
+
+.level-card-source {
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-amber);
+  opacity: 0.92;
+}
+
+.target-div-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.32);
+}
+
+.target-div-bar.fault {
+  background: rgba(251, 113, 133, 0.16);
+  border-color: rgba(251, 113, 133, 0.72);
+}
+
+.target-div-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fde68a;
+  line-height: 1.2;
+}
+
+.target-div-bar.fault .target-div-label {
+  color: #fecdd3;
+}
+
+.target-div-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.target-div-btn {
+  height: 26px;
+  min-width: 30px;
+  padding: 0 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(251, 191, 36, 0.42);
+  background: rgba(15, 23, 42, 0.9);
+  color: #fde68a;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.target-div-btn.active {
+  background: #fbbf24;
+  color: #091122;
+  border-color: #fef08a;
+}

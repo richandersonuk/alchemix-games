@@ -9,8 +9,8 @@ export class EquationPreview {
     this.root = root;
   }
 
-  render(scenario: CycleScenario, vectors: VectorArrow[]): void {
-    const preview = buildEquationPreview(scenario, vectors);
+  render(scenario: CycleScenario, vectors: VectorArrow[], targetDivisor = 1): void {
+    const preview = buildEquationPreview(scenario, vectors, targetDivisor);
     const eqTermsOnly =
       preview.status === 'empty'
         ? `${prettifyChemText(scenario.targetLabel)} = Drag between nodes to wire route`

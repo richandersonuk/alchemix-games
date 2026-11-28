@@ -23,6 +23,8 @@ export interface RenderOptions {
   dragProbe: DragProbeState;
   timeMs: number;
   solvedDeltaH: number | null;
+  targetDivisor: number;
+  isTargetDivisorFault?: boolean;
 }
 
 interface FormulaToken {
@@ -50,6 +52,7 @@ export class SwitchboardRenderer {
   width = 360;
   height = 460;
   private dpr = 1;
+  private lastBusbarHitRect: { x: number; y: number; width: number; height: number } | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -58,6 +61,17 @@ export class SwitchboardRenderer {
       throw new Error('Could not initialize 2D canvas context');
     }
     this.ctx = ctx;
+  }
+
+  hitTestTargetBusbar(px: number, py: number): boolean {
+    const r = this.lastBusbarHitRect;
+    if (!r) return false;
+    return (
+      px >= r.x - 6 &&
+      px <= r.x + r.width + 6 &&
+      py >= r.y - 6 &&
+      py <= r.y + r.height + 6
+    );
   }
 
   resize(cssWidth: number, cssHeight: number): void {
@@ -107,6 +121,8 @@ export class SwitchboardRenderer {
     // Pass 4: Foreground pills (always readable above wires and nodes)
     if (busbarGeom) {
       this.drawTargetBusbarPill(ctx, busbarGeom, opts);
+    } else {
+      this.lastBusbarHitRect = null;
     }
 
     for (const vector of opts.vectors) {
@@ -275,6 +291,7 @@ export class SwitchboardRenderer {
     opts: RenderOptions
   ): void {
     const prettyLabel = prettifyChemText(opts.scenario.targetLabel);
+    const hasDivisor = (opts.scenario.targetMoles ?? 1) > 1;
     const valueText =
       opts.solvedDeltaH !== null
         ? `${prettyLabel} = ${formatSignedDeltaH(opts.solvedDeltaH)}`
@@ -283,20 +300,48 @@ export class SwitchboardRenderer {
     ctx.save();
     ctx.font = '700 10.5px ui-monospace, SFMono-Regular, Menlo, monospace';
     const textW = ctx.measureText(valueText).width;
-    const pillW = Math.min(this.width * 0.62, textW + 16);
+    const divGap = hasDivisor ? 4 : 0;
+    const divW = hasDivisor ? 30 : 0;
+    const pillW = Math.min(this.width * 0.56, textW + 16);
     const pillH = 21;
+    const totalW = pillW + divGap + divW;
+    const startX = Math.max(8, Math.min(this.width - totalW - 8, g.midX - totalW * 0.5));
+    const topY = g.midY - pillH * 0.5;
 
-    this.roundRect(ctx, g.midX - pillW * 0.5, g.midY - pillH * 0.5, pillW, pillH, 7);
+    this.lastBusbarHitRect = { x: startX, y: topY, width: totalW, height: pillH };
+
+    const strokeColor = opts.isTargetDivisorFault ? '#fb7185' : g.color;
+
+    this.roundRect(ctx, startX, topY, pillW, pillH, 7);
     ctx.fillStyle = '#091122';
     ctx.fill();
-    ctx.strokeStyle = g.color;
-    ctx.lineWidth = 1.3;
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = opts.isTargetDivisorFault ? 2 : 1.3;
     ctx.stroke();
 
-    ctx.fillStyle = g.color;
+    ctx.fillStyle = strokeColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(valueText, g.midX, g.midY + 0.5, pillW - 10);
+    ctx.fillText(valueText, startX + pillW * 0.5, g.midY + 0.5, pillW - 10);
+
+    if (hasDivisor) {
+      const divX = startX + pillW + divGap;
+      this.roundRect(ctx, divX, topY, divW, pillH, 7);
+      ctx.fillStyle = opts.targetDivisor > 1 ? 'rgba(251, 191, 36, 0.24)' : '#0f172a';
+      ctx.fill();
+      ctx.strokeStyle = opts.isTargetDivisorFault
+        ? '#fb7185'
+        : opts.targetDivisor > 1
+          ? '#fbbf24'
+          : 'rgba(251, 191, 36, 0.55)';
+      ctx.lineWidth = opts.isTargetDivisorFault ? 2 : 1.3;
+      ctx.stroke();
+
+      ctx.fillStyle = opts.isTargetDivisorFault ? '#fda4af' : '#fbbf24';
+      ctx.font = '800 10.5px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.fillText(`÷${opts.targetDivisor}`, divX + divW * 0.5, g.midY + 0.5);
+    }
+
     ctx.restore();
   }
 
@@ -622,10 +667,15 @@ function tokenizeFormula(input: string): FormulaToken[] {
 
     if (/\d/.test(input[i]) && i > 0 && /[A-Za-z)]/.test(input[i - 1])) {
       let j = i;
-      while (j < input.length && /\d/.test(input[j])) j++;
-      tokens.push({ text: input.slice(i, j), kind: 'sub' });
-      i = j;
-      continue;
+      while (j < input.length && /\d/.test(input[j])) {
+        if (/^\d[+-](?=\(|$|\s)/.test(input.slice(j))) break;
+        j++;
+      }
+      if (j > i) {
+        tokens.push({ text: input.slice(i, j), kind: 'sub' });
+        i = j;
+        continue;
+      }
     }
 
     tokens.push({ text: input[i], kind: 'normal' });

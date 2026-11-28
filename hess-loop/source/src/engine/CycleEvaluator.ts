@@ -78,7 +78,9 @@ function getThermalSign(deltaH: number): ThermalSign {
 function buildMarkSchemeSteps(
   scenario: CycleScenario,
   orderedRoute: VectorArrow[],
-  calculatedDeltaH: number
+  calculatedDeltaH: number,
+  routeSum: number,
+  targetDivisor: number
 ): MarkSchemeStep[] {
   const step2Lines = orderedRoute.map((vec) => {
     const eff = getEffectiveDeltaH(vec);
@@ -93,6 +95,11 @@ function buildMarkSchemeSteps(
   const thermalWord =
     calculatedDeltaH < 0 ? 'Exothermic (ΔH < 0)' : calculatedDeltaH > 0 ? 'Endothermic (ΔH > 0)' : 'Thermoneutral';
 
+  const m3Detail =
+    targetDivisor > 1
+      ? `Cycle sum = ${formatSignedDeltaH(routeSum)} kJ for ${targetDivisor} mol; ÷ ${targetDivisor} = ${formatSignedDeltaH(calculatedDeltaH)} kJ mol⁻¹ (${thermalWord}). Target ${scenario.targetLabel} = ${formatSignedDeltaH(scenario.targetDeltaH)} kJ mol⁻¹.`
+      : `Indirect route sum = ${formatSignedDeltaH(calculatedDeltaH)} kJ mol⁻¹ (${thermalWord}). Direct target ${scenario.targetLabel} = ${formatSignedDeltaH(scenario.targetDeltaH)} kJ mol⁻¹ → Net loop = 0.0 kJ mol⁻¹.`;
+
   return [
     {
       code: 'M1',
@@ -106,8 +113,8 @@ function buildMarkSchemeSteps(
     },
     {
       code: 'M3',
-      title: 'Closed-Loop Verification (ΣΔH = 0)',
-      detail: `Indirect route sum = ${formatSignedDeltaH(calculatedDeltaH)} kJ mol⁻¹ (${thermalWord}). Direct target ${scenario.targetLabel} = ${formatSignedDeltaH(scenario.targetDeltaH)} kJ mol⁻¹ → Net loop = 0.0 kJ mol⁻¹.`,
+      title: targetDivisor > 1 ? 'Per-Mole Division & Verification' : 'Closed-Loop Verification (ΣΔH = 0)',
+      detail: m3Detail,
     },
   ];
 }
@@ -115,7 +122,8 @@ function buildMarkSchemeSteps(
 export function evaluateCircuit(
   scenario: CycleScenario,
   vectors: VectorArrow[],
-  attemptsCount = 1
+  attemptsCount = 1,
+  targetDivisor = 1
 ): EvaluationResult {
   const nodeMap = new Map<string, StateNodeData>(
     scenario.nodes.map((node) => [node.id, node])
@@ -267,23 +275,49 @@ export function evaluateCircuit(
     cursor = currentTo;
   }
 
-  // 5. Sum effective enthalpies and verify ΔH_net = 0 around closed loop
-  const calculatedDeltaH = roundOneDecimal(
+  // 5. Sum effective enthalpies, apply per-mole target divisor, and verify closed loop
+  const routeSum = roundOneDecimal(
     undirectedPath.reduce((acc, vec) => acc + getEffectiveDeltaH(vec), 0)
   );
+  const requiredDivisor = scenario.targetMoles ?? 1;
+
+  if (targetDivisor !== requiredDivisor) {
+    const scaled = roundOneDecimal(routeSum / targetDivisor);
+    return {
+      valid: false,
+      calculatedDeltaH: scaled,
+      routeTotalDeltaH: routeSum,
+      targetDivisorUsed: targetDivisor,
+      netLoopDeltaH: null,
+      thermalSign: getThermalSign(scaled),
+      orderedRoute: undirectedPath,
+      fault: {
+        type: 'stoichiometry_mismatch',
+        headline: 'Target Per-Mole Divisor Needed!',
+        detail: `The balanced cycle solves for ${requiredDivisor} mol (total ${formatSignedDeltaH(routeSum)} kJ), whereas ${scenario.targetLabel} is defined per 1 mol. Tap the gold target busbar or bottom strip to set ÷${requiredDivisor}.`,
+        isTargetDivisorFault: true,
+      },
+      markSchemeSteps: [],
+      starsAwarded: 0,
+    };
+  }
+
+  const calculatedDeltaH = roundOneDecimal(routeSum / requiredDivisor);
   const netLoopDeltaH = roundOneDecimal(calculatedDeltaH - scenario.targetDeltaH);
 
   if (Math.abs(netLoopDeltaH) > 0.15) {
     return {
       valid: false,
       calculatedDeltaH,
+      routeTotalDeltaH: routeSum,
+      targetDivisorUsed: requiredDivisor,
       netLoopDeltaH,
       thermalSign: getThermalSign(calculatedDeltaH),
       orderedRoute: undirectedPath,
       fault: {
         type: 'math_imbalance',
         headline: 'Hess Loop Does Not Sum to Zero',
-        detail: `Your pathway sums to ${formatSignedDeltaH(calculatedDeltaH)} kJ mol⁻¹, leaving a residual of ${formatSignedDeltaH(netLoopDeltaH)} kJ mol⁻¹ against ${scenario.targetLabel}.`,
+        detail: `Your pathway evaluates to ${formatSignedDeltaH(calculatedDeltaH)} kJ mol⁻¹, leaving a residual of ${formatSignedDeltaH(netLoopDeltaH)} kJ mol⁻¹ against ${scenario.targetLabel}.`,
       },
       markSchemeSteps: [],
       starsAwarded: 0,
@@ -295,10 +329,18 @@ export function evaluateCircuit(
   return {
     valid: true,
     calculatedDeltaH,
+    routeTotalDeltaH: routeSum,
+    targetDivisorUsed: requiredDivisor,
     netLoopDeltaH: 0,
     thermalSign: getThermalSign(calculatedDeltaH),
     orderedRoute: undirectedPath,
-    markSchemeSteps: buildMarkSchemeSteps(scenario, undirectedPath, calculatedDeltaH),
+    markSchemeSteps: buildMarkSchemeSteps(
+      scenario,
+      undirectedPath,
+      calculatedDeltaH,
+      routeSum,
+      requiredDivisor
+    ),
     starsAwarded,
   };
 }
@@ -308,7 +350,8 @@ export function evaluateCircuit(
  */
 export function buildEquationPreview(
   scenario: CycleScenario,
-  vectors: VectorArrow[]
+  vectors: VectorArrow[],
+  targetDivisor = 1
 ): EquationPreviewState {
   if (vectors.length === 0) {
     return {
@@ -359,14 +402,17 @@ export function buildEquationPreview(
     return `[${prefix}${mult}(${baseStr})]`;
   });
 
-  const sum = roundOneDecimal(
+  const rawSum = roundOneDecimal(
     ordered.reduce((acc, vec) => acc + getEffectiveDeltaH(vec), 0)
   );
+  const requiredDivisor = scenario.targetMoles ?? 1;
+  const sum = roundOneDecimal(rawSum / targetDivisor);
   const sumStr = `${formatSignedDeltaH(sum)} kJ mol⁻¹`;
+  const joinedTerms = targetDivisor > 1 ? `(${parts.join(' + ')}) ÷ ${targetDivisor}` : parts.join(' + ');
 
   if (hasTrap) {
     return {
-      expression: `${parts.join(' + ')} = ${sumStr}`,
+      expression: `${joinedTerms} = ${sumStr}`,
       numericSumText: sumStr,
       status: 'trap',
       statusLabel: 'STATE TRAP',
@@ -384,7 +430,7 @@ export function buildEquationPreview(
 
   if (hasOpposingArrow) {
     return {
-      expression: `${parts.join(' + ')} = ${sumStr}`,
+      expression: `${joinedTerms} = ${sumStr}`,
       numericSumText: sumStr,
       status: 'opposing',
       statusLabel: 'FLIP ARROW',
@@ -393,15 +439,24 @@ export function buildEquationPreview(
 
   if (hasStoichMismatch) {
     return {
-      expression: `${parts.join(' + ')} = ${sumStr}`,
+      expression: `${joinedTerms} = ${sumStr}`,
       numericSumText: sumStr,
       status: 'partial',
       statusLabel: 'CHECK ×MOLES',
     };
   }
 
+  if (targetDivisor !== requiredDivisor) {
+    return {
+      expression: `${joinedTerms} = ${sumStr}`,
+      numericSumText: sumStr,
+      status: 'partial',
+      statusLabel: 'SET ÷MOLES',
+    };
+  }
+
   return {
-    expression: `${parts.join(' + ')} = ${sumStr}`,
+    expression: `${joinedTerms} = ${sumStr}`,
     numericSumText: sumStr,
     status: 'ready',
     statusLabel: 'LOOP READY',

@@ -40,7 +40,7 @@ export class MobileHUD {
 
     this.headerRoot.innerHTML = `
       <div class="hud-group">
-        <button id="hud-btn-levels" class="hud-btn accent" type="button" title="Select Thermochemical Cycle">☰ ${scenario.number}/12</button>
+        <button id="hud-btn-levels" class="hud-btn accent" type="button" title="Select Thermochemical Cycle">☰ ${scenario.number}/20</button>
         <button id="hud-btn-guide" class="hud-btn" type="button" title="Data Booklet &amp; Rules">?</button>
       </div>
       <div class="hud-center">
@@ -80,11 +80,12 @@ export class MobileHUD {
 
   private renderLevelsModal(): void {
     const filters: Array<{ key: 'all' | CycleCategory; label: string }> = [
-      { key: 'all', label: 'All (12)' },
+      { key: 'all', label: `All (${this.lastLevels.length})` },
+      { key: 'calorimetry', label: 'Calorimetry' },
       { key: 'formation', label: 'ΔfH°' },
-      { key: 'combustion', label: 'ΔcH°' },
-      { key: 'hydration', label: 'Hydration' },
-      { key: 'multistep', label: 'Multi-Step' },
+      { key: 'bond', label: 'Bond & Latent' },
+      { key: 'solution', label: 'Solution' },
+      { key: 'bornhaber', label: 'Born-Haber' },
     ];
 
     const filtered =
@@ -100,11 +101,12 @@ export class MobileHUD {
         return `
           <button class="level-card ${isCurrent ? 'active' : ''}" data-level-id="${lvl.id}" type="button">
             <div class="level-card-top">
-              <span class="level-card-code">${lvl.code} · ${lvl.category.toUpperCase()}</span>
+              <span class="level-card-code">${lvl.code}</span>
               <span class="level-card-stars">${starStr}</span>
             </div>
             <div class="level-card-title">${escapeHtml(prettifyChemText(lvl.title))}</div>
             <div class="level-card-eq">${escapeHtml(prettifyChemText(lvl.targetEquation))}</div>
+            <div class="level-card-source">${escapeHtml(lvl.examSource)} · Find ${escapeHtml(prettifyChemText(lvl.targetLabel))}</div>
           </button>
         `;
       })
@@ -115,7 +117,7 @@ export class MobileHUD {
         <div class="modal-header">
           <div>
             <div class="modal-kicker">WJEC · AQA · OCR ENERGETICS</div>
-            <h2 class="modal-heading">Switchboard Cycles (12)</h2>
+            <h2 class="modal-heading">Switchboard Cycles (${this.lastLevels.length})</h2>
           </div>
           <button id="btn-levels-close" class="hud-btn" type="button">✕</button>
         </div>
@@ -171,8 +173,8 @@ export class MobileHUD {
             <div class="ms-step-detail">Tap any wired arrow to flip its arrowhead and invert its enthalpy sign (+ ↔ −). Every arrow along your indirect route must point head-to-tail from START to TARGET.</div>
           </div>
           <div class="ms-step">
-            <div class="ms-step-head"><span class="ms-code">VERB 3</span><span class="ms-step-title">Double-Tap / Badge Stoichiometry (×N)</span></div>
-            <div class="ms-step-detail">Double-tap a wire, tap its ×1 badge, or use the bottom slider to scale mole coefficients (e.g. 2×ΔcH°[H₂] for 2 mol H₂O(l)).</div>
+            <div class="ms-step-head"><span class="ms-code">VERB 3</span><span class="ms-step-title">Stoichiometry (×N) &amp; Target Divisor (÷N)</span></div>
+            <div class="ms-step-detail">Double-tap a wire or tap ×1 to scale mole coefficients. When an unknown leg forms 2, 3, or 4 moles (e.g. 2H₂O₂, 3HCl, 4 bonds), tap the gold busbar ÷N pill to divide to 1 mol!</div>
           </div>
           <div class="ms-note">
             <strong>Mark-Scheme Traps (298 K, 100 kPa):</strong><br/>
@@ -241,6 +243,8 @@ export function prettifyChemText(input: string): string {
   };
   return input
     .replace(/2\+/g, '²⁺')
+    .replace(/3\+/g, '³⁺')
+    .replace(/2-/g, '²⁻')
     .replace(/([A-Za-z0-9])\+(?=\(|$|\s|])/g, '$1⁺')
     .replace(/([A-Za-z0-9])-(?=\(|$|\s|])/g, '$1⁻')
     .replace(/([A-Za-z)])(\d+)/g, (_, prefix: string, digits: string) => {
