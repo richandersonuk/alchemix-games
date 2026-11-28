@@ -160,6 +160,7 @@ class HessLoopApp {
     this.bindSplash();
     this.bindCanvasEvents();
     this.bindResize();
+    this.bindKeyboard();
 
     const initialId =
       this.progress.lastLevelId && LEVELS.some((l) => l.id === this.progress.lastLevelId)
@@ -214,6 +215,66 @@ class HessLoopApp {
     observer.observe(stage);
     window.addEventListener('resize', () => this.resizeCanvas());
     this.resizeCanvas();
+  }
+
+  private bindKeyboard(): void {
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (this.settingsMenu.isOpen()) {
+          this.settingsMenu.close();
+          return;
+        }
+        const levelsModal = document.getElementById('levels-modal');
+        const guideModal = document.getElementById('databook-modal');
+        const msModal = document.getElementById('markscheme-modal');
+        if (msModal && !msModal.classList.contains('hidden')) {
+          this.markSchemeModal.hide();
+          return;
+        }
+        if (levelsModal && !levelsModal.classList.contains('hidden')) {
+          this.hud.closeLevelsModal();
+          return;
+        }
+        if (guideModal && !guideModal.classList.contains('hidden')) {
+          this.hud.closeGuideModal();
+          return;
+        }
+        if (this.selectedVectorId) {
+          this.selectedVectorId = null;
+          this.refreshUI();
+        }
+        return;
+      }
+
+      if (!this.splashEl.classList.contains('hidden') || this.settingsMenu.isOpen()) return;
+      for (const modalId of ['levels-modal', 'databook-modal', 'markscheme-modal']) {
+        const el = document.getElementById(modalId);
+        if (el && !el.classList.contains('hidden')) return;
+      }
+
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+
+      if (e.key === 'f' || e.key === 'F') {
+        if (this.selectedVectorId) {
+          e.preventDefault();
+          this.flipSelectedVector();
+        }
+      } else if (e.key >= '1' && e.key <= '4') {
+        if (this.selectedVectorId) {
+          e.preventDefault();
+          this.setSelectedMultiplier(Number(e.key));
+        }
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (this.selectedVectorId) {
+          e.preventDefault();
+          this.deleteSelectedVector();
+        }
+      } else if (e.key === 'Enter' && target === document.body) {
+        e.preventDefault();
+        this.handleEnergiseClick();
+      }
+    });
   }
 
   private resizeCanvas(): void {

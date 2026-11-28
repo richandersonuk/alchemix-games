@@ -2,6 +2,7 @@ import type { CircuitState, CycleScenario } from '../types/energetics.ts';
 import { formatSignedDeltaH } from '../engine/CycleEvaluator.ts';
 import type { EnthalpyVector } from '../entities/EnthalpyVector.ts';
 import type { StateNode } from '../entities/StateNode.ts';
+import { computeCanvasScale } from '../entities/viewportScale.ts';
 
 export interface DragProbeState {
   active: boolean;
@@ -138,8 +139,9 @@ export class SwitchboardRenderer {
   ): void {
     const w = this.width;
     const h = this.height;
+    const s = computeCanvasScale(w, h);
 
-    const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.35, 16, w * 0.5, h * 0.5, Math.max(w, h) * 0.8);
+    const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.35, 16 * s, w * 0.5, h * 0.5, Math.max(w, h) * 0.8);
     if (circuitState === 'energised_exothermic') {
       bgGrad.addColorStop(0, '#2a1308');
       bgGrad.addColorStop(0.55, '#130c14');
@@ -155,7 +157,7 @@ export class SwitchboardRenderer {
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, w, h);
 
-    const step = 28;
+    const step = Math.round(28 * s);
     ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -176,17 +178,18 @@ export class SwitchboardRenderer {
       ctx.strokeStyle = isExo
         ? `rgba(251, 146, 60, ${0.25 + pulse * 0.25})`
         : `rgba(56, 189, 248, ${0.28 + pulse * 0.28})`;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3 * s;
       ctx.strokeRect(3, 3, w - 6, h - 6);
 
-      for (let i = 0; i < 14; i++) {
+      const particleCount = w > 700 ? 22 : 14;
+      for (let i = 0; i < particleCount; i++) {
         const px = ((i * 79 + (isExo ? timeMs * 0.02 : -timeMs * 0.015)) % w + w) % w;
         const py = isExo
           ? h - (((i * 53 + timeMs * 0.045) % h + h) % h)
           : ((i * 53 + timeMs * 0.03) % h + h) % h;
         ctx.fillStyle = isExo ? 'rgba(251, 146, 60, 0.45)' : 'rgba(186, 230, 253, 0.55)';
         ctx.beginPath();
-        ctx.arc(px, py, isExo ? 2.4 : 2.1, 0, Math.PI * 2);
+        ctx.arc(px, py, (isExo ? 2.4 : 2.1) * s, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
@@ -217,32 +220,38 @@ export class SwitchboardRenderer {
     let ctrlX = (source.cx + target.cx) * 0.5;
     let ctrlY = (source.cy + target.cy) * 0.5;
 
+    const s = computeCanvasScale(this.width, this.height);
+    const edgePad = Math.round(18 * s);
+    const midPadX = Math.round(66 * s);
+
     if (horizontal) {
       const avgY = (source.cy + target.cy) * 0.5;
       if (avgY <= centroidY) {
         // Arc upward/outward into clear top headroom above START/TARGET cards
-        ctrlY = Math.max(18, Math.min(source.rect.y, target.rect.y) - 42);
+        ctrlY = Math.max(edgePad, Math.min(source.rect.y, target.rect.y) - Math.round(42 * s));
       } else {
         // Arc downward/outward into clear bottom headroom below START/TARGET cards
         ctrlY = Math.min(
-          this.height - 18,
-          Math.max(source.rect.y + source.rect.height, target.rect.y + target.rect.height) + 42
+          this.height - edgePad,
+          Math.max(source.rect.y + source.rect.height, target.rect.y + target.rect.height) + Math.round(42 * s)
         );
       }
     } else {
       // Vertical target busbar: bow outward away from cycle interior
       const avgX = (source.cx + target.cx) * 0.5;
+      const bowX = Math.round(38 * s);
       ctrlX =
         avgX >= centroidX
-          ? Math.min(this.width - 18, Math.max(source.rect.x + source.rect.width, target.rect.x + target.rect.width) + 38)
-          : Math.max(18, Math.min(source.rect.x, target.rect.x) - 38);
+          ? Math.min(this.width - edgePad, Math.max(source.rect.x + source.rect.width, target.rect.x + target.rect.width) + bowX)
+          : Math.max(edgePad, Math.min(source.rect.x, target.rect.x) - bowX);
     }
 
-    const start = source.getPerimeterAnchor(ctrlX, ctrlY, 4);
-    const end = target.getPerimeterAnchor(ctrlX, ctrlY, 4);
+    const inset = Math.round(4 * s);
+    const start = source.getPerimeterAnchor(ctrlX, ctrlY, inset);
+    const end = target.getPerimeterAnchor(ctrlX, ctrlY, inset);
 
-    const midX = Math.max(66, Math.min(this.width - 66, 0.25 * start.x + 0.5 * ctrlX + 0.25 * end.x));
-    const midY = Math.max(16, Math.min(this.height - 16, 0.25 * start.y + 0.5 * ctrlY + 0.25 * end.y));
+    const midX = Math.max(midPadX, Math.min(this.width - midPadX, 0.25 * start.x + 0.5 * ctrlX + 0.25 * end.x));
+    const midY = Math.max(edgePad, Math.min(this.height - edgePad, 0.25 * start.y + 0.5 * ctrlY + 0.25 * end.y));
 
     return {
       startX: start.x,
@@ -263,13 +272,14 @@ export class SwitchboardRenderer {
     g: BusbarGeometry,
     timeMs: number
   ): void {
+    const s = computeCanvasScale(this.width, this.height);
     ctx.save();
     ctx.strokeStyle = g.color;
-    ctx.lineWidth = g.isEnergised ? 3 : 2.1;
-    ctx.setLineDash([7, 5]);
-    ctx.lineDashOffset = -(timeMs * 0.025);
+    ctx.lineWidth = (g.isEnergised ? 3 : 2.1) * s;
+    ctx.setLineDash([7 * s, 5 * s]);
+    ctx.lineDashOffset = -(timeMs * 0.025 * s);
     ctx.shadowColor = g.color;
-    ctx.shadowBlur = g.isEnergised ? 14 : 6;
+    ctx.shadowBlur = (g.isEnergised ? 14 : 6) * s;
 
     ctx.beginPath();
     ctx.moveTo(g.startX, g.startY);
@@ -278,7 +288,7 @@ export class SwitchboardRenderer {
     ctx.setLineDash([]);
 
     const angle = Math.atan2(g.endY - g.ctrlY, g.endX - g.ctrlX);
-    this.drawArrowhead(ctx, g.endX, g.endY, angle, g.color, 9);
+    this.drawArrowhead(ctx, g.endX, g.endY, angle, g.color, 9 * s);
 
     if (g.isEnergised) {
       const t = (timeMs * 0.0011) % 1;
@@ -287,7 +297,7 @@ export class SwitchboardRenderer {
       const py = omt * omt * g.startY + 2 * omt * t * g.ctrlY + t * t * g.endY;
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+      ctx.arc(px, py, 3.5 * s, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -299,6 +309,7 @@ export class SwitchboardRenderer {
     g: BusbarGeometry,
     opts: RenderOptions
   ): void {
+    const s = computeCanvasScale(this.width, this.height);
     const hasDivisor = (opts.scenario.targetMoles ?? 1) > 1;
     const valueText =
       opts.solvedDeltaH !== null
@@ -306,29 +317,31 @@ export class SwitchboardRenderer {
         : `${opts.scenario.targetLabel} = ?`;
 
     const fontFamily = 'ui-monospace, SFMono-Regular, Menlo, monospace';
-    const baseSize = 10.5;
+    const baseSize = Math.round(10.5 * s * 10) / 10;
     const tokens = tokenizeFormula(valueText);
     const textW = this.measureRichTokens(ctx, tokens, baseSize, fontFamily);
 
     ctx.save();
-    const divGap = hasDivisor ? 4 : 0;
-    const divW = hasDivisor ? 30 : 0;
+    const divGap = hasDivisor ? Math.round(4 * s) : 0;
+    const divW = hasDivisor ? Math.round(30 * s) : 0;
     const maxPillFrac = hasDivisor ? 0.6 : 0.68;
-    const pillW = Math.min(this.width * maxPillFrac, textW + 16);
-    const pillH = 22;
+    const pillW = Math.min(this.width * maxPillFrac, textW + Math.round(16 * s));
+    const pillH = Math.round(22 * s);
     const totalW = pillW + divGap + divW;
-    const startX = Math.max(8, Math.min(this.width - totalW - 8, g.midX - totalW * 0.5));
+    const edgePad = Math.round(8 * s);
+    const startX = Math.max(edgePad, Math.min(this.width - totalW - edgePad, g.midX - totalW * 0.5));
     const topY = g.midY - pillH * 0.5;
+    const cornerR = Math.round(7 * s);
 
     this.lastBusbarHitRect = { x: startX, y: topY, width: totalW, height: pillH };
 
     const strokeColor = opts.isTargetDivisorFault ? '#fb7185' : g.color;
 
-    this.roundRect(ctx, startX, topY, pillW, pillH, 7);
+    this.roundRect(ctx, startX, topY, pillW, pillH, cornerR);
     ctx.fillStyle = '#091122';
     ctx.fill();
     ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = opts.isTargetDivisorFault ? 2 : 1.3;
+    ctx.lineWidth = (opts.isTargetDivisorFault ? 2 : 1.3) * s;
     ctx.stroke();
 
     this.drawRichTokens(
@@ -336,16 +349,17 @@ export class SwitchboardRenderer {
       tokens,
       startX + pillW * 0.5,
       g.midY + 0.5,
-      pillW - 12,
+      pillW - Math.round(12 * s),
       baseSize,
       strokeColor,
       fontFamily,
-      false
+      false,
+      s
     );
 
     if (hasDivisor) {
       const divX = startX + pillW + divGap;
-      this.roundRect(ctx, divX, topY, divW, pillH, 7);
+      this.roundRect(ctx, divX, topY, divW, pillH, cornerR);
       ctx.fillStyle = opts.targetDivisor > 1 ? 'rgba(251, 191, 36, 0.24)' : '#0f172a';
       ctx.fill();
       ctx.strokeStyle = opts.isTargetDivisorFault
@@ -353,11 +367,11 @@ export class SwitchboardRenderer {
         : opts.targetDivisor > 1
           ? '#fbbf24'
           : 'rgba(251, 191, 36, 0.55)';
-      ctx.lineWidth = opts.isTargetDivisorFault ? 2 : 1.3;
+      ctx.lineWidth = (opts.isTargetDivisorFault ? 2 : 1.3) * s;
       ctx.stroke();
 
       ctx.fillStyle = opts.isTargetDivisorFault ? '#fda4af' : '#fbbf24';
-      ctx.font = '800 10.5px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.font = `800 ${baseSize}px ui-monospace, SFMono-Regular, Menlo, monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(`÷${opts.targetDivisor}`, divX + divW * 0.5, g.midY + 0.5);
@@ -386,6 +400,7 @@ export class SwitchboardRenderer {
     const geom = vector.geometry;
     if (!geom) return;
 
+    const s = computeCanvasScale(this.width, this.height);
     const isSelected = opts.selectedVectorId === vector.data.id;
     const isFault = opts.offendingVectorId === vector.data.id;
     const isEnergised =
@@ -394,9 +409,9 @@ export class SwitchboardRenderer {
 
     ctx.save();
     ctx.strokeStyle = color;
-    ctx.lineWidth = isSelected || isFault ? 3.6 : 2.7;
+    ctx.lineWidth = (isSelected || isFault ? 3.6 : 2.7) * s;
     ctx.shadowColor = color;
-    ctx.shadowBlur = isSelected || isEnergised || isFault ? 13 : 5;
+    ctx.shadowBlur = (isSelected || isEnergised || isFault ? 13 : 5) * s;
     ctx.lineCap = 'round';
 
     ctx.beginPath();
@@ -405,7 +420,7 @@ export class SwitchboardRenderer {
     ctx.stroke();
 
     const endAngle = Math.atan2(geom.endY - geom.ctrlY, geom.endX - geom.ctrlX);
-    this.drawArrowhead(ctx, geom.endX, geom.endY, endAngle, color, 9.5);
+    this.drawArrowhead(ctx, geom.endX, geom.endY, endAngle, color, 9.5 * s);
 
     if (isEnergised) {
       const phase = (opts.timeMs * 0.0014) % 1;
@@ -416,7 +431,7 @@ export class SwitchboardRenderer {
         const py = omt * omt * geom.startY + 2 * omt * t * geom.ctrlY + t * t * geom.endY;
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(px, py, 3.1, 0, Math.PI * 2);
+        ctx.arc(px, py, 3.1 * s, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -432,34 +447,37 @@ export class SwitchboardRenderer {
     const geom = vector.geometry;
     if (!geom) return;
 
+    const s = computeCanvasScale(this.width, this.height);
     const isSelected = opts.selectedVectorId === vector.data.id;
     const color = this.getVectorColor(vector, opts);
     const { labelRect, multRect } = geom;
+    const pillRadius = Math.round(6 * s);
 
     ctx.save();
-    this.roundRect(ctx, labelRect.x, labelRect.y, labelRect.width, labelRect.height, 6);
+    this.roundRect(ctx, labelRect.x, labelRect.y, labelRect.width, labelRect.height, pillRadius);
     ctx.fillStyle = isSelected ? '#172542' : '#091122';
     ctx.fill();
     ctx.strokeStyle = color;
-    ctx.lineWidth = isSelected ? 1.8 : 1.15;
+    ctx.lineWidth = (isSelected ? 1.8 : 1.15) * s;
     ctx.stroke();
 
     const effText = formatSignedDeltaH(vector.effectiveDeltaH);
+    const labelFontPx = Math.round(10.5 * s * 10) / 10;
     ctx.fillStyle = color;
-    ctx.font = '700 10.5px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = `700 ${labelFontPx}px ui-monospace, SFMono-Regular, Menlo, monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(effText, labelRect.x + labelRect.width * 0.5, labelRect.y + labelRect.height * 0.5 + 0.5, labelRect.width - 6);
+    ctx.fillText(effText, labelRect.x + labelRect.width * 0.5, labelRect.y + labelRect.height * 0.5 + 0.5, labelRect.width - Math.round(6 * s));
 
-    this.roundRect(ctx, multRect.x, multRect.y, multRect.width, multRect.height, 6);
+    this.roundRect(ctx, multRect.x, multRect.y, multRect.width, multRect.height, pillRadius);
     ctx.fillStyle = vector.data.multiplier > 1 ? 'rgba(251, 191, 36, 0.24)' : '#0f172a';
     ctx.fill();
     ctx.strokeStyle = vector.data.multiplier > 1 ? '#fbbf24' : 'rgba(148, 163, 184, 0.5)';
-    ctx.lineWidth = 1.1;
+    ctx.lineWidth = 1.1 * s;
     ctx.stroke();
 
     ctx.fillStyle = vector.data.multiplier > 1 ? '#fbbf24' : '#cbd5e1';
-    ctx.font = '800 10px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = `800 ${Math.round(10 * s * 10) / 10}px ui-monospace, SFMono-Regular, Menlo, monospace`;
     ctx.fillText(
       `×${vector.data.multiplier}`,
       multRect.x + multRect.width * 0.5,
@@ -473,20 +491,21 @@ export class SwitchboardRenderer {
     origin: StateNode,
     probe: DragProbeState
   ): void {
-    const start = origin.getPerimeterAnchor(probe.pointerX, probe.pointerY, 3);
+    const s = computeCanvasScale(this.width, this.height);
+    const start = origin.getPerimeterAnchor(probe.pointerX, probe.pointerY, Math.round(3 * s));
     ctx.save();
     ctx.strokeStyle = probe.hoveredNodeId ? '#34d399' : '#38bdf8';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([6, 4]);
+    ctx.lineWidth = 3 * s;
+    ctx.setLineDash([6 * s, 4 * s]);
     ctx.shadowColor = probe.hoveredNodeId ? '#34d399' : '#38bdf8';
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 12 * s;
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(probe.pointerX, probe.pointerY);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.beginPath();
-    ctx.arc(probe.pointerX, probe.pointerY, 6, 0, Math.PI * 2);
+    ctx.arc(probe.pointerX, probe.pointerY, 6 * s, 0, Math.PI * 2);
     ctx.fillStyle = probe.hoveredNodeId ? '#34d399' : '#38bdf8';
     ctx.fill();
     ctx.restore();
@@ -519,43 +538,46 @@ export class SwitchboardRenderer {
     if (isOrigin || isSnapTarget) borderColor = '#fbbf24';
     if (isFault) borderColor = '#fb7185';
 
+    const s = computeCanvasScale(this.width, this.height);
     ctx.save();
     if (isSnapTarget || isOrigin || isFault) {
       ctx.shadowColor = borderColor;
-      ctx.shadowBlur = 16;
+      ctx.shadowBlur = 16 * s;
     }
 
-    this.roundRect(ctx, x, y, width, height, 10);
+    this.roundRect(ctx, x, y, width, height, Math.round(10 * s));
     ctx.fillStyle = node.data.role === 'trap' ? 'rgba(30, 12, 22, 0.96)' : 'rgba(11, 19, 38, 0.96)';
     ctx.fill();
     ctx.strokeStyle = borderColor;
-    ctx.lineWidth = isSnapTarget || isOrigin || isFault ? 2.2 : 1.4;
+    ctx.lineWidth = (isSnapTarget || isOrigin || isFault ? 2.2 : 1.4) * s;
     ctx.stroke();
 
     ctx.shadowBlur = 0;
     const tagText = node.data.badge ?? node.data.title.toUpperCase();
-    ctx.font = '800 8px ui-monospace, SFMono-Regular, Menlo, monospace';
-    const tagW = Math.min(width - 12, ctx.measureText(tagText).width + 9);
-    this.roundRect(ctx, x + 6, y - 6.5, tagW, 13, 4);
+    ctx.font = `800 ${Math.round(8 * s * 10) / 10}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+    const tagH = Math.round(13 * s);
+    const tagPad = Math.round(9 * s);
+    const tagW = Math.min(width - Math.round(12 * s), ctx.measureText(tagText).width + tagPad);
+    this.roundRect(ctx, x + Math.round(6 * s), y - tagH * 0.5, tagW, tagH, Math.round(4 * s));
     ctx.fillStyle = '#091122';
     ctx.fill();
     ctx.fillStyle = badgeBg;
     ctx.fill();
     ctx.strokeStyle = borderColor;
-    ctx.lineWidth = 0.9;
+    ctx.lineWidth = 0.9 * s;
     ctx.stroke();
 
     ctx.fillStyle = badgeFg;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(tagText, x + 10.5, y + 0.2, tagW - 8);
+    ctx.fillText(tagText, x + Math.round(10.5 * s), y + 0.2, tagW - Math.round(8 * s));
 
-    this.drawChemicalFormula(ctx, node.data.formulaText, node.cx, node.cy + 3.5, width - 14);
+    this.drawChemicalFormula(ctx, node.data.formulaText, node.cx, node.cy + 3.5 * s, width - Math.round(14 * s), s);
 
     for (const dotX of [x, x + width]) {
       ctx.fillStyle = borderColor;
       ctx.beginPath();
-      ctx.arc(dotX, node.cy, 2.8, 0, Math.PI * 2);
+      ctx.arc(dotX, node.cy, 2.8 * s, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -587,7 +609,8 @@ export class SwitchboardRenderer {
     baseSize: number,
     baseColor: string,
     fontFamily: string,
-    useChemColors: boolean
+    useChemColors: boolean,
+    uiScale = 1
   ): void {
     const subSize = Math.round(baseSize * 0.74 * 10) / 10;
     const totalW = this.measureRichTokens(ctx, tokens, baseSize, fontFamily);
@@ -611,13 +634,13 @@ export class SwitchboardRenderer {
       let fill = baseColor;
 
       if (tok.kind === 'sub') {
-        yOffset = 3.4;
+        yOffset = 3.4 * uiScale;
         fill = useChemColors ? '#cbd5e1' : baseColor;
       } else if (tok.kind === 'sup') {
-        yOffset = -4.2;
+        yOffset = -4.2 * uiScale;
         fill = useChemColors ? '#fbbf24' : baseColor;
       } else if (tok.kind === 'state') {
-        yOffset = 2.4;
+        yOffset = 2.4 * uiScale;
         fill = useChemColors ? stateColor(tok.stateChar ?? '') : baseColor;
       }
 
@@ -634,10 +657,11 @@ export class SwitchboardRenderer {
     formula: string,
     centerX: number,
     centerY: number,
-    maxWidth: number
+    maxWidth: number,
+    uiScale = 1
   ): void {
     const tokens = tokenizeFormula(formula);
-    const baseSize = formula.length > 20 ? 11 : 12.2;
+    const baseSize = Math.round((formula.length > 20 ? 11 : 12.2) * uiScale * 10) / 10;
     this.drawRichTokens(
       ctx,
       tokens,
@@ -647,7 +671,8 @@ export class SwitchboardRenderer {
       baseSize,
       '#f1f5f9',
       'Inter, system-ui, sans-serif',
-      true
+      true,
+      uiScale
     );
   }
 

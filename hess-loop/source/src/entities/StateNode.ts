@@ -1,4 +1,5 @@
 import type { StateNodeData } from '../types/energetics.ts';
+import { computeCanvasScale, computePlayfieldBounds } from './viewportScale.ts';
 
 export interface Rect {
   x: number;
@@ -25,18 +26,36 @@ export class StateNode {
    * sizing boxes compactly so horizontal pairs leave a wide central channel and ample headroom.
    */
   updateLayout(canvasWidth: number, canvasHeight: number, totalNodes: number): void {
-    const compact = canvasWidth < 385 || totalNodes >= 5;
     const formulaLen = this.data.formulaText.length;
-    const baseWidth = compact
-      ? Math.min(144, Math.max(88, 48 + formulaLen * 4.8))
-      : Math.min(162, Math.max(96, 54 + formulaLen * 5.1));
-    const width = Math.min(baseWidth, Math.floor(canvasWidth * 0.40));
-    const height = compact ? 42 : 46;
+    let width: number;
+    let height: number;
+    let padX: number;
+    let padY: number;
+    let rawCx: number;
+    let rawCy: number;
 
-    const padX = 8;
-    const padY = 12;
-    const rawCx = this.data.nx * canvasWidth;
-    const rawCy = this.data.ny * canvasHeight;
+    if (canvasWidth < 460) {
+      const compact = canvasWidth < 385 || totalNodes >= 5;
+      const baseWidth = compact
+        ? Math.min(144, Math.max(88, 48 + formulaLen * 4.8))
+        : Math.min(162, Math.max(96, 54 + formulaLen * 5.1));
+      width = Math.min(baseWidth, Math.floor(canvasWidth * 0.40));
+      height = compact ? 42 : 46;
+      padX = 8;
+      padY = 12;
+      rawCx = this.data.nx * canvasWidth;
+      rawCy = this.data.ny * canvasHeight;
+    } else {
+      const s = computeCanvasScale(canvasWidth, canvasHeight);
+      const { offsetX, stageW, offsetY, stageH } = computePlayfieldBounds(canvasWidth, canvasHeight);
+      const idealWidth = Math.round(Math.max(118, 58 + formulaLen * 5.6) * s);
+      width = Math.min(Math.floor(stageW * 0.40), idealWidth);
+      height = Math.round((totalNodes >= 5 ? 46 : 50) * s);
+      padX = Math.round(12 * s);
+      padY = Math.round(16 * s);
+      rawCx = offsetX + this.data.nx * stageW;
+      rawCy = offsetY + this.data.ny * stageH;
+    }
 
     const minCx = padX + width * 0.5;
     const maxCx = Math.max(minCx, canvasWidth - padX - width * 0.5);

@@ -1,6 +1,7 @@
 import type { VectorArrow, VectorTemplate } from '../types/energetics.ts';
 import { getEffectiveDeltaH, getEffectiveFromId, getEffectiveToId } from '../engine/CycleEvaluator.ts';
 import type { Rect, StateNode } from './StateNode.ts';
+import { computeCanvasScale } from './viewportScale.ts';
 
 export interface VectorGeometry {
   startX: number;
@@ -21,6 +22,7 @@ export type VectorHitTarget = 'none' | 'multiplier' | 'body';
 export class EnthalpyVector {
   data: VectorArrow;
   geometry: VectorGeometry | null;
+  private lastScale = 1;
 
   constructor(template: VectorTemplate, idOverride?: string) {
     this.data = {
@@ -67,6 +69,9 @@ export class EnthalpyVector {
   }
 
   updateGeometry(nodeMap: Map<string, StateNode>, canvasWidth: number, canvasHeight: number): void {
+    const s = computeCanvasScale(canvasWidth, canvasHeight);
+    this.lastScale = s;
+
     const fromNode = nodeMap.get(this.effectiveFromId);
     const toNode = nodeMap.get(this.effectiveToId);
     if (!fromNode || !toNode) {
@@ -105,49 +110,55 @@ export class EnthalpyVector {
       ny = -ny;
     }
 
-    const bow = Math.max(18, Math.abs(this.data.curveOffset) || 20);
+    const bow = Math.round(Math.max(18, Math.abs(this.data.curveOffset) || 20) * (s > 1 ? s * 1.1 : 1));
     const rawMidX = (fromNode.cx + toNode.cx) * 0.5 + nx * bow;
     const rawMidY = (fromNode.cy + toNode.cy) * 0.5 + ny * bow;
 
-    const start = fromNode.getPerimeterAnchor(rawMidX, rawMidY, 4);
-    const end = toNode.getPerimeterAnchor(rawMidX, rawMidY, 4);
+    const anchorInset = Math.round(4 * s);
+    const start = fromNode.getPerimeterAnchor(rawMidX, rawMidY, anchorInset);
+    const end = toNode.getPerimeterAnchor(rawMidX, rawMidY, anchorInset);
 
     // Quadratic control point pushed outward while remaining inside viewport margins
+    const margin = Math.round(14 * s);
     const ctrlX = Math.max(
-      14,
-      Math.min(canvasWidth - 14, (start.x + end.x) * 0.5 + nx * bow * 1.75)
+      margin,
+      Math.min(canvasWidth - margin, (start.x + end.x) * 0.5 + nx * bow * 1.75)
     );
     const ctrlY = Math.max(
-      14,
-      Math.min(canvasHeight - 14, (start.y + end.y) * 0.5 + ny * bow * 1.75)
+      margin,
+      Math.min(canvasHeight - margin, (start.y + end.y) * 0.5 + ny * bow * 1.75)
     );
 
     let badgeCenterX = 0.25 * start.x + 0.5 * ctrlX + 0.25 * end.x;
     let badgeCenterY = 0.25 * start.y + 0.5 * ctrlY + 0.25 * end.y;
 
-    const pillW = 58;
-    const pillH = 20;
-    const multW = 25;
-    const multH = 20;
-    const gap = 3;
+    const pillW = Math.round(58 * s);
+    const pillH = Math.round(20 * s);
+    const multW = Math.round(25 * s);
+    const multH = Math.round(20 * s);
+    const gap = Math.round(3 * s);
     const groupW = pillW + gap + multW;
+    const edgePad = Math.round(6 * s);
 
     const clampGroup = (cx: number, cy: number): { cx: number; cy: number } => ({
-      cx: Math.max(groupW * 0.5 + 6, Math.min(canvasWidth - groupW * 0.5 - 6, cx)),
-      cy: Math.max(pillH * 0.5 + 6, Math.min(canvasHeight - pillH * 0.5 - 6, cy)),
+      cx: Math.max(groupW * 0.5 + edgePad, Math.min(canvasWidth - groupW * 0.5 - edgePad, cx)),
+      cy: Math.max(pillH * 0.5 + edgePad, Math.min(canvasHeight - pillH * 0.5 - edgePad, cy)),
     });
 
     ({ cx: badgeCenterX, cy: badgeCenterY } = clampGroup(badgeCenterX, badgeCenterY));
 
     // Place pill group cleanly without overlapping any StateNode card (including its top role chip)
+    const padSide = Math.round(3 * s);
+    const padTop = Math.round(8 * s);
+    const padExtraH = Math.round(11 * s);
     const overlapsAnyNode = (cx: number, cy: number): boolean => {
       const gx = cx - groupW * 0.5;
       const gy = cy - pillH * 0.5;
       for (const node of nodesList) {
-        const rx = node.rect.x - 3;
-        const ry = node.rect.y - 8;
-        const rw = node.rect.width + 6;
-        const rh = node.rect.height + 11;
+        const rx = node.rect.x - padSide;
+        const ry = node.rect.y - padTop;
+        const rw = node.rect.width + padSide * 2;
+        const rh = node.rect.height + padExtraH;
         if (gx < rx + rw && gx + groupW > rx && gy < ry + rh && gy + pillH > ry) {
           return true;
         }
@@ -157,16 +168,16 @@ export class EnthalpyVector {
 
     if (overlapsAnyNode(badgeCenterX, badgeCenterY)) {
       const offsets: Array<[number, number]> = [];
-      for (const dy of [0, -18, 18, -34, 34, -52, 52, -70, 70]) {
-        for (const dx of [0, -24, 24, -48, 48]) {
-          if (dx === 0 && dy === 0) continue;
-          offsets.push([dx, dy]);
+      for (const dyRaw of [0, -18, 18, -34, 34, -52, 52, -70, 70]) {
+        for (const dxRaw of [0, -24, 24, -48, 48]) {
+          if (dxRaw === 0 && dyRaw === 0) continue;
+          offsets.push([Math.round(dxRaw * s), Math.round(dyRaw * s)]);
         }
       }
       offsets.sort(
         (a, b) =>
-          a[0] * a[0] + a[1] * a[1] - (a[0] * nx + a[1] * ny) * 8 -
-          (b[0] * b[0] + b[1] * b[1] - (b[0] * nx + b[1] * ny) * 8)
+          a[0] * a[0] + a[1] * a[1] - (a[0] * nx + a[1] * ny) * (8 * s) -
+          (b[0] * b[0] + b[1] * b[1] - (b[0] * nx + b[1] * ny) * (8 * s))
       );
       for (const [dx, dy] of offsets) {
         const cand = clampGroup(badgeCenterX + dx, badgeCenterY + dy);
@@ -222,7 +233,7 @@ export class EnthalpyVector {
     if (!this.geometry) return 'none';
     const { multRect, labelRect, samples } = this.geometry;
 
-    const padMult = 8;
+    const padMult = 8 * this.lastScale;
     if (
       px >= multRect.x - padMult &&
       px <= multRect.x + multRect.width + padMult &&
@@ -232,7 +243,7 @@ export class EnthalpyVector {
       return 'multiplier';
     }
 
-    const padLabel = 8;
+    const padLabel = 8 * this.lastScale;
     if (
       px >= labelRect.x - padLabel &&
       px <= labelRect.x + labelRect.width + padLabel &&
@@ -242,7 +253,8 @@ export class EnthalpyVector {
       return 'body';
     }
 
-    const hitRadiusSq = 22 * 22;
+    const hitRadius = 22 * this.lastScale;
+    const hitRadiusSq = hitRadius * hitRadius;
     for (let i = 0; i < samples.length - 1; i++) {
       const a = samples[i];
       const b = samples[i + 1];
