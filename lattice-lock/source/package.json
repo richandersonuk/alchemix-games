@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "start": "node server/index.mjs",
     "test:shared": "node scripts/check-shared.mjs",
-    "build:alchemix": "tsc --noEmit && VITE_ARCADE_HUB_URL=/ VITE_SCOREBOARD_URL=https://lattice-lock-scores.lattice-lock.workers.dev vite build"
+    "build:alchemix": "tsc --noEmit && VITE_ARCADE_HUB_URL=/ VITE_SCOREBOARD_URL=https://alchemix-games-scores.alchemix-games.workers.dev vite build"
   },
   "dependencies": {
     "@react-three/drei": "9.114.0",

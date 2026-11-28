@@ -40,8 +40,8 @@ phase, and menus/defeat use a low-pass filtered version of the build track.
 
 ## Online scoreboard & safety
 
-**Live:** the global scoreboard runs on Cloudflare as the Worker `lattice-lock-scores` (D1 database
-`lattice-lock-scores`) at https://lattice-lock-scores.lattice-lock.workers.dev. It now serves every
+**Live:** the global scoreboard runs on Cloudflare as the Worker `alchemix-games-scores` (D1 database
+`lattice-lock-scores`, unchanged) at https://alchemix-games-scores.alchemix-games.workers.dev. It now serves every
 Alchemix Arcade game; its source, deploy and moderation commands live in the arcade repo's
 `/scoreboard` folder (see `scoreboard/README.md`). `npm run build:alchemix` points this game at it.
 

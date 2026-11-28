@@ -1,6 +1,7 @@
 # Alchemix Arcade global scoreboards — Cloudflare Worker + D1
-# (name kept as lattice-lock-scores so the live URL doesn't change)
-name = "lattice-lock-scores"
+# Worker renamed to alchemix-games-scores. The D1 database is still referenced by its
+# database_id below, so the existing scores stay exactly where they are.
+name = "alchemix-games-scores"
 main = "src/index.js"
 compatibility_date = "2025-09-01"
 
