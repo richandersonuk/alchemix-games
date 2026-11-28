@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
+  <defs>
+    <!-- Deep lab-navy shell with cyan/magenta/amber edge highlights -->
+    <linearGradient id="cd-shell" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10203a" />
+      <stop offset="55%" stop-color="#081224" />
+      <stop offset="100%" stop-color="#040812" />
+    </linearGradient>
+    <linearGradient id="cd-shell-edge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="52%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#eab308" />
+    </linearGradient>
+    <linearGradient id="cd-label" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060c1a" />
+      <stop offset="55%" stop-color="#0c1932" />
+      <stop offset="100%" stop-color="#17112b" />
+    </linearGradient>
+    <linearGradient id="cd-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="cd-plate" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#dbeafe" />
+    </linearGradient>
+    <linearGradient id="cd-solvent" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.88" />
+    </linearGradient>
+    <filter id="cd-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Ambient Drop Shadow -->
+  <rect x="28" y="14" width="164" height="174" rx="10" fill="#020408" opacity="0.82" />
+
+  <!-- Bottom PCB Connector Housing -->
+  <rect x="44" y="176" width="132" height="28" rx="4" fill="#071121" stroke="#38bdf8" stroke-width="2" />
+  <rect x="50" y="180" width="120" height="22" rx="2" fill="#0b1f38" stroke="#ec4899" stroke-width="1" />
+
+  <!-- Gold Edge Connector Pins -->
+  <g fill="url(#cd-gold)">
+    <rect x="55" y="182" width="6" height="19" rx="1" />
+    <rect x="65" y="182" width="6" height="19" rx="1" />
+    <rect x="75" y="182" width="6" height="19" rx="1" />
+    <rect x="85" y="182" width="6" height="19" rx="1" />
+    <rect x="95" y="182" width="6" height="19" rx="1" />
+    <rect x="105" y="182" width="6" height="19" rx="1" />
+    <rect x="115" y="182" width="6" height="19" rx="1" />
+    <rect x="125" y="182" width="6" height="19" rx="1" />
+    <rect x="135" y="182" width="6" height="19" rx="1" />
+    <rect x="145" y="182" width="6" height="19" rx="1" />
+    <rect x="155" y="182" width="6" height="19" rx="1" />
+    <rect x="163" y="182" width="4" height="19" rx="1" />
+  </g>
+
+  <!-- Main Cartridge Body with Left Notch -->
+  <path d="M 38 14 H 180 A 8 8 0 0 1 188 22 V 174 A 6 6 0 0 1 182 180 H 38 A 6 6 0 0 1 32 174 V 32 L 44 20 V 14 Z"
+        fill="url(#cd-shell)" stroke="url(#cd-shell-edge)" stroke-width="2.5" />
+
+  <!-- Top Grip Spine Ribs -->
+  <rect x="52" y="18" width="124" height="18" rx="3" fill="#060f1e" stroke="#0369a1" stroke-width="1" />
+  <g stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round">
+    <line x1="60" y1="22" x2="168" y2="22" />
+    <line x1="60" y1="27" x2="168" y2="27" />
+    <line x1="60" y1="32" x2="168" y2="32" />
+  </g>
+
+  <!-- Side Grip Grooves -->
+  <g fill="#050b16" stroke="#0369a1" stroke-width="0.8">
+    <rect x="33" y="52" width="7" height="5" rx="1" />
+    <rect x="33" y="62" width="7" height="5" rx="1" />
+    <rect x="33" y="72" width="7" height="5" rx="1" />
+    <rect x="33" y="82" width="7" height="5" rx="1" />
+    <rect x="180" y="52" width="7" height="5" rx="1" />
+    <rect x="180" y="62" width="7" height="5" rx="1" />
+    <rect x="180" y="72" width="7" height="5" rx="1" />
+    <rect x="180" y="82" width="7" height="5" rx="1" />
+  </g>
+
+  <!-- Security Screws -->
+  <g fill="#475569" stroke="#cbd5e1" stroke-width="1">
+    <circle cx="43" cy="166" r="4.5" />
+    <line x1="40.5" y1="166" x2="45.5" y2="166" stroke="#0f172a" stroke-width="1.4" />
+    <circle cx="177" cy="166" r="4.5" />
+    <line x1="174.5" y1="166" x2="179.5" y2="166" stroke="#0f172a" stroke-width="1.4" />
+  </g>
+
+  <!-- Recessed Center Label Well + Sticker -->
+  <rect x="46" y="42" width="128" height="114" rx="6" fill="#030710" stroke="#38bdf8" stroke-width="1.5" />
+  <rect x="49" y="45" width="122" height="108" rx="4" fill="url(#cd-label)" stroke="#ec4899" stroke-width="1.3" />
+
+  <!-- Top Sticker Header Band -->
+  <path d="M 50 49 A 3 3 0 0 1 53 46 H 167 A 3 3 0 0 1 170 49 V 61 H 50 Z" fill="#38bdf8" />
+  <text x="110" y="56.5" text-anchor="middle" fill="#050d1a" font-family="monospace" font-weight="900" font-size="8.6" letter-spacing="1.2">CHROMATO-DASH</text>
+
+  <!-- Corner Badges -->
+  <g transform="translate(53, 65)">
+    <rect x="0" y="0" width="26" height="14" rx="3" fill="#062925" stroke="#34d399" stroke-width="1" />
+    <text x="13" y="9.8" text-anchor="middle" fill="#6ee7b7" font-family="monospace" font-weight="900" font-size="7.2">Rf</text>
+  </g>
+  <g transform="translate(141, 65)">
+    <rect x="0" y="0" width="26" height="14" rx="3" fill="#27142b" stroke="#ec4899" stroke-width="1" />
+    <text x="13" y="9.8" text-anchor="middle" fill="#fbcfe8" font-family="monospace" font-weight="900" font-size="7.2">UV</text>
+  </g>
+
+  <!-- TLC Chromatography Plate & Solvent Chamber -->
+  <g transform="translate(0, 1)">
+    <!-- Beaker / Chamber outline -->
+    <rect x="78" y="66" width="64" height="72" rx="6" fill="#081427" stroke="#38bdf8" stroke-width="1.4" opacity="0.95" />
+    <!-- White Silica TLC Plate -->
+    <rect x="85" y="70" width="50" height="62" rx="3" fill="url(#cd-plate)" />
+    <!-- Wetted region below solvent front -->
+    <path d="M 85 84 Q 97.5 81 110 84 T 135 84 L 135 132 L 85 132 Z" fill="#38bdf8" opacity="0.18" />
+    <!-- Dashed Solvent Front Wave -->
+    <path d="M 85 84 Q 97.5 81 110 84 T 135 84" fill="none" stroke="#0284c7" stroke-width="1.8" stroke-dasharray="3 2" />
+    <!-- Pencil Baseline (10%) -->
+    <line x1="87" y1="122" x2="133" y2="122" stroke="#475569" stroke-width="1.6" />
+
+    <!-- Pigment migration trails -->
+    <line x1="97" y1="122" x2="97" y2="91" stroke="#06b6d4" stroke-width="2" stroke-dasharray="2 2" opacity="0.6" />
+    <line x1="110" y1="122" x2="110" y2="101" stroke="#ec4899" stroke-width="2" stroke-dasharray="2 2" opacity="0.6" />
+    <line x1="123" y1="122" x2="123" y2="111" stroke="#eab308" stroke-width="2" stroke-dasharray="2 2" opacity="0.6" />
+
+    <!-- Separated Pigment Spots + Target Rings -->
+    <g filter="url(#cd-glow)">
+      <circle cx="97" cy="91" r="6.2" fill="none" stroke="#06b6d4" stroke-width="1" stroke-dasharray="2 1.5" opacity="0.85" />
+      <circle cx="97" cy="91" r="4" fill="#06b6d4" />
+      <circle cx="110" cy="101" r="6.2" fill="none" stroke="#ec4899" stroke-width="1" stroke-dasharray="2 1.5" opacity="0.85" />
+      <circle cx="110" cy="101" r="4.2" fill="#ec4899" />
+      <circle cx="123" cy="111" r="6.2" fill="none" stroke="#eab308" stroke-width="1" stroke-dasharray="2 1.5" opacity="0.85" />
+      <circle cx="123" cy="111" r="3.9" fill="#eab308" />
+    </g>
+
+    <!-- Bottom Solvent Reservoir Band (safely below pencil line) -->
+    <rect x="80" y="125" width="60" height="11" rx="3" fill="url(#cd-solvent)" stroke="#38bdf8" stroke-width="1.1" />
+  </g>
+
+  <!-- Side Rf scale ticks -->
+  <g stroke="#38bdf8" stroke-width="1" opacity="0.55">
+    <line x1="65" y1="85" x2="72" y2="85" />
+    <line x1="67" y1="97" x2="72" y2="97" />
+    <line x1="65" y1="109" x2="72" y2="109" />
+    <line x1="67" y1="122" x2="72" y2="122" />
+  </g>
+  <g stroke="#ec4899" stroke-width="1" opacity="0.55">
+    <line x1="148" y1="85" x2="155" y2="85" />
+    <line x1="148" y1="97" x2="153" y2="97" />
+    <line x1="148" y1="109" x2="155" y2="109" />
+    <line x1="148" y1="122" x2="153" y2="122" />
+  </g>
+
+  <!-- Bottom ROM Serial Badge on Sticker -->
+  <rect x="55" y="144" width="110" height="7" rx="2" fill="#040b0e" stroke="#38bdf8" stroke-width="0.8" />
+  <text x="110" y="149.6" text-anchor="middle" fill="#67e8f9" font-family="monospace" font-weight="bold" font-size="5.6" letter-spacing="0.7">ALX-13 • RF ESCAPE</text>
+
+  <!-- Molded Downward Insertion Triangle -->
+  <polygon points="103,163 117,163 110,172" fill="#0369a1" stroke="#38bdf8" stroke-width="1" />
+</svg>
