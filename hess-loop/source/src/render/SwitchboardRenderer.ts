@@ -203,6 +203,13 @@ export class SwitchboardRenderer {
     const color = isExo ? '#fb923c' : isEndo ? '#38bdf8' : '#fbbf24';
     const isEnergised = isExo || isEndo;
 
+    const cycleNodes = opts.nodes.filter((n) => n.data.role !== 'trap');
+    const centroidSource = cycleNodes.length >= 2 ? cycleNodes : opts.nodes;
+    const centroidX =
+      centroidSource.reduce((acc, n) => acc + n.cx, 0) / (centroidSource.length || 1);
+    const centroidY =
+      centroidSource.reduce((acc, n) => acc + n.cy, 0) / (centroidSource.length || 1);
+
     const dx = target.cx - source.cx;
     const dy = target.cy - source.cy;
     const horizontal = Math.abs(dx) >= Math.abs(dy);
@@ -212,20 +219,23 @@ export class SwitchboardRenderer {
 
     if (horizontal) {
       const avgY = (source.cy + target.cy) * 0.5;
-      if (avgY < this.height * 0.45) {
-        // Arc upward into clear top headroom above START/TARGET cards
-        ctrlY = Math.max(22, Math.min(source.rect.y, target.rect.y) - 42);
+      if (avgY <= centroidY) {
+        // Arc upward/outward into clear top headroom above START/TARGET cards
+        ctrlY = Math.max(18, Math.min(source.rect.y, target.rect.y) - 42);
       } else {
-        // Arc downward into clear bottom headroom below START/TARGET cards
+        // Arc downward/outward into clear bottom headroom below START/TARGET cards
         ctrlY = Math.min(
-          this.height - 22,
+          this.height - 18,
           Math.max(source.rect.y + source.rect.height, target.rect.y + target.rect.height) + 42
         );
       }
     } else {
-      // Vertical target busbar (e.g. L09 right column): bow slightly toward center if room, else outward
+      // Vertical target busbar: bow outward away from cycle interior
       const avgX = (source.cx + target.cx) * 0.5;
-      ctrlX = avgX > this.width * 0.5 ? avgX - 38 : avgX + 38;
+      ctrlX =
+        avgX >= centroidX
+          ? Math.min(this.width - 18, Math.max(source.rect.x + source.rect.width, target.rect.x + target.rect.width) + 38)
+          : Math.max(18, Math.min(source.rect.x, target.rect.x) - 38);
     }
 
     const start = source.getPerimeterAnchor(ctrlX, ctrlY, 4);

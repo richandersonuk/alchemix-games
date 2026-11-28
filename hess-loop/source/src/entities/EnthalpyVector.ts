@@ -74,24 +74,53 @@ export class EnthalpyVector {
       return;
     }
 
-    // Offset curve perpendicular to the standard direction so flipping keeps the same arc lane
+    // Compute cycle centroid from non-trap nodes so every edge consistently bows outward
+    const nodesList = Array.from(nodeMap.values());
+    const cycleNodes = nodesList.filter((n) => n.data.role !== 'trap');
+    const centroidSource = cycleNodes.length >= 2 ? cycleNodes : nodesList;
+    const centroidX =
+      centroidSource.reduce((acc, n) => acc + n.cx, 0) / (centroidSource.length || 1);
+    const centroidY =
+      centroidSource.reduce((acc, n) => acc + n.cy, 0) / (centroidSource.length || 1);
+
+    // Offset curve perpendicular to standard chord direction, oriented away from cycle interior
     const stdFrom = nodeMap.get(this.data.standardFromId) ?? fromNode;
     const stdTo = nodeMap.get(this.data.standardToId) ?? toNode;
     const sdx = stdTo.cx - stdFrom.cx;
     const sdy = stdTo.cy - stdFrom.cy;
     const slen = Math.hypot(sdx, sdy) || 1;
-    const nx = -sdy / slen;
-    const ny = sdx / slen;
+    let nx = -sdy / slen;
+    let ny = sdx / slen;
 
-    const rawMidX = (fromNode.cx + toNode.cx) * 0.5 + nx * this.data.curveOffset;
-    const rawMidY = (fromNode.cy + toNode.cy) * 0.5 + ny * this.data.curveOffset;
+    const chordMidX = (stdFrom.cx + stdTo.cx) * 0.5;
+    const chordMidY = (stdFrom.cy + stdTo.cy) * 0.5;
+    let outVecX = chordMidX - centroidX;
+    let outVecY = chordMidY - centroidY;
+    if (Math.hypot(outVecX, outVecY) < 4) {
+      outVecX = chordMidX - canvasWidth * 0.5;
+      outVecY = chordMidY - canvasHeight * 0.5;
+    }
+    if (nx * outVecX + ny * outVecY < 0) {
+      nx = -nx;
+      ny = -ny;
+    }
+
+    const bow = Math.max(18, Math.abs(this.data.curveOffset) || 20);
+    const rawMidX = (fromNode.cx + toNode.cx) * 0.5 + nx * bow;
+    const rawMidY = (fromNode.cy + toNode.cy) * 0.5 + ny * bow;
 
     const start = fromNode.getPerimeterAnchor(rawMidX, rawMidY, 4);
     const end = toNode.getPerimeterAnchor(rawMidX, rawMidY, 4);
 
-    // Quadratic control point pushed so t=0.5 passes cleanly along the curve lane
-    const ctrlX = (start.x + end.x) * 0.5 + nx * this.data.curveOffset * 1.65;
-    const ctrlY = (start.y + end.y) * 0.5 + ny * this.data.curveOffset * 1.65;
+    // Quadratic control point pushed outward while remaining inside viewport margins
+    const ctrlX = Math.max(
+      14,
+      Math.min(canvasWidth - 14, (start.x + end.x) * 0.5 + nx * bow * 1.75)
+    );
+    const ctrlY = Math.max(
+      14,
+      Math.min(canvasHeight - 14, (start.y + end.y) * 0.5 + ny * bow * 1.75)
+    );
 
     let badgeCenterX = 0.25 * start.x + 0.5 * ctrlX + 0.25 * end.x;
     let badgeCenterY = 0.25 * start.y + 0.5 * ctrlY + 0.25 * end.y;
@@ -111,7 +140,6 @@ export class EnthalpyVector {
     ({ cx: badgeCenterX, cy: badgeCenterY } = clampGroup(badgeCenterX, badgeCenterY));
 
     // Place pill group cleanly without overlapping any StateNode card (including its top role chip)
-    const nodesList = Array.from(nodeMap.values());
     const overlapsAnyNode = (cx: number, cy: number): boolean => {
       const gx = cx - groupW * 0.5;
       const gy = cy - pillH * 0.5;
@@ -135,7 +163,11 @@ export class EnthalpyVector {
           offsets.push([dx, dy]);
         }
       }
-      offsets.sort((a, b) => a[0] * a[0] + a[1] * a[1] - (b[0] * b[0] + b[1] * b[1]));
+      offsets.sort(
+        (a, b) =>
+          a[0] * a[0] + a[1] * a[1] - (a[0] * nx + a[1] * ny) * 8 -
+          (b[0] * b[0] + b[1] * b[1] - (b[0] * nx + b[1] * ny) * 8)
+      );
       for (const [dx, dy] of offsets) {
         const cand = clampGroup(badgeCenterX + dx, badgeCenterY + dy);
         if (!overlapsAnyNode(cand.cx, cand.cy)) {
