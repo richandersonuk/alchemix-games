@@ -1,5 +1,6 @@
 import type { CycleScenario, VectorArrow } from '../types/energetics.ts';
 import { buildEquationPreview } from '../engine/CycleEvaluator.ts';
+import { prettifyChemText } from './MobileHUD.ts';
 
 export class EquationPreview {
   private root: HTMLElement;
@@ -10,12 +11,24 @@ export class EquationPreview {
 
   render(scenario: CycleScenario, vectors: VectorArrow[]): void {
     const preview = buildEquationPreview(scenario, vectors);
+    const eqTermsOnly =
+      preview.status === 'empty'
+        ? `${prettifyChemText(scenario.targetLabel)} = Drag between nodes to wire route`
+        : preview.expression.replace(/\s*=\s*[-−+]?\d+\.\d+\s*kJ mol⁻¹$/, '');
+    const totalPill =
+      preview.status === 'empty'
+        ? ''
+        : `<span class="eq-sum-pill">Σ = ${escapeHtml(preview.numericSumText)}</span>`;
+
     this.root.innerHTML = `
-      <div class="eq-readout">
+      <div class="eq-top-row">
         <span class="eq-label">Live Hess Summation</span>
-        <span class="eq-formula">${escapeHtml(preview.expression)}</span>
+        <div class="eq-badges">
+          ${totalPill}
+          <span class="eq-status-chip ${preview.status}">${escapeHtml(preview.statusLabel)}</span>
+        </div>
       </div>
-      <span class="eq-status-chip ${preview.status}">${escapeHtml(preview.statusLabel)}</span>
+      <div class="eq-formula">${escapeHtml(eqTermsOnly)}</div>
     `;
   }
 }

@@ -4,15 +4,14 @@ import { LEVELS } from './data/levels.ts';
 import { buildEquationPreview, evaluateCircuit } from './engine/CycleEvaluator.ts';
 import { StateNode } from './entities/StateNode.ts';
 import { EnthalpyVector } from './entities/EnthalpyVector.ts';
-import {
-  SwitchboardAudio,
-  SwitchboardRenderer,
-  type DragProbeState,
-} from './render/SwitchboardRenderer.ts';
+import { SwitchboardRenderer, type DragProbeState } from './render/SwitchboardRenderer.ts';
+import { AudioManager } from './audio/AudioManager.ts';
+import { SettingsStore } from './settings.ts';
 import { MobileHUD } from './ui/MobileHUD.ts';
 import { EquationPreview } from './ui/EquationPreview.ts';
 import { BottomCTA } from './ui/BottomCTA.ts';
 import { MarkSchemeModal } from './ui/MarkSchemeModal.ts';
+import { SettingsMenu } from './ui/SettingsMenu.ts';
 
 const STORAGE_KEY = 'hess-loop-progress-v1';
 
@@ -35,12 +34,15 @@ class HessLoopApp {
 
   private canvas: HTMLCanvasElement;
   private renderer: SwitchboardRenderer;
-  private audio: SwitchboardAudio;
+  private settings: SettingsStore;
+  private audio: AudioManager;
   private hud: MobileHUD;
+  private settingsMenu: SettingsMenu;
   private equationPreview: EquationPreview;
   private bottomCTA: BottomCTA;
   private markSchemeModal: MarkSchemeModal;
   private toastEl: HTMLElement;
+  private splashEl: HTMLElement;
   private toastTimer: number | null = null;
   private modalTimer: number | null = null;
 
@@ -65,8 +67,10 @@ class HessLoopApp {
     const ctaBar = document.getElementById('bottom-cta-bar');
     const levelsModal = document.getElementById('levels-modal');
     const guideModal = document.getElementById('databook-modal');
+    const settingsModal = document.getElementById('settings-modal');
     const msModal = document.getElementById('markscheme-modal');
     const toastEl = document.getElementById('board-toast');
+    const splashEl = document.getElementById('splash-overlay');
 
     if (
       !canvas ||
@@ -76,31 +80,48 @@ class HessLoopApp {
       !ctaBar ||
       !levelsModal ||
       !guideModal ||
+      !settingsModal ||
       !msModal ||
-      !toastEl
+      !toastEl ||
+      !splashEl
     ) {
       throw new Error('Missing required DOM elements for Hess’s Loop');
     }
 
     this.canvas = canvas;
     this.toastEl = toastEl;
+    this.splashEl = splashEl;
     this.renderer = new SwitchboardRenderer(canvas);
-    this.audio = new SwitchboardAudio();
+    this.settings = new SettingsStore();
+    this.audio = new AudioManager(this.settings);
+
+    this.settingsMenu = new SettingsMenu(settingsModal, this.settings, this.audio, {
+      onBackToTitle: () => {
+        this.updateSplashSummary();
+        this.splashEl.classList.remove('hidden');
+      },
+    });
 
     this.hud = new MobileHUD(hudHeader, levelsModal, guideModal, {
-      onOpenLevels: () =>
-        this.hud.openLevelsModal(LEVELS, this.scenario.id, this.progress.starsByLevel),
-      onOpenGuide: () => this.hud.openGuideModal(),
+      onOpenLevels: () => {
+        this.audio.playClick();
+        this.hud.openLevelsModal(LEVELS, this.scenario.id, this.progress.starsByLevel);
+      },
+      onOpenGuide: () => {
+        this.audio.playClick();
+        this.hud.openGuideModal();
+      },
       onReset: () => {
         this.audio.playFlipClick();
         this.loadLevel(this.scenario.id);
         this.showToast('Switchboard cleared and reset.', 'info');
       },
-      onToggleAudio: () => {
-        this.audio.muted = !this.audio.muted;
-        this.hud.renderHeader(this.scenario, this.audio.muted);
+      onOpenSettings: () => {
+        this.audio.playClick();
+        this.settingsMenu.open(true);
       },
       onSelectLevel: (id) => {
+        this.audio.startBgm();
         this.loadLevel(id);
       },
     });
@@ -112,7 +133,10 @@ class HessLoopApp {
       onSetMultiplier: (mult) => this.setSelectedMultiplier(mult),
       onDeleteSelected: () => this.deleteSelectedVector(),
       onEnergise: () => this.handleEnergiseClick(),
-      onHint: () => this.showToast(this.scenario.hint, 'info', 6000),
+      onHint: () => {
+        this.audio.playClick();
+        this.showToast(this.scenario.hint, 'info', 6000);
+      },
     });
 
     this.markSchemeModal = new MarkSchemeModal(msModal, {
@@ -143,23 +167,31 @@ class HessLoopApp {
   }
 
   private bindSplash(): void {
-    const splash = document.getElementById('splash-overlay');
     const playBtn = document.getElementById('btn-splash-play');
     const casesBtn = document.getElementById('btn-splash-cases');
     const guideBtn = document.getElementById('btn-splash-guide');
+    const settingsBtn = document.getElementById('btn-splash-settings');
 
     playBtn?.addEventListener('click', () => {
-      splash?.classList.add('hidden');
+      this.splashEl.classList.add('hidden');
+      this.audio.startBgm();
       this.audio.playWireLatch();
       this.resizeCanvas();
     });
     casesBtn?.addEventListener('click', () => {
-      splash?.classList.add('hidden');
+      this.splashEl.classList.add('hidden');
+      this.audio.startBgm();
+      this.audio.playClick();
       this.resizeCanvas();
       this.hud.openLevelsModal(LEVELS, this.scenario.id, this.progress.starsByLevel);
     });
     guideBtn?.addEventListener('click', () => {
+      this.audio.playClick();
       this.hud.openGuideModal();
+    });
+    settingsBtn?.addEventListener('click', () => {
+      this.audio.playClick();
+      this.settingsMenu.open(false);
     });
   }
 
@@ -241,7 +273,7 @@ class HessLoopApp {
 
   private refreshUI(): void {
     const rawArrows = this.vectors.map((v) => v.data);
-    this.hud.renderHeader(this.scenario, this.audio.muted);
+    this.hud.renderHeader(this.scenario);
     this.equationPreview.render(this.scenario, rawArrows);
 
     const preview = buildEquationPreview(this.scenario, rawArrows);
@@ -265,10 +297,10 @@ class HessLoopApp {
   }
 
   private onPointerDown(e: PointerEvent): void {
+    this.audio.startBgm();
     if (this.activePointerId !== null) return;
     const pt = this.toCanvasPoint(e);
 
-    // 1. Check node hit first for thumb-drag vector routing
     const hitNode = this.nodes.find((n) => n.containsPoint(pt.x, pt.y, 10));
     if (hitNode) {
       this.activePointerId = e.pointerId;
@@ -284,7 +316,6 @@ class HessLoopApp {
       return;
     }
 
-    // 2. Check existing vector hit (multiplier badge vs body flip/double-tap)
     for (let i = this.vectors.length - 1; i >= 0; i--) {
       const vec = this.vectors[i];
       const hit = vec.hitTest(pt.x, pt.y);
@@ -302,10 +333,9 @@ class HessLoopApp {
         return;
       }
 
-      // Single-tap flips direction; rapid double-tap restores direction and increments multiplier
       const now = performance.now();
       if (this.lastTapVectorId === vec.data.id && now - this.lastTapTimeMs < 280) {
-        vec.toggleDirection(); // undo first tap flip
+        vec.toggleDirection();
         vec.cycleMultiplier(4);
         this.lastTapVectorId = null;
         this.lastTapTimeMs = 0;
@@ -325,7 +355,6 @@ class HessLoopApp {
       return;
     }
 
-    // Background tap deselects active vector
     this.selectedVectorId = null;
     this.refreshUI();
   }
@@ -367,7 +396,6 @@ class HessLoopApp {
   }
 
   private connectNodes(nodeAId: string, nodeBId: string): void {
-    // Prevent directly short-circuiting START to TARGET with no intermediate data
     const isDirectUnknown =
       (nodeAId === this.scenario.sourceNodeId && nodeBId === this.scenario.targetNodeId) ||
       (nodeBId === this.scenario.sourceNodeId && nodeAId === this.scenario.targetNodeId);
@@ -458,6 +486,7 @@ class HessLoopApp {
   }
 
   private handleEnergiseClick(): void {
+    this.audio.startBgm();
     if (
       (this.circuitState === 'energised_exothermic' ||
         this.circuitState === 'energised_endothermic') &&
@@ -500,7 +529,6 @@ class HessLoopApp {
       return;
     }
 
-    // Circuit fault detected
     this.circuitState = 'fault';
     this.offendingVectorId = result.fault?.offendingVectorId ?? null;
     this.offendingNodeId = result.fault?.offendingNodeId ?? null;

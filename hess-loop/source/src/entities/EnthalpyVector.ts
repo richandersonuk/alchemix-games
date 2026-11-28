@@ -89,30 +89,72 @@ export class EnthalpyVector {
     const start = fromNode.getPerimeterAnchor(rawMidX, rawMidY, 4);
     const end = toNode.getPerimeterAnchor(rawMidX, rawMidY, 4);
 
-    // Quadratic control point pushed twice curveOffset so t=0.5 passes near rawMid
-    const ctrlX = (start.x + end.x) * 0.5 + nx * this.data.curveOffset * 1.45;
-    const ctrlY = (start.y + end.y) * 0.5 + ny * this.data.curveOffset * 1.45;
+    // Quadratic control point pushed so t=0.5 passes cleanly along the curve lane
+    const ctrlX = (start.x + end.x) * 0.5 + nx * this.data.curveOffset * 1.65;
+    const ctrlY = (start.y + end.y) * 0.5 + ny * this.data.curveOffset * 1.65;
 
-    const midX = 0.25 * start.x + 0.5 * ctrlX + 0.25 * end.x;
-    const midY = 0.25 * start.y + 0.5 * ctrlY + 0.25 * end.y;
+    let badgeCenterX = 0.25 * start.x + 0.5 * ctrlX + 0.25 * end.x;
+    let badgeCenterY = 0.25 * start.y + 0.5 * ctrlY + 0.25 * end.y;
 
-    // Keep badges inside canvas margins
-    const pillW = 68;
-    const pillH = 22;
-    const multW = 28;
-    const multH = 22;
-    const safeMidX = Math.max(pillW * 0.5 + 8, Math.min(canvasWidth - pillW * 0.5 - 34, midX));
-    const safeMidY = Math.max(pillH * 0.5 + 8, Math.min(canvasHeight - pillH * 0.5 - 8, midY));
+    const pillW = 58;
+    const pillH = 20;
+    const multW = 25;
+    const multH = 20;
+    const gap = 3;
+    const groupW = pillW + gap + multW;
+
+    const clampGroup = (cx: number, cy: number): { cx: number; cy: number } => ({
+      cx: Math.max(groupW * 0.5 + 6, Math.min(canvasWidth - groupW * 0.5 - 6, cx)),
+      cy: Math.max(pillH * 0.5 + 6, Math.min(canvasHeight - pillH * 0.5 - 6, cy)),
+    });
+
+    ({ cx: badgeCenterX, cy: badgeCenterY } = clampGroup(badgeCenterX, badgeCenterY));
+
+    // Place pill group cleanly without overlapping any StateNode card (including its top role chip)
+    const nodesList = Array.from(nodeMap.values());
+    const overlapsAnyNode = (cx: number, cy: number): boolean => {
+      const gx = cx - groupW * 0.5;
+      const gy = cy - pillH * 0.5;
+      for (const node of nodesList) {
+        const rx = node.rect.x - 3;
+        const ry = node.rect.y - 8;
+        const rw = node.rect.width + 6;
+        const rh = node.rect.height + 11;
+        if (gx < rx + rw && gx + groupW > rx && gy < ry + rh && gy + pillH > ry) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (overlapsAnyNode(badgeCenterX, badgeCenterY)) {
+      const offsets: Array<[number, number]> = [];
+      for (const dy of [0, -18, 18, -34, 34, -52, 52, -70, 70]) {
+        for (const dx of [0, -24, 24, -48, 48]) {
+          if (dx === 0 && dy === 0) continue;
+          offsets.push([dx, dy]);
+        }
+      }
+      offsets.sort((a, b) => a[0] * a[0] + a[1] * a[1] - (b[0] * b[0] + b[1] * b[1]));
+      for (const [dx, dy] of offsets) {
+        const cand = clampGroup(badgeCenterX + dx, badgeCenterY + dy);
+        if (!overlapsAnyNode(cand.cx, cand.cy)) {
+          badgeCenterX = cand.cx;
+          badgeCenterY = cand.cy;
+          break;
+        }
+      }
+    }
 
     const labelRect: Rect = {
-      x: safeMidX - pillW * 0.5,
-      y: safeMidY - pillH * 0.5,
+      x: badgeCenterX - groupW * 0.5,
+      y: badgeCenterY - pillH * 0.5,
       width: pillW,
       height: pillH,
     };
 
     const multRect: Rect = {
-      x: labelRect.x + labelRect.width + 3,
+      x: labelRect.x + pillW + gap,
       y: labelRect.y,
       width: multW,
       height: multH,
@@ -136,8 +178,8 @@ export class EnthalpyVector {
       endY: end.y,
       ctrlX,
       ctrlY,
-      midX: safeMidX,
-      midY: safeMidY,
+      midX: badgeCenterX,
+      midY: badgeCenterY,
       labelRect,
       multRect,
       samples,

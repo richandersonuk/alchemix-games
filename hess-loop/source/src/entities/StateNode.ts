@@ -15,26 +15,26 @@ export class StateNode {
 
   constructor(data: StateNodeData) {
     this.data = data;
-    this.rect = { x: 0, y: 0, width: 132, height: 52 };
+    this.rect = { x: 0, y: 0, width: 120, height: 44 };
     this.cx = 0;
     this.cy = 0;
   }
 
   /**
    * Updates pixel coordinates from normalized (nx, ny) within the portrait canvas,
-   * clamping cleanly inside safe margins so boxes never clip on 360px-wide viewports.
+   * sizing boxes compactly so horizontal pairs leave a wide central channel and ample headroom.
    */
   updateLayout(canvasWidth: number, canvasHeight: number, totalNodes: number): void {
     const compact = canvasWidth < 385 || totalNodes >= 5;
     const formulaLen = this.data.formulaText.length;
     const baseWidth = compact
-      ? Math.min(156, Math.max(106, 62 + formulaLen * 5.2))
-      : Math.min(176, Math.max(118, 68 + formulaLen * 5.6));
-    const width = Math.min(baseWidth, Math.floor(canvasWidth * 0.44));
-    const height = compact ? 48 : 54;
+      ? Math.min(144, Math.max(88, 48 + formulaLen * 4.8))
+      : Math.min(162, Math.max(96, 54 + formulaLen * 5.1));
+    const width = Math.min(baseWidth, Math.floor(canvasWidth * 0.40));
+    const height = compact ? 42 : 46;
 
-    const padX = 10;
-    const padY = 10;
+    const padX = 8;
+    const padY = 12;
     const rawCx = this.data.nx * canvasWidth;
     const rawCy = this.data.ny * canvasHeight;
 

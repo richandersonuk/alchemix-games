@@ -1,5 +1,6 @@
 import type { CircuitState, VectorArrow } from '../types/energetics.ts';
 import { formatSignedDeltaH, getEffectiveDeltaH } from '../engine/CycleEvaluator.ts';
+import { prettifyChemText } from './MobileHUD.ts';
 
 export interface BottomCTACallbacks {
   onFlipSelected: () => void;
@@ -36,10 +37,10 @@ export class BottomCTA {
   private renderInspector(selected: VectorArrow | null): void {
     if (!selected) {
       this.inspectorRoot.innerHTML = `
-        <div class="coach-bar">
-          <div class="coach-text">
-            <strong>Drag</strong> node → node to wire · <strong>Tap</strong> arrow to flip sign · <strong>Double-tap</strong> or <strong>×1</strong> to scale moles
-          </div>
+        <div class="coach-chips">
+          <span class="coach-chip"><strong>Drag</strong> node → node</span>
+          <span class="coach-chip"><strong>Tap</strong> arrow to flip</span>
+          <span class="coach-chip"><strong>2×Tap</strong> scale ×N</span>
         </div>
       `;
       return;
@@ -47,12 +48,13 @@ export class BottomCTA {
 
     const eff = formatSignedDeltaH(getEffectiveDeltaH(selected));
     const dirClass = selected.reversed ? 'rev' : 'std';
-    const dirTag = selected.reversed ? 'REVERSED (−ΔH)' : 'STANDARD (+ΔH)';
+    const dirTag = selected.reversed ? 'REVERSED (−ΔH)' : 'STANDARD (ΔH)';
+    const prettySymbol = prettifyChemText(selected.symbol);
 
     this.inspectorRoot.innerHTML = `
       <div class="inspector-wrap">
         <div class="inspector-top">
-          <span class="inspector-name">${escapeHtml(selected.symbol)} · ${dirTag}</span>
+          <span class="inspector-name">${escapeHtml(prettySymbol)} · ${dirTag}</span>
           <span class="inspector-val ${dirClass}">${eff} kJ mol⁻¹</span>
         </div>
         <div class="inspector-controls">
@@ -99,10 +101,10 @@ export class BottomCTA {
 
     if (circuitState === 'energised_exothermic') {
       btnClass += ' exo';
-      label = '🔥 Exothermic Loop Closed — View Report';
+      label = '🔥 Exothermic! View Report';
     } else if (circuitState === 'energised_endothermic') {
       btnClass += ' endo';
-      label = '❄️ Endothermic Loop Closed — View Report';
+      label = '❄️ Endothermic! View Report';
     } else if (loopReady) {
       btnClass += ' ready';
       label = '⚡ Close & Energise Circuit';

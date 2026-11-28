@@ -6,7 +6,7 @@ export interface MobileHUDCallbacks {
   onOpenLevels: () => void;
   onOpenGuide: () => void;
   onReset: () => void;
-  onToggleAudio: () => void;
+  onOpenSettings: () => void;
   onSelectLevel: (levelId: string) => void;
 }
 
@@ -33,8 +33,11 @@ export class MobileHUD {
     this.callbacks = callbacks;
   }
 
-  renderHeader(scenario: CycleScenario, muted: boolean): void {
+  renderHeader(scenario: CycleScenario): void {
     const boards = scenario.examBoards.join('·');
+    const prettyTarget = prettifyChemText(scenario.targetLabel);
+    const prettyEq = prettifyChemText(scenario.targetEquation);
+
     this.headerRoot.innerHTML = `
       <div class="hud-group">
         <button id="hud-btn-levels" class="hud-btn accent" type="button" title="Select Thermochemical Cycle">☰ ${scenario.number}/12</button>
@@ -43,20 +46,20 @@ export class MobileHUD {
       <div class="hud-center">
         <div class="hud-target-row">
           <span class="hud-level-code">${boards}</span>
-          <span class="hud-target-label">Find ${escapeHtml(scenario.targetLabel)}</span>
+          <span class="hud-target-label">Find ${escapeHtml(prettyTarget)}</span>
         </div>
-        <div class="hud-equation-sub">${escapeHtml(scenario.targetEquation)}</div>
+        <div class="hud-equation-sub">${escapeHtml(prettyEq)}</div>
       </div>
       <div class="hud-group">
         <button id="hud-btn-reset" class="hud-btn" type="button" title="Reset Switchboard">↻</button>
-        <button id="hud-btn-audio" class="hud-btn" type="button" title="Toggle Sound">${muted ? '🔇' : '🔊'}</button>
+        <button id="hud-btn-settings" class="hud-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
       </div>
     `;
 
     this.headerRoot.querySelector('#hud-btn-levels')?.addEventListener('click', () => this.callbacks.onOpenLevels());
     this.headerRoot.querySelector('#hud-btn-guide')?.addEventListener('click', () => this.callbacks.onOpenGuide());
     this.headerRoot.querySelector('#hud-btn-reset')?.addEventListener('click', () => this.callbacks.onReset());
-    this.headerRoot.querySelector('#hud-btn-audio')?.addEventListener('click', () => this.callbacks.onToggleAudio());
+    this.headerRoot.querySelector('#hud-btn-settings')?.addEventListener('click', () => this.callbacks.onOpenSettings());
   }
 
   openLevelsModal(
@@ -100,8 +103,8 @@ export class MobileHUD {
               <span class="level-card-code">${lvl.code} · ${lvl.category.toUpperCase()}</span>
               <span class="level-card-stars">${starStr}</span>
             </div>
-            <div class="level-card-title">${escapeHtml(lvl.title)}</div>
-            <div class="level-card-eq">${escapeHtml(lvl.targetEquation)}</div>
+            <div class="level-card-title">${escapeHtml(prettifyChemText(lvl.title))}</div>
+            <div class="level-card-eq">${escapeHtml(prettifyChemText(lvl.targetEquation))}</div>
           </button>
         `;
       })
@@ -221,6 +224,35 @@ export class MobileHUD {
       });
     });
   }
+}
+
+export function prettifyChemText(input: string): string {
+  const subDigits: Record<string, string> = {
+    '0': '₀',
+    '1': '₁',
+    '2': '₂',
+    '3': '₃',
+    '4': '₄',
+    '5': '₅',
+    '6': '₆',
+    '7': '₇',
+    '8': '₈',
+    '9': '₉',
+  };
+  return input
+    .replace(/2\+/g, '²⁺')
+    .replace(/([A-Za-z0-9])\+(?=\(|$|\s|])/g, '$1⁺')
+    .replace(/([A-Za-z0-9])-(?=\(|$|\s|])/g, '$1⁻')
+    .replace(/([A-Za-z)])(\d+)/g, (_, prefix: string, digits: string) => {
+      const sub = digits
+        .split('')
+        .map((d) => subDigits[d] ?? d)
+        .join('');
+      return `${prefix}${sub}`;
+    })
+    .replace(/0\.5/g, '½')
+    .replace(/1\.5/g, '1½')
+    .replace(/3\.5/g, '3½');
 }
 
 function escapeHtml(text: string): string {

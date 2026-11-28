@@ -2,6 +2,7 @@ import type { CircuitState, CycleScenario } from '../types/energetics.ts';
 import { formatSignedDeltaH } from '../engine/CycleEvaluator.ts';
 import type { EnthalpyVector } from '../entities/EnthalpyVector.ts';
 import type { StateNode } from '../entities/StateNode.ts';
+import { prettifyChemText } from '../ui/MobileHUD.ts';
 
 export interface DragProbeState {
   active: boolean;
@@ -30,112 +31,17 @@ interface FormulaToken {
   stateChar?: string;
 }
 
-/**
- * Lightweight Web Audio synthesizer for tactile switchboard clicks, wire latches,
- * exothermic warm chords, and endothermic ice chimes.
- */
-export class SwitchboardAudio {
-  private ctx: AudioContext | null = null;
-  muted = false;
-
-  private ensureContext(): AudioContext | null {
-    if (this.muted) return null;
-    if (!this.ctx && typeof window !== 'undefined') {
-      const AudioCtor =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (AudioCtor) {
-        this.ctx = new AudioCtor();
-      }
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      void this.ctx.resume();
-    }
-    return this.ctx;
-  }
-
-  playWireLatch(): void {
-    const ctx = this.ensureContext();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(340, now);
-    osc.frequency.exponentialRampToValueAtTime(680, now + 0.075);
-    gain.gain.setValueAtTime(0.09, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.1);
-  }
-
-  playFlipClick(): void {
-    const ctx = this.ensureContext();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(520, now);
-    osc.frequency.exponentialRampToValueAtTime(210, now + 0.045);
-    gain.gain.setValueAtTime(0.06, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.06);
-  }
-
-  playStoichTick(multiplier: number): void {
-    const ctx = this.ensureContext();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(420 + multiplier * 75, now);
-    gain.gain.setValueAtTime(0.07, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.065);
-  }
-
-  playFaultBuzz(): void {
-    const ctx = this.ensureContext();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(165, now);
-    osc.frequency.linearRampToValueAtTime(115, now + 0.22);
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.25);
-  }
-
-  playEnergise(exothermic: boolean): void {
-    const ctx = this.ensureContext();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    const freqs = exothermic ? [261.6, 329.6, 392.0, 523.3] : [523.3, 659.3, 784.0, 1046.5];
-    freqs.forEach((f, idx) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = exothermic ? 'triangle' : 'sine';
-      const t0 = now + idx * 0.055;
-      osc.frequency.setValueAtTime(f, t0);
-      gain.gain.setValueAtTime(0.001, t0);
-      gain.gain.linearRampToValueAtTime(0.075, t0 + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.42);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(t0);
-      osc.stop(t0 + 0.45);
-    });
-  }
+interface BusbarGeometry {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  ctrlX: number;
+  ctrlY: number;
+  midX: number;
+  midY: number;
+  color: string;
+  isEnergised: boolean;
 }
 
 export class SwitchboardRenderer {
@@ -168,23 +74,24 @@ export class SwitchboardRenderer {
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.width, this.height);
 
+    // Pass 1: Switchboard grid & thermal particles
     this.drawBackgroundGrid(ctx, opts.circuitState, opts.timeMs);
 
     const nodeMap = new Map<string, StateNode>(opts.nodes.map((n) => [n.data.id, n]));
     const sourceNode = nodeMap.get(opts.scenario.sourceNodeId);
     const targetNode = nodeMap.get(opts.scenario.targetNodeId);
+    const busbarGeom =
+      sourceNode && targetNode ? this.computeBusbarGeometry(sourceNode, targetNode, opts) : null;
 
-    // Draw direct target busbar (START -> TARGET)
-    if (sourceNode && targetNode) {
-      this.drawTargetBusbar(ctx, sourceNode, targetNode, opts);
+    // Pass 2: Target Busbar arc, Vector curves, arrowheads, and active drag probe
+    if (busbarGeom) {
+      this.drawTargetBusbarArc(ctx, busbarGeom, opts.timeMs);
     }
 
-    // Draw all placed vectors
     for (const vector of opts.vectors) {
-      this.drawVector(ctx, vector, opts);
+      this.drawVectorLine(ctx, vector, opts);
     }
 
-    // Draw active thumb-drag probe wire
     if (opts.dragProbe.active && opts.dragProbe.originNodeId) {
       const origin = nodeMap.get(opts.dragProbe.originNodeId);
       if (origin) {
@@ -192,9 +99,18 @@ export class SwitchboardRenderer {
       }
     }
 
-    // Draw state nodes on top
+    // Pass 3: StateNode cards
     for (const node of opts.nodes) {
       this.drawStateNode(ctx, node, opts);
+    }
+
+    // Pass 4: Foreground pills (always readable above wires and nodes)
+    if (busbarGeom) {
+      this.drawTargetBusbarPill(ctx, busbarGeom, opts);
+    }
+
+    for (const vector of opts.vectors) {
+      this.drawVectorPills(ctx, vector, opts);
     }
 
     ctx.restore();
@@ -224,7 +140,6 @@ export class SwitchboardRenderer {
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, w, h);
 
-    // Subtle PCB switchboard dot/line grid
     const step = 28;
     ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
     ctx.lineWidth = 1;
@@ -239,7 +154,6 @@ export class SwitchboardRenderer {
     }
     ctx.stroke();
 
-    // Thermal celebration overlay particles
     if (circuitState === 'energised_exothermic' || circuitState === 'energised_endothermic') {
       const isExo = circuitState === 'energised_exothermic';
       const pulse = 0.5 + 0.5 * Math.sin(timeMs * 0.005);
@@ -264,78 +178,145 @@ export class SwitchboardRenderer {
     }
   }
 
-  private drawTargetBusbar(
-    ctx: CanvasRenderingContext2D,
+  private computeBusbarGeometry(
     source: StateNode,
     target: StateNode,
     opts: RenderOptions
-  ): void {
-    const start = source.getPerimeterAnchor(target.cx, target.cy, 4);
-    const end = target.getPerimeterAnchor(source.cx, source.cy, 4);
-
+  ): BusbarGeometry {
     const isExo = opts.circuitState === 'energised_exothermic';
     const isEndo = opts.circuitState === 'energised_endothermic';
-    const strokeColor = isExo ? '#fb923c' : isEndo ? '#38bdf8' : '#fbbf24';
+    const color = isExo ? '#fb923c' : isEndo ? '#38bdf8' : '#fbbf24';
+    const isEnergised = isExo || isEndo;
 
+    const dx = target.cx - source.cx;
+    const dy = target.cy - source.cy;
+    const horizontal = Math.abs(dx) >= Math.abs(dy);
+
+    let ctrlX = (source.cx + target.cx) * 0.5;
+    let ctrlY = (source.cy + target.cy) * 0.5;
+
+    if (horizontal) {
+      const avgY = (source.cy + target.cy) * 0.5;
+      if (avgY < this.height * 0.45) {
+        // Arc upward into clear top headroom above START/TARGET cards
+        ctrlY = Math.max(22, Math.min(source.rect.y, target.rect.y) - 42);
+      } else {
+        // Arc downward into clear bottom headroom below START/TARGET cards
+        ctrlY = Math.min(
+          this.height - 22,
+          Math.max(source.rect.y + source.rect.height, target.rect.y + target.rect.height) + 42
+        );
+      }
+    } else {
+      // Vertical target busbar (e.g. L09 right column): bow slightly toward center if room, else outward
+      const avgX = (source.cx + target.cx) * 0.5;
+      ctrlX = avgX > this.width * 0.5 ? avgX - 38 : avgX + 38;
+    }
+
+    const start = source.getPerimeterAnchor(ctrlX, ctrlY, 4);
+    const end = target.getPerimeterAnchor(ctrlX, ctrlY, 4);
+
+    const midX = Math.max(66, Math.min(this.width - 66, 0.25 * start.x + 0.5 * ctrlX + 0.25 * end.x));
+    const midY = Math.max(16, Math.min(this.height - 16, 0.25 * start.y + 0.5 * ctrlY + 0.25 * end.y));
+
+    return {
+      startX: start.x,
+      startY: start.y,
+      endX: end.x,
+      endY: end.y,
+      ctrlX,
+      ctrlY,
+      midX,
+      midY,
+      color,
+      isEnergised,
+    };
+  }
+
+  private drawTargetBusbarArc(
+    ctx: CanvasRenderingContext2D,
+    g: BusbarGeometry,
+    timeMs: number
+  ): void {
     ctx.save();
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = isExo || isEndo ? 3 : 2.2;
+    ctx.strokeStyle = g.color;
+    ctx.lineWidth = g.isEnergised ? 3 : 2.1;
     ctx.setLineDash([7, 5]);
-    ctx.lineDashOffset = -(opts.timeMs * 0.025);
-    ctx.shadowColor = strokeColor;
-    ctx.shadowBlur = isExo || isEndo ? 14 : 6;
+    ctx.lineDashOffset = -(timeMs * 0.025);
+    ctx.shadowColor = g.color;
+    ctx.shadowBlur = g.isEnergised ? 14 : 6;
+
     ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    ctx.lineTo(end.x, end.y);
+    ctx.moveTo(g.startX, g.startY);
+    ctx.quadraticCurveTo(g.ctrlX, g.ctrlY, g.endX, g.endY);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    const angle = Math.atan2(end.y - start.y, end.x - start.x);
-    this.drawArrowhead(ctx, end.x, end.y, angle, strokeColor, 9);
+    const angle = Math.atan2(g.endY - g.ctrlY, g.endX - g.ctrlX);
+    this.drawArrowhead(ctx, g.endX, g.endY, angle, g.color, 9);
 
-    // Target label badge
-    const midX = (start.x + end.x) * 0.5;
-    const midY = (start.y + end.y) * 0.5;
-    const valueText =
-      opts.solvedDeltaH !== null
-        ? `${opts.scenario.targetLabel} = ${formatSignedDeltaH(opts.solvedDeltaH)}`
-        : `${opts.scenario.targetLabel} = ?`;
-
-    ctx.font = '700 10.5px ui-monospace, SFMono-Regular, Menlo, monospace';
-    const textW = ctx.measureText(valueText).width;
-    const pillW = Math.min(this.width * 0.48, textW + 16);
-    const pillH = 22;
-
-    ctx.shadowBlur = 0;
-    this.roundRect(ctx, midX - pillW * 0.5, midY - pillH * 0.5, pillW, pillH, 7);
-    ctx.fillStyle = '#0b1326';
-    ctx.fill();
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-
-    ctx.fillStyle = strokeColor;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(valueText, midX, midY + 0.5, pillW - 8);
-
-    // Animated return pulse when energised
-    if (isExo || isEndo) {
-      const t = (opts.timeMs * 0.0011) % 1;
-      const px = start.x + (end.x - start.x) * t;
-      const py = start.y + (end.y - start.y) * t;
+    if (g.isEnergised) {
+      const t = (timeMs * 0.0011) % 1;
+      const omt = 1 - t;
+      const px = omt * omt * g.startX + 2 * omt * t * g.ctrlX + t * t * g.endX;
+      const py = omt * omt * g.startY + 2 * omt * t * g.ctrlY + t * t * g.endY;
       ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = strokeColor;
-      ctx.shadowBlur = 10;
       ctx.beginPath();
-      ctx.arc(px, py, 3.6, 0, Math.PI * 2);
+      ctx.arc(px, py, 3.5, 0, Math.PI * 2);
       ctx.fill();
     }
 
     ctx.restore();
   }
 
-  private drawVector(ctx: CanvasRenderingContext2D, vector: EnthalpyVector, opts: RenderOptions): void {
+  private drawTargetBusbarPill(
+    ctx: CanvasRenderingContext2D,
+    g: BusbarGeometry,
+    opts: RenderOptions
+  ): void {
+    const prettyLabel = prettifyChemText(opts.scenario.targetLabel);
+    const valueText =
+      opts.solvedDeltaH !== null
+        ? `${prettyLabel} = ${formatSignedDeltaH(opts.solvedDeltaH)}`
+        : `${prettyLabel} = ?`;
+
+    ctx.save();
+    ctx.font = '700 10.5px ui-monospace, SFMono-Regular, Menlo, monospace';
+    const textW = ctx.measureText(valueText).width;
+    const pillW = Math.min(this.width * 0.62, textW + 16);
+    const pillH = 21;
+
+    this.roundRect(ctx, g.midX - pillW * 0.5, g.midY - pillH * 0.5, pillW, pillH, 7);
+    ctx.fillStyle = '#091122';
+    ctx.fill();
+    ctx.strokeStyle = g.color;
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+
+    ctx.fillStyle = g.color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(valueText, g.midX, g.midY + 0.5, pillW - 10);
+    ctx.restore();
+  }
+
+  private getVectorColor(vector: EnthalpyVector, opts: RenderOptions): string {
+    const isFault = opts.offendingVectorId === vector.data.id;
+    const isEnergised =
+      opts.circuitState === 'energised_exothermic' || opts.circuitState === 'energised_endothermic';
+
+    if (isEnergised) {
+      return opts.circuitState === 'energised_exothermic' ? '#fb923c' : '#38bdf8';
+    }
+    if (vector.data.isTrap || isFault) return '#fb7185';
+    return vector.data.reversed ? '#f472b6' : '#22d3ee';
+  }
+
+  private drawVectorLine(
+    ctx: CanvasRenderingContext2D,
+    vector: EnthalpyVector,
+    opts: RenderOptions
+  ): void {
     const geom = vector.geometry;
     if (!geom) return;
 
@@ -343,19 +324,13 @@ export class SwitchboardRenderer {
     const isFault = opts.offendingVectorId === vector.data.id;
     const isEnergised =
       opts.circuitState === 'energised_exothermic' || opts.circuitState === 'energised_endothermic';
-
-    let color = vector.data.reversed ? '#f472b6' : '#22d3ee';
-    if (vector.data.isTrap) color = '#fb7185';
-    if (isFault) color = '#fb7185';
-    if (isEnergised) {
-      color = opts.circuitState === 'energised_exothermic' ? '#fb923c' : '#38bdf8';
-    }
+    const color = this.getVectorColor(vector, opts);
 
     ctx.save();
     ctx.strokeStyle = color;
-    ctx.lineWidth = isSelected || isFault ? 3.8 : 2.8;
+    ctx.lineWidth = isSelected || isFault ? 3.6 : 2.7;
     ctx.shadowColor = color;
-    ctx.shadowBlur = isSelected || isEnergised || isFault ? 14 : 6;
+    ctx.shadowBlur = isSelected || isEnergised || isFault ? 13 : 5;
     ctx.lineCap = 'round';
 
     ctx.beginPath();
@@ -363,11 +338,9 @@ export class SwitchboardRenderer {
     ctx.quadraticCurveTo(geom.ctrlX, geom.ctrlY, geom.endX, geom.endY);
     ctx.stroke();
 
-    // Tangent angle at t = 1 for arrowhead
     const endAngle = Math.atan2(geom.endY - geom.ctrlY, geom.endX - geom.ctrlX);
-    this.drawArrowhead(ctx, geom.endX, geom.endY, endAngle, color, 10);
+    this.drawArrowhead(ctx, geom.endX, geom.endY, endAngle, color, 9.5);
 
-    // Animated current packets along placed vectors
     if (isEnergised) {
       const phase = (opts.timeMs * 0.0014) % 1;
       for (const offset of [0, 0.5]) {
@@ -377,44 +350,55 @@ export class SwitchboardRenderer {
         const py = omt * omt * geom.startY + 2 * omt * t * geom.ctrlY + t * t * geom.endY;
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(px, py, 3.2, 0, Math.PI * 2);
+        ctx.arc(px, py, 3.1, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    // Value pill
-    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  private drawVectorPills(
+    ctx: CanvasRenderingContext2D,
+    vector: EnthalpyVector,
+    opts: RenderOptions
+  ): void {
+    const geom = vector.geometry;
+    if (!geom) return;
+
+    const isSelected = opts.selectedVectorId === vector.data.id;
+    const color = this.getVectorColor(vector, opts);
     const { labelRect, multRect } = geom;
-    this.roundRect(ctx, labelRect.x, labelRect.y, labelRect.width, labelRect.height, 7);
+
+    ctx.save();
+    this.roundRect(ctx, labelRect.x, labelRect.y, labelRect.width, labelRect.height, 6);
     ctx.fillStyle = isSelected ? '#172542' : '#091122';
     ctx.fill();
     ctx.strokeStyle = color;
-    ctx.lineWidth = isSelected ? 1.8 : 1.1;
+    ctx.lineWidth = isSelected ? 1.8 : 1.15;
     ctx.stroke();
 
     const effText = formatSignedDeltaH(vector.effectiveDeltaH);
     ctx.fillStyle = color;
-    ctx.font = '700 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = '700 10.5px ui-monospace, SFMono-Regular, Menlo, monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(effText, labelRect.x + labelRect.width * 0.5, labelRect.y + labelRect.height * 0.5 + 0.5);
+    ctx.fillText(effText, labelRect.x + labelRect.width * 0.5, labelRect.y + labelRect.height * 0.5 + 0.5, labelRect.width - 6);
 
-    // Multiplier badge (always interactive!)
     this.roundRect(ctx, multRect.x, multRect.y, multRect.width, multRect.height, 6);
-    ctx.fillStyle = vector.data.multiplier > 1 ? 'rgba(251, 191, 36, 0.22)' : '#0f172a';
+    ctx.fillStyle = vector.data.multiplier > 1 ? 'rgba(251, 191, 36, 0.24)' : '#0f172a';
     ctx.fill();
-    ctx.strokeStyle = vector.data.multiplier > 1 ? '#fbbf24' : 'rgba(148, 163, 184, 0.45)';
+    ctx.strokeStyle = vector.data.multiplier > 1 ? '#fbbf24' : 'rgba(148, 163, 184, 0.5)';
     ctx.lineWidth = 1.1;
     ctx.stroke();
 
     ctx.fillStyle = vector.data.multiplier > 1 ? '#fbbf24' : '#cbd5e1';
-    ctx.font = '800 10.5px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = '800 10px ui-monospace, SFMono-Regular, Menlo, monospace';
     ctx.fillText(
       `×${vector.data.multiplier}`,
       multRect.x + multRect.width * 0.5,
       multRect.y + multRect.height * 0.5 + 0.5
     );
-
     ctx.restore();
   }
 
@@ -466,12 +450,8 @@ export class SwitchboardRenderer {
       badgeFg = '#fda4af';
     }
 
-    if (isOrigin || isSnapTarget) {
-      borderColor = '#fbbf24';
-    }
-    if (isFault) {
-      borderColor = '#fb7185';
-    }
+    if (isOrigin || isSnapTarget) borderColor = '#fbbf24';
+    if (isFault) borderColor = '#fb7185';
 
     ctx.save();
     if (isSnapTarget || isOrigin || isFault) {
@@ -479,19 +459,18 @@ export class SwitchboardRenderer {
       ctx.shadowBlur = 16;
     }
 
-    this.roundRect(ctx, x, y, width, height, 11);
-    ctx.fillStyle = node.data.role === 'trap' ? 'rgba(30, 12, 22, 0.94)' : 'rgba(11, 19, 38, 0.94)';
+    this.roundRect(ctx, x, y, width, height, 10);
+    ctx.fillStyle = node.data.role === 'trap' ? 'rgba(30, 12, 22, 0.96)' : 'rgba(11, 19, 38, 0.96)';
     ctx.fill();
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = isSnapTarget || isOrigin || isFault ? 2.2 : 1.4;
     ctx.stroke();
 
-    // Top badge chip
     ctx.shadowBlur = 0;
     const tagText = node.data.badge ?? node.data.title.toUpperCase();
-    ctx.font = '800 8.5px ui-monospace, SFMono-Regular, Menlo, monospace';
-    const tagW = Math.min(width - 14, ctx.measureText(tagText).width + 10);
-    this.roundRect(ctx, x + 7, y - 7, tagW, 14, 4);
+    ctx.font = '800 8px ui-monospace, SFMono-Regular, Menlo, monospace';
+    const tagW = Math.min(width - 12, ctx.measureText(tagText).width + 9);
+    this.roundRect(ctx, x + 6, y - 6.5, tagW, 13, 4);
     ctx.fillStyle = '#091122';
     ctx.fill();
     ctx.fillStyle = badgeBg;
@@ -503,16 +482,14 @@ export class SwitchboardRenderer {
     ctx.fillStyle = badgeFg;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(tagText, x + 12, y + 0.5, tagW - 8);
+    ctx.fillText(tagText, x + 10.5, y + 0.2, tagW - 8);
 
-    // Rich chemical formula inside node box
-    this.drawChemicalFormula(ctx, node.data.formulaText, node.cx, node.cy + 4, width - 14);
+    this.drawChemicalFormula(ctx, node.data.formulaText, node.cx, node.cy + 3.5, width - 14);
 
-    // Snap terminal dots on left/right edges
     for (const dotX of [x, x + width]) {
       ctx.fillStyle = borderColor;
       ctx.beginPath();
-      ctx.arc(dotX, node.cy, 3, 0, Math.PI * 2);
+      ctx.arc(dotX, node.cy, 2.8, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -527,7 +504,7 @@ export class SwitchboardRenderer {
     maxWidth: number
   ): void {
     const tokens = tokenizeFormula(formula);
-    const baseSize = formula.length > 20 ? 11.5 : 12.8;
+    const baseSize = formula.length > 20 ? 11 : 12.2;
     const subSize = Math.round(baseSize * 0.74);
 
     const measureToken = (tok: FormulaToken): number => {
@@ -555,13 +532,13 @@ export class SwitchboardRenderer {
       let fill = '#f1f5f9';
 
       if (tok.kind === 'sub') {
-        yOffset = 4;
+        yOffset = 3.5;
         fill = '#cbd5e1';
       } else if (tok.kind === 'sup') {
-        yOffset = -5;
+        yOffset = -4.5;
         fill = '#fbbf24';
       } else if (tok.kind === 'state') {
-        yOffset = 3;
+        yOffset = 2.5;
         fill = stateColor(tok.stateChar ?? '');
       }
 
@@ -625,7 +602,6 @@ function tokenizeFormula(input: string): FormulaToken[] {
   const tokens: FormulaToken[] = [];
   let i = 0;
   while (i < input.length) {
-    // State symbol e.g. (s), (l), (g), (aq)
     const stateMatch = input.slice(i).match(/^\((aq|s|l|g)\)/);
     if (stateMatch) {
       tokens.push({
@@ -637,7 +613,6 @@ function tokenizeFormula(input: string): FormulaToken[] {
       continue;
     }
 
-    // Ionic charges like 2+, +, - attached to element/ion or e-
     const chargeMatch = input.slice(i).match(/^(\d?[+-])(?=\(|$|\s)/);
     if (chargeMatch && i > 0 && /[A-Za-z0-9]/.test(input[i - 1])) {
       tokens.push({ text: chargeMatch[1], kind: 'sup' });
@@ -645,12 +620,7 @@ function tokenizeFormula(input: string): FormulaToken[] {
       continue;
     }
 
-    // Subscript digit directly after letter or closing bracket (not after space or '+')
-    if (
-      /\d/.test(input[i]) &&
-      i > 0 &&
-      /[A-Za-z)]/.test(input[i - 1])
-    ) {
+    if (/\d/.test(input[i]) && i > 0 && /[A-Za-z)]/.test(input[i - 1])) {
       let j = i;
       while (j < input.length && /\d/.test(input[j])) j++;
       tokens.push({ text: input.slice(i, j), kind: 'sub' });
