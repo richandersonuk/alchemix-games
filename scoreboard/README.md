@@ -3,7 +3,7 @@
 One Cloudflare Worker + D1 database serves every game's leaderboard. Each game has its **own,
 separate** boards.
 
-Live API: https://lattice-lock-scores.lattice-lock.workers.dev
+Live API: https://alchemix-games-scores.alchemix-games.workers.dev (Worker `alchemix-games-scores`; D1 database still named `lattice-lock-scores`, same ID)
 
 | Game | Board(s) | Endpoint |
 |---|---|---|

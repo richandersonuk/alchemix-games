@@ -14,7 +14,7 @@
 (function () {
   'use strict';
 
-  var ENDPOINT = 'https://lattice-lock-scores.lattice-lock.workers.dev';
+  var ENDPOINT = 'https://alchemix-games-scores.alchemix-games.workers.dev';
   var TIMEOUT_MS = 7000;
 
   function request(path, init) {
