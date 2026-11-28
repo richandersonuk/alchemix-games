@@ -62,6 +62,18 @@ export const GAMES = {
       difficulty: pattern(/^[A-Z][A-Z0-9 -]{0,15}$/),
     },
   },
+  // Redox Rogue (/redox-rogue)
+  'redox-rogue': {
+    boards: (b) => b === 'main',
+    maxScore: () => 50_000,
+    tag: pattern(/^[A-Z0-9]{2,8}$/),
+    meta: {
+      victory: int(0, 1),
+      turns: int(1, 99),
+      peak_emf_mv: int(0, 9999),
+      hp_left: int(0, 100),
+    },
+  },
 };
 
 /** Returns cleaned meta (only whitelisted, valid fields) or null if a supplied field is invalid. */
