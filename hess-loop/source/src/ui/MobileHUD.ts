@@ -1,6 +1,9 @@
 import type { CycleCategory, CycleScenario } from '../types/energetics.ts';
 import { STANDARD_ENTHALPIES } from '../data/standardEnthalpies.ts';
 import { formatSignedDeltaH } from '../engine/CycleEvaluator.ts';
+import { formatChemHtml, prettifyChemText } from './chemFormat.ts';
+
+export { prettifyChemText };
 
 export interface MobileHUDCallbacks {
   onOpenLevels: () => void;
@@ -35,8 +38,6 @@ export class MobileHUD {
 
   renderHeader(scenario: CycleScenario): void {
     const boards = scenario.examBoards.join('·');
-    const prettyTarget = prettifyChemText(scenario.targetLabel);
-    const prettyEq = prettifyChemText(scenario.targetEquation);
 
     this.headerRoot.innerHTML = `
       <div class="hud-group">
@@ -46,9 +47,9 @@ export class MobileHUD {
       <div class="hud-center">
         <div class="hud-target-row">
           <span class="hud-level-code">${boards}</span>
-          <span class="hud-target-label">Find ${escapeHtml(prettyTarget)}</span>
+          <span class="hud-target-label">Find ${formatChemHtml(scenario.targetLabel)}</span>
         </div>
-        <div class="hud-equation-sub">${escapeHtml(prettyEq)}</div>
+        <div class="hud-equation-sub">${formatChemHtml(scenario.targetEquation)}</div>
       </div>
       <div class="hud-group">
         <button id="hud-btn-reset" class="hud-btn" type="button" title="Reset Switchboard">↻</button>
@@ -82,8 +83,8 @@ export class MobileHUD {
     const filters: Array<{ key: 'all' | CycleCategory; label: string }> = [
       { key: 'all', label: `All (${this.lastLevels.length})` },
       { key: 'calorimetry', label: 'Calorimetry' },
-      { key: 'formation', label: 'ΔfH°' },
-      { key: 'bond', label: 'Bond & Latent' },
+      { key: 'formation', label: formatChemHtml('ΔfHθ') },
+      { key: 'bond', label: 'Bond &amp; Latent' },
       { key: 'solution', label: 'Solution' },
       { key: 'bornhaber', label: 'Born-Haber' },
     ];
@@ -101,12 +102,12 @@ export class MobileHUD {
         return `
           <button class="level-card ${isCurrent ? 'active' : ''}" data-level-id="${lvl.id}" type="button">
             <div class="level-card-top">
-              <span class="level-card-code">${lvl.code}</span>
+              <span class="level-card-code">${formatChemHtml(lvl.code)}</span>
               <span class="level-card-stars">${starStr}</span>
             </div>
-            <div class="level-card-title">${escapeHtml(prettifyChemText(lvl.title))}</div>
-            <div class="level-card-eq">${escapeHtml(prettifyChemText(lvl.targetEquation))}</div>
-            <div class="level-card-source">${escapeHtml(lvl.examSource)} · Find ${escapeHtml(prettifyChemText(lvl.targetLabel))}</div>
+            <div class="level-card-title">${formatChemHtml(lvl.title)}</div>
+            <div class="level-card-eq">${formatChemHtml(lvl.targetEquation)}</div>
+            <div class="level-card-source">${formatChemHtml(lvl.examSource)} · Find ${formatChemHtml(lvl.targetLabel)}</div>
           </button>
         `;
       })
@@ -166,34 +167,34 @@ export class MobileHUD {
         ? `
           <div class="ms-step">
             <div class="ms-step-head"><span class="ms-code">VERB 1</span><span class="ms-step-title">Thumb-Drag Vector Routing</span></div>
-            <div class="ms-step-detail">Drag from one state node to an adjacent state node to wire a standard ΔH conduit. Arrows always spawn in their IUPAC standard direction (e.g. Elements → Compound for ΔfH°, Fuel → Oxides for ΔcH°).</div>
+            <div class="ms-step-detail">Drag from one state node to an adjacent state node to wire a standard ΔH<sup>θ</sup> conduit. Arrows always spawn in their IUPAC/WJEC standard direction (e.g. Elements → Compound for Δ<sub>f</sub>H<sup>θ</sup>, Fuel → Oxides for Δ<sub>c</sub>H<sup>θ</sup>).</div>
           </div>
           <div class="ms-step">
-            <div class="ms-step-head"><span class="ms-code">VERB 2</span><span class="ms-step-title">Tap Arrow to Flip Direction (−ΔH)</span></div>
+            <div class="ms-step-head"><span class="ms-code">VERB 2</span><span class="ms-step-title">Tap Arrow to Flip Direction (−ΔH<sup>θ</sup>)</span></div>
             <div class="ms-step-detail">Tap any wired arrow to flip its arrowhead and invert its enthalpy sign (+ ↔ −). Every arrow along your indirect route must point head-to-tail from START to TARGET.</div>
           </div>
           <div class="ms-step">
             <div class="ms-step-head"><span class="ms-code">VERB 3</span><span class="ms-step-title">Stoichiometry (×N) &amp; Target Divisor (÷N)</span></div>
-            <div class="ms-step-detail">Double-tap a wire or tap ×1 to scale mole coefficients. When an unknown leg forms 2, 3, or 4 moles (e.g. 2H₂O₂, 3HCl, 4 bonds), tap the gold busbar ÷N pill to divide to 1 mol!</div>
+            <div class="ms-step-detail">Double-tap a wire or tap ×1 to scale mole coefficients. When an unknown leg forms 2, 3, or 4 moles (e.g. 2H<sub>2</sub>O<sub>2</sub>, 3HCl, 4 bonds), tap the gold busbar ÷N pill to divide to 1 mol!</div>
           </div>
           <div class="ms-note">
             <strong>Mark-Scheme Traps (298 K, 100 kPa):</strong><br/>
-            • Water from standard combustion is liquid <strong>H₂O(l)</strong>, never steam H₂O(g).<br/>
-            • Bromine is liquid <strong>Br₂(l)</strong> in its standard state.<br/>
-            • Lattice formation enthalpy points from gaseous ions → solid lattice.
+            • Water from standard combustion is liquid <strong>H<sub>2</sub>O(l)</strong>, never steam H<sub>2</sub>O(g).<br/>
+            • Bromine is liquid <strong>Br<sub>2</sub>(l)</strong> in its standard state.<br/>
+            • Δ<sub>latt form</sub>H<sup>θ</sup> points from gaseous ions → solid lattice (exothermic).
           </div>
         `
         : `
           <table class="data-table">
             <thead>
-              <tr><th>Symbol</th><th>Notes</th><th style="text-align:right">ΔH° / kJ mol⁻¹</th></tr>
+              <tr><th>Symbol</th><th>Notes</th><th style="text-align:right">ΔH<sup>θ</sup> / kJ mol<sup>−1</sup></th></tr>
             </thead>
             <tbody>
               ${STANDARD_ENTHALPIES.map(
                 (entry) => `
                 <tr>
-                  <td><strong>${escapeHtml(entry.symbol)}</strong></td>
-                  <td>${escapeHtml(entry.notes)}</td>
+                  <td><strong>${formatChemHtml(entry.symbol)}</strong></td>
+                  <td>${formatChemHtml(entry.notes)}</td>
                   <td class="num">${formatSignedDeltaH(entry.deltaH)}</td>
                 </tr>`
               ).join('')}
@@ -226,43 +227,4 @@ export class MobileHUD {
       });
     });
   }
-}
-
-export function prettifyChemText(input: string): string {
-  const subDigits: Record<string, string> = {
-    '0': '₀',
-    '1': '₁',
-    '2': '₂',
-    '3': '₃',
-    '4': '₄',
-    '5': '₅',
-    '6': '₆',
-    '7': '₇',
-    '8': '₈',
-    '9': '₉',
-  };
-  return input
-    .replace(/2\+/g, '²⁺')
-    .replace(/3\+/g, '³⁺')
-    .replace(/2-/g, '²⁻')
-    .replace(/([A-Za-z0-9])\+(?=\(|$|\s|])/g, '$1⁺')
-    .replace(/([A-Za-z0-9])-(?=\(|$|\s|])/g, '$1⁻')
-    .replace(/([A-Za-z)])(\d+)/g, (_, prefix: string, digits: string) => {
-      const sub = digits
-        .split('')
-        .map((d) => subDigits[d] ?? d)
-        .join('');
-      return `${prefix}${sub}`;
-    })
-    .replace(/0\.5/g, '½')
-    .replace(/1\.5/g, '1½')
-    .replace(/3\.5/g, '3½');
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

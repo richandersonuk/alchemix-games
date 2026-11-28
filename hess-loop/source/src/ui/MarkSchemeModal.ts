@@ -1,5 +1,6 @@
 import type { CycleScenario, EvaluationResult } from '../types/energetics.ts';
 import { formatSignedDeltaH } from '../engine/CycleEvaluator.ts';
+import { escapeHtml, formatChemHtml } from './chemFormat.ts';
 
 export interface MarkSchemeModalCallbacks {
   onCloseInspect: () => void;
@@ -29,8 +30,8 @@ export class MarkSchemeModal {
       const isExo = result.thermalSign === 'exothermic';
       const bannerClass = isExo ? 'exo' : 'endo';
       const thermalLabel = isExo
-        ? 'EXOTHERMIC (ΔH < 0 · Heat Released)'
-        : 'ENDOTHERMIC (ΔH > 0 · Heat Absorbed)';
+        ? 'EXOTHERMIC (ΔH<sup>θ</sup> &lt; 0 · Heat Released)'
+        : 'ENDOTHERMIC (ΔH<sup>θ</sup> &gt; 0 · Heat Absorbed)';
       const starStr =
         '★'.repeat(result.starsAwarded) + '☆'.repeat(3 - result.starsAwarded);
 
@@ -38,8 +39,8 @@ export class MarkSchemeModal {
         <div class="modal-card" role="dialog" aria-modal="true" aria-label="Examiners' Mark Scheme Report">
           <div class="modal-header">
             <div>
-              <div class="modal-kicker">${scenario.code} · ${escapeHtml(scenario.examSource)} · MARK SCHEME</div>
-              <h2 class="modal-heading">${escapeHtml(scenario.title)}</h2>
+              <div class="modal-kicker">${escapeHtml(scenario.code)} · ${formatChemHtml(scenario.examSource)} · MARK SCHEME</div>
+              <h2 class="modal-heading">${formatChemHtml(scenario.title)}</h2>
             </div>
             <span class="level-card-stars" style="font-size:16px">${starStr}</span>
           </div>
@@ -47,9 +48,9 @@ export class MarkSchemeModal {
           <div class="ms-banner ${bannerClass}">
             <div>
               <div class="modal-kicker">${thermalLabel}</div>
-              <div style="font-size:12px;color:#e2e8f0;margin-top:2px;">${escapeHtml(scenario.targetLabel)}</div>
+              <div style="font-size:12px;color:#e2e8f0;margin-top:2px;">${formatChemHtml(scenario.targetLabel)}</div>
             </div>
-            <div class="ms-value">${formatSignedDeltaH(result.calculatedDeltaH)} <span style="font-size:11px;font-weight:700">kJ mol⁻¹</span></div>
+            <div class="ms-value">${formatSignedDeltaH(result.calculatedDeltaH)} <span style="font-size:11px;font-weight:700">kJ mol<sup>−1</sup></span></div>
           </div>
 
           ${result.markSchemeSteps
@@ -58,15 +59,15 @@ export class MarkSchemeModal {
             <div class="ms-step">
               <div class="ms-step-head">
                 <span class="ms-code">${escapeHtml(step.code)}</span>
-                <span class="ms-step-title">${escapeHtml(step.title)}</span>
+                <span class="ms-step-title">${formatChemHtml(step.title)}</span>
               </div>
-              <div class="ms-step-detail">${escapeHtml(step.detail)}</div>
+              <div class="ms-step-detail">${formatChemHtml(step.detail)}</div>
             </div>`
             )
             .join('')}
 
           <div class="ms-note">
-            <strong>Examiner's Report:</strong> ${escapeHtml(scenario.examinerNote)}
+            <strong>Examiner's Report:</strong> ${formatChemHtml(scenario.examinerNote)}
           </div>
 
           <div class="splash-row-2">
@@ -103,19 +104,19 @@ export class MarkSchemeModal {
         <div class="modal-header">
           <div>
             <div class="modal-kicker">SWITCHBOARD DIAGNOSTIC</div>
-            <h2 class="modal-heading">${escapeHtml(fault?.headline ?? 'Circuit Imbalance')}</h2>
+            <h2 class="modal-heading">${formatChemHtml(fault?.headline ?? 'Circuit Imbalance')}</h2>
           </div>
           <button id="ms-btn-close" class="hud-btn" type="button">✕</button>
         </div>
 
         <div class="ms-banner fault">
           <div style="font-size:12.5px;line-height:1.45;color:#fecdd3;">
-            ${escapeHtml(fault?.detail ?? 'Inspect highlighted conduits on the switchboard.')}
+            ${formatChemHtml(fault?.detail ?? 'Inspect highlighted conduits on the switchboard.')}
           </div>
         </div>
 
         <div class="ms-note">
-          <strong>Mark-Scheme Tip:</strong> ${escapeHtml(scenario.hint)}
+          <strong>Mark-Scheme Tip:</strong> ${formatChemHtml(scenario.hint)}
         </div>
 
         <button id="ms-btn-fix" class="btn-primary" style="width:100%" type="button">Back to Switchboard</button>
@@ -126,11 +127,4 @@ export class MarkSchemeModal {
     this.root.querySelector('#ms-btn-fix')?.addEventListener('click', () => this.hide());
     this.root.classList.remove('hidden');
   }
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }

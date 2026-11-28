@@ -2,7 +2,6 @@ import type { CircuitState, CycleScenario } from '../types/energetics.ts';
 import { formatSignedDeltaH } from '../engine/CycleEvaluator.ts';
 import type { EnthalpyVector } from '../entities/EnthalpyVector.ts';
 import type { StateNode } from '../entities/StateNode.ts';
-import { prettifyChemText } from '../ui/MobileHUD.ts';
 
 export interface DragProbeState {
   active: boolean;
@@ -290,20 +289,23 @@ export class SwitchboardRenderer {
     g: BusbarGeometry,
     opts: RenderOptions
   ): void {
-    const prettyLabel = prettifyChemText(opts.scenario.targetLabel);
     const hasDivisor = (opts.scenario.targetMoles ?? 1) > 1;
     const valueText =
       opts.solvedDeltaH !== null
-        ? `${prettyLabel} = ${formatSignedDeltaH(opts.solvedDeltaH)}`
-        : `${prettyLabel} = ?`;
+        ? `${opts.scenario.targetLabel} = ${formatSignedDeltaH(opts.solvedDeltaH)}`
+        : `${opts.scenario.targetLabel} = ?`;
+
+    const fontFamily = 'ui-monospace, SFMono-Regular, Menlo, monospace';
+    const baseSize = 10.5;
+    const tokens = tokenizeFormula(valueText);
+    const textW = this.measureRichTokens(ctx, tokens, baseSize, fontFamily);
 
     ctx.save();
-    ctx.font = '700 10.5px ui-monospace, SFMono-Regular, Menlo, monospace';
-    const textW = ctx.measureText(valueText).width;
     const divGap = hasDivisor ? 4 : 0;
     const divW = hasDivisor ? 30 : 0;
-    const pillW = Math.min(this.width * 0.56, textW + 16);
-    const pillH = 21;
+    const maxPillFrac = hasDivisor ? 0.6 : 0.68;
+    const pillW = Math.min(this.width * maxPillFrac, textW + 16);
+    const pillH = 22;
     const totalW = pillW + divGap + divW;
     const startX = Math.max(8, Math.min(this.width - totalW - 8, g.midX - totalW * 0.5));
     const topY = g.midY - pillH * 0.5;
@@ -319,10 +321,17 @@ export class SwitchboardRenderer {
     ctx.lineWidth = opts.isTargetDivisorFault ? 2 : 1.3;
     ctx.stroke();
 
-    ctx.fillStyle = strokeColor;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(valueText, startX + pillW * 0.5, g.midY + 0.5, pillW - 10);
+    this.drawRichTokens(
+      ctx,
+      tokens,
+      startX + pillW * 0.5,
+      g.midY + 0.5,
+      pillW - 12,
+      baseSize,
+      strokeColor,
+      fontFamily,
+      false
+    );
 
     if (hasDivisor) {
       const divX = startX + pillW + divGap;
@@ -339,6 +348,8 @@ export class SwitchboardRenderer {
 
       ctx.fillStyle = opts.isTargetDivisorFault ? '#fda4af' : '#fbbf24';
       ctx.font = '800 10.5px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(`÷${opts.targetDivisor}`, divX + divW * 0.5, g.midY + 0.5);
     }
 
@@ -541,26 +552,35 @@ export class SwitchboardRenderer {
     ctx.restore();
   }
 
-  private drawChemicalFormula(
+  private measureRichTokens(
     ctx: CanvasRenderingContext2D,
-    formula: string,
-    centerX: number,
-    centerY: number,
-    maxWidth: number
-  ): void {
-    const tokens = tokenizeFormula(formula);
-    const baseSize = formula.length > 20 ? 11 : 12.2;
-    const subSize = Math.round(baseSize * 0.74);
-
-    const measureToken = (tok: FormulaToken): number => {
+    tokens: FormulaToken[],
+    baseSize: number,
+    fontFamily: string
+  ): number {
+    const subSize = Math.round(baseSize * 0.74 * 10) / 10;
+    return tokens.reduce((sum, tok) => {
       ctx.font =
         tok.kind === 'normal'
-          ? `700 ${baseSize}px Inter, system-ui, sans-serif`
-          : `700 ${subSize}px Inter, system-ui, sans-serif`;
-      return ctx.measureText(tok.text).width;
-    };
+          ? `700 ${baseSize}px ${fontFamily}`
+          : `700 ${subSize}px ${fontFamily}`;
+      return sum + ctx.measureText(tok.text).width;
+    }, 0);
+  }
 
-    const totalW = tokens.reduce((sum, tok) => sum + measureToken(tok), 0);
+  private drawRichTokens(
+    ctx: CanvasRenderingContext2D,
+    tokens: FormulaToken[],
+    centerX: number,
+    centerY: number,
+    maxWidth: number,
+    baseSize: number,
+    baseColor: string,
+    fontFamily: string,
+    useChemColors: boolean
+  ): void {
+    const subSize = Math.round(baseSize * 0.74 * 10) / 10;
+    const totalW = this.measureRichTokens(ctx, tokens, baseSize, fontFamily);
     const scale = totalW > maxWidth ? maxWidth / totalW : 1;
 
     ctx.save();
@@ -572,19 +592,23 @@ export class SwitchboardRenderer {
     ctx.textBaseline = 'middle';
 
     for (const tok of tokens) {
-      const w = measureToken(tok);
+      ctx.font =
+        tok.kind === 'normal'
+          ? `700 ${baseSize}px ${fontFamily}`
+          : `700 ${subSize}px ${fontFamily}`;
+      const w = ctx.measureText(tok.text).width;
       let yOffset = 0;
-      let fill = '#f1f5f9';
+      let fill = baseColor;
 
       if (tok.kind === 'sub') {
-        yOffset = 3.5;
-        fill = '#cbd5e1';
+        yOffset = 3.4;
+        fill = useChemColors ? '#cbd5e1' : baseColor;
       } else if (tok.kind === 'sup') {
-        yOffset = -4.5;
-        fill = '#fbbf24';
+        yOffset = -4.2;
+        fill = useChemColors ? '#fbbf24' : baseColor;
       } else if (tok.kind === 'state') {
-        yOffset = 2.5;
-        fill = stateColor(tok.stateChar ?? '');
+        yOffset = 2.4;
+        fill = useChemColors ? stateColor(tok.stateChar ?? '') : baseColor;
       }
 
       ctx.fillStyle = fill;
@@ -593,6 +617,28 @@ export class SwitchboardRenderer {
     }
 
     ctx.restore();
+  }
+
+  private drawChemicalFormula(
+    ctx: CanvasRenderingContext2D,
+    formula: string,
+    centerX: number,
+    centerY: number,
+    maxWidth: number
+  ): void {
+    const tokens = tokenizeFormula(formula);
+    const baseSize = formula.length > 20 ? 11 : 12.2;
+    this.drawRichTokens(
+      ctx,
+      tokens,
+      centerX,
+      centerY,
+      maxWidth,
+      baseSize,
+      '#f1f5f9',
+      'Inter, system-ui, sans-serif',
+      true
+    );
   }
 
   private drawArrowhead(
@@ -643,11 +689,84 @@ function stateColor(state: string): string {
   return '#fbbf24';
 }
 
+const SUB_DIGIT_ASCII: Record<string, string> = {
+  '₀': '0',
+  '₁': '1',
+  '₂': '2',
+  '₃': '3',
+  '₄': '4',
+  '₅': '5',
+  '₆': '6',
+  '₇': '7',
+  '₈': '8',
+  '₉': '9',
+};
+
+function normalizeSubText(s: string): string {
+  return s
+    .split('')
+    .map((ch) => SUB_DIGIT_ASCII[ch] ?? ch)
+    .join('');
+}
+
 function tokenizeFormula(input: string): FormulaToken[] {
   const tokens: FormulaToken[] = [];
   let i = 0;
   while (i < input.length) {
-    const stateMatch = input.slice(i).match(/^\((aq|s|l|g)\)/);
+    const rest = input.slice(i);
+
+    // 1. Official WJEC enthalpy / thermodynamic notation
+    const wjecEnthalpy = rest.match(
+      /^Δ(latt form|latt break|latt|ie\(1\+2\)|ie1|ea1|vap|hyd|sol|at|f|c|r)H([θ°]?)/
+    );
+    if (wjecEnthalpy) {
+      tokens.push({ text: 'Δ', kind: 'normal' });
+      tokens.push({ text: wjecEnthalpy[1], kind: 'sub' });
+      tokens.push({ text: 'H', kind: 'normal' });
+      if (wjecEnthalpy[2]) {
+        tokens.push({ text: 'θ', kind: 'sup' });
+      }
+      i += wjecEnthalpy[0].length;
+      continue;
+    }
+
+    const simpleThermo = rest.match(/^Δ([HGS])([₁₂₃123]?)([θ°])/);
+    if (simpleThermo) {
+      tokens.push({ text: `Δ${simpleThermo[1]}`, kind: 'normal' });
+      if (simpleThermo[2]) {
+        tokens.push({ text: normalizeSubText(simpleThermo[2]), kind: 'sub' });
+      }
+      tokens.push({ text: 'θ', kind: 'sup' });
+      i += simpleThermo[0].length;
+      continue;
+    }
+
+    const indexedDeltaH = rest.match(/^ΔH([₁₂₃123])/);
+    if (indexedDeltaH) {
+      tokens.push({ text: 'ΔH', kind: 'normal' });
+      tokens.push({ text: normalizeSubText(indexedDeltaH[1]), kind: 'sub' });
+      i += indexedDeltaH[0].length;
+      continue;
+    }
+
+    if (/^Ea(?=\b|$|\s|\))/.test(rest) && (i === 0 || !/[A-Za-z]/.test(input[i - 1]))) {
+      tokens.push({ text: 'E', kind: 'normal' });
+      tokens.push({ text: 'a', kind: 'sub' });
+      i += 2;
+      continue;
+    }
+
+    // 2. Half-stoichiometry before species (e.g. 0.5Cl2 -> ½Cl₂)
+    const halfMatch = rest.match(/^(0\.5|1\.5|3\.5)(?=[A-Za-z])/);
+    if (halfMatch && (i === 0 || !/\d/.test(input[i - 1]))) {
+      const rep = halfMatch[1] === '0.5' ? '½' : halfMatch[1] === '1.5' ? '1½' : '3½';
+      tokens.push({ text: rep, kind: 'normal' });
+      i += halfMatch[1].length;
+      continue;
+    }
+
+    // 3. State symbols
+    const stateMatch = rest.match(/^\((aq|s|l|g)\)/);
     if (stateMatch) {
       tokens.push({
         text: stateMatch[0],
@@ -658,17 +777,39 @@ function tokenizeFormula(input: string): FormulaToken[] {
       continue;
     }
 
-    const chargeMatch = input.slice(i).match(/^(\d?[+-])(?=\(|$|\s)/);
-    if (chargeMatch && i > 0 && /[A-Za-z0-9]/.test(input[i - 1])) {
-      tokens.push({ text: chargeMatch[1], kind: 'sup' });
+    // 4. Unicode & ASCII ion charges
+    const unicodeCharge = rest.match(/^(²⁺|³⁺|²⁻|⁺|⁻)/);
+    if (unicodeCharge) {
+      const normalized = unicodeCharge[1]
+        .replace('²⁺', '2+')
+        .replace('³⁺', '3+')
+        .replace('²⁻', '2−')
+        .replace('⁺', '+')
+        .replace('⁻', '−');
+      tokens.push({ text: normalized, kind: 'sup' });
+      i += unicodeCharge[1].length;
+      continue;
+    }
+
+    const chargeMatch = rest.match(/^(\d?[+-])(?=\(|$|\s|\])/);
+    if (chargeMatch && i > 0 && /[A-Za-z0-9₀-₉]/.test(input[i - 1])) {
+      tokens.push({ text: chargeMatch[1].replace('-', '−'), kind: 'sup' });
       i += chargeMatch[1].length;
+      continue;
+    }
+
+    // 5. Unicode & ASCII chemical subscripts
+    const unicodeSub = rest.match(/^[₀-₉]+/);
+    if (unicodeSub) {
+      tokens.push({ text: normalizeSubText(unicodeSub[0]), kind: 'sub' });
+      i += unicodeSub[0].length;
       continue;
     }
 
     if (/\d/.test(input[i]) && i > 0 && /[A-Za-z)]/.test(input[i - 1])) {
       let j = i;
       while (j < input.length && /\d/.test(input[j])) {
-        if (/^\d[+-](?=\(|$|\s)/.test(input.slice(j))) break;
+        if (/^\d[+-](?=\(|$|\s|\])/.test(input.slice(j))) break;
         j++;
       }
       if (j > i) {

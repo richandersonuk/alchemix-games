@@ -12,6 +12,7 @@ import { EquationPreview } from './ui/EquationPreview.ts';
 import { BottomCTA } from './ui/BottomCTA.ts';
 import { MarkSchemeModal } from './ui/MarkSchemeModal.ts';
 import { SettingsMenu } from './ui/SettingsMenu.ts';
+import { formatChemHtml } from './ui/chemFormat.ts';
 
 const STORAGE_KEY = 'hess-loop-progress-v1';
 
@@ -590,7 +591,7 @@ class HessLoopApp {
     kind: 'fault' | 'info' = 'fault',
     durationMs = 3600
   ): void {
-    this.toastEl.textContent = message;
+    this.toastEl.innerHTML = formatChemHtml(message);
     this.toastEl.classList.remove('hidden', 'info');
     if (kind === 'info') {
       this.toastEl.classList.add('info');

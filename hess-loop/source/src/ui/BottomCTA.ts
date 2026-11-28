@@ -1,6 +1,6 @@
 import type { CircuitState, VectorArrow } from '../types/energetics.ts';
 import { formatSignedDeltaH, getEffectiveDeltaH } from '../engine/CycleEvaluator.ts';
-import { prettifyChemText } from './MobileHUD.ts';
+import { formatChemHtml } from './chemFormat.ts';
 
 export interface BottomCTACallbacks {
   onFlipSelected: () => void;
@@ -78,15 +78,14 @@ export class BottomCTA {
 
     const eff = formatSignedDeltaH(getEffectiveDeltaH(selected));
     const dirClass = selected.reversed ? 'rev' : 'std';
-    const dirTag = selected.reversed ? 'REVERSED (−ΔH)' : 'STANDARD (ΔH)';
-    const prettySymbol = prettifyChemText(selected.symbol);
+    const dirTag = selected.reversed ? 'REVERSED (−ΔH<sup>θ</sup>)' : 'STANDARD (ΔH<sup>θ</sup>)';
 
     this.inspectorRoot.innerHTML = `
       <div class="inspector-wrap">
         ${divisorBarHtml}
         <div class="inspector-top">
-          <span class="inspector-name">${escapeHtml(prettySymbol)} · ${dirTag}</span>
-          <span class="inspector-val ${dirClass}">${eff} kJ mol⁻¹</span>
+          <span class="inspector-name">${formatChemHtml(selected.symbol)} · ${dirTag}</span>
+          <span class="inspector-val ${dirClass}">${eff} kJ mol<sup>−1</sup></span>
         </div>
         <div class="inspector-controls">
           <button id="btn-vec-flip" class="ctrl-btn flip" type="button">⇄ Flip</button>
@@ -159,11 +158,4 @@ export class BottomCTA {
     this.ctaRoot.querySelector('#btn-hint-mini')?.addEventListener('click', () => this.callbacks.onHint());
     this.ctaRoot.querySelector('#btn-energise-cta')?.addEventListener('click', () => this.callbacks.onEnergise());
   }
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }
